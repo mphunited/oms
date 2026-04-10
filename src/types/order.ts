@@ -1,14 +1,10 @@
-import type {
-  Order,
-  OrderLineItem,
-  OrderStatus,
-  Customer,
-  Vendor,
-  Invoice,
-  BillOfLading,
-} from "@prisma/client";
+export type { Order, OrderLineItem } from "@/lib/db/schema";
+export type { Invoice, BillOfLading } from "@/lib/db/schema";
+export type { Customer, Vendor } from "@/lib/db/schema";
 
-export type { Order, OrderLineItem, OrderStatus, Invoice, BillOfLading };
+export type OrderStatus = 'QUOTE' | 'PENDING' | 'IN_PROGRESS' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'ON_HOLD';
+
+import type { Order, OrderLineItem, Customer, Vendor, Invoice, BillOfLading } from "@/lib/db/schema";
 
 export interface OrderRow extends Order {
   customer: Pick<Customer, "id" | "name">;

@@ -1,48 +1,78 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
-import type { UserRole } from "@prisma/client";
+import { db } from "@/lib/db";
+import { users, company_members } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import type { MemberRole } from "@/types/tenant";
 
 export async function inviteMember(
   companyId: string,
   email: string,
   name: string,
-  role: UserRole = "CSR"
+  role: MemberRole = "CSR"
 ) {
   // Upsert the base user record (no company-specific fields)
-  const user = await prisma.user.upsert({
-    where: { email },
-    create: { email, name },
-    update: {},
+  const existing = await db.query.users.findFirst({
+    where: eq(users.email, email),
   });
 
+  let user;
+  if (existing) {
+    user = existing;
+  } else {
+    // We can't create auth users here — insert a placeholder row.
+    // In production this would be handled via Supabase invite flow.
+    const [created] = await db.insert(users).values({
+      id: crypto.randomUUID(),
+      email,
+      name,
+    }).returning();
+    user = created;
+  }
+
   // Upsert the membership for this company
-  const member = await prisma.companyMember.upsert({
-    where: { companyId_userId: { companyId, userId: user.id } },
-    create: { companyId, userId: user.id, role },
-    update: { role, isActive: true },
+  const existingMember = await db.query.company_members.findFirst({
+    where: and(
+      eq(company_members.company_id, companyId),
+      eq(company_members.user_id, user.id)
+    ),
   });
+
+  let member;
+  if (existingMember) {
+    const [updated] = await db.update(company_members)
+      .set({ role, is_active: true })
+      .where(eq(company_members.id, existingMember.id))
+      .returning();
+    member = updated;
+  } else {
+    const [created] = await db.insert(company_members).values({
+      company_id: companyId,
+      user_id: user.id,
+      role,
+    }).returning();
+    member = created;
+  }
 
   revalidatePath("/admin/team", "page");
   return member;
 }
 
-export async function updateMemberRole(memberId: string, role: UserRole) {
-  const member = await prisma.companyMember.update({
-    where: { id: memberId },
-    data: { role },
-  });
+export async function updateMemberRole(memberId: string, role: MemberRole) {
+  const [member] = await db.update(company_members)
+    .set({ role })
+    .where(eq(company_members.id, memberId))
+    .returning();
 
   revalidatePath("/admin/team", "page");
   return member;
 }
 
 export async function removeMember(memberId: string) {
-  await prisma.companyMember.update({
-    where: { id: memberId },
-    data: { isActive: false },
-  });
+  await db.update(company_members)
+    .set({ is_active: false })
+    .where(eq(company_members.id, memberId));
 
   revalidatePath("/admin/team", "page");
 }

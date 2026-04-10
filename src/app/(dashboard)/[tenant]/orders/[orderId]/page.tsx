@@ -6,9 +6,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { orders, order_line_items, customers, vendors, invoices, bills_of_lading } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
-import type { OrderLineItem, Vendor, Customer } from "@prisma/client";
+import type { OrderLineItem, Vendor, Customer } from "@/lib/db/schema";
 import Link from "next/link";
 import { ChevronLeft, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,33 +24,43 @@ type LineItemRow = OrderLineItem & { vendor: Vendor | null };
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
   const { tenant: companyId, orderId } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: {
-      customer: true,
-      lineItems: { include: { vendor: true } },
-      invoice: true,
-      billOfLading: true,
-    },
+  const order = await db.query.orders.findFirst({
+    where: eq(orders.id, orderId),
   });
 
   if (!order) notFound();
 
+  const [customer, lineItemRows, invoice, billOfLading] = await Promise.all([
+    db.query.customers.findFirst({ where: eq(customers.id, order.customer_id) }),
+    db
+      .select({ lineItem: order_line_items, vendor: vendors })
+      .from(order_line_items)
+      .leftJoin(vendors, eq(vendors.id, order_line_items.vendor_id))
+      .where(eq(order_line_items.order_id, orderId)),
+    db.query.invoices.findFirst({ where: eq(invoices.order_id, orderId) }),
+    db.query.bills_of_lading.findFirst({ where: eq(bills_of_lading.order_id, orderId) }),
+  ]);
+
+  const lineItems: LineItemRow[] = lineItemRows.map(({ lineItem, vendor }) => ({
+    ...lineItem,
+    vendor: vendor ?? null,
+  }));
+
   // Compute totals from line items
-  const subtotal = order.lineItems.reduce(
-    (sum, li) => sum + Number(li.sellEach) * Number(li.qty),
+  const subtotal = lineItems.reduce(
+    (sum, li) => sum + Number(li.sell_each) * Number(li.qty),
     0
   );
-  const freight = order.lineItems.reduce(
-    (sum, li) => sum + Number(li.freightCost),
+  const freight = lineItems.reduce(
+    (sum, li) => sum + Number(li.freight_cost),
     0
   );
 
   return (
     <>
       <PageHeader
-        title={order.orderNumber}
-        description={`Created ${new Date(order.createdAt).toLocaleDateString()}`}
+        title={order.order_number}
+        description={`Created ${new Date(order.created_at).toLocaleDateString()}`}
         actions={
           <Link
             href={`/${companyId}/orders`}
@@ -61,7 +73,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
       />
 
       <div className="flex gap-3 items-center">
-        <OrderStatusBadge status={order.status} />
+        <OrderStatusBadge status={order.status as import("@/types/order").OrderStatus} />
         {order.flag && (
           <Badge variant="destructive" className="gap-1">
             <Flag className="size-3" /> Flagged
@@ -87,16 +99,16 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(order.lineItems as LineItemRow[]).map((item) => (
+                  {lineItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.description}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {item.vendor?.name ?? "—"}
                       </TableCell>
                       <TableCell className="text-right">{Number(item.qty)}</TableCell>
-                      <TableCell className="text-right">${Number(item.buyEach).toFixed(4)}</TableCell>
-                      <TableCell className="text-right">${Number(item.sellEach).toFixed(4)}</TableCell>
-                      <TableCell className="text-right">${Number(item.freightCost).toFixed(2)}</TableCell>
+                      <TableCell className="text-right">${Number(item.buy_each).toFixed(4)}</TableCell>
+                      <TableCell className="text-right">${Number(item.sell_each).toFixed(4)}</TableCell>
+                      <TableCell className="text-right">${Number(item.freight_cost).toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -119,7 +131,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           <Card>
             <CardHeader><CardTitle>Customer</CardTitle></CardHeader>
             <CardContent className="space-y-1 text-sm">
-              <p className="font-medium">{(order.customer as Customer).name}</p>
+              <p className="font-medium">{customer?.name ?? "—"}</p>
               {order.salesperson && (
                 <p className="text-muted-foreground">Sales: {order.salesperson}</p>
               )}
@@ -132,16 +144,16 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           <Card>
             <CardHeader><CardTitle>Dates</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              {order.shipDate && (
+              {order.ship_date && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Ship Date</span>
-                  <span>{new Date(order.shipDate).toLocaleDateString()}</span>
+                  <span>{new Date(order.ship_date).toLocaleDateString()}</span>
                 </div>
               )}
-              {order.deliveryDate && (
+              {order.delivery_date && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Delivery</span>
-                  <span>{new Date(order.deliveryDate).toLocaleDateString()}</span>
+                  <span>{new Date(order.delivery_date).toLocaleDateString()}</span>
                 </div>
               )}
             </CardContent>

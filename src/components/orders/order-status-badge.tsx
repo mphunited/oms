@@ -8,6 +8,7 @@ const ORDER_STATUS_CONFIG: Record<
   QUOTE:       { label: "Quote",       variant: "outline" },
   PENDING:     { label: "Pending",     variant: "secondary" },
   IN_PROGRESS: { label: "In Progress", variant: "default" },
+  CONFIRMED:   { label: "Confirmed",   variant: "default" },
   SHIPPED:     { label: "Shipped",     variant: "default" },
   DELIVERED:   { label: "Delivered",   variant: "default" },
   CANCELLED:   { label: "Cancelled",   variant: "destructive" },

@@ -1,6 +1,4 @@
-import type { Customer } from "@prisma/client";
-
-export type { Customer };
+export type { Customer } from "@/lib/db/schema";
 
 export interface CustomerContact {
   name: string;
@@ -26,6 +24,15 @@ export interface CreateCustomerInput {
   notes?: string;
 }
 
-export interface CustomerWithOrderCount extends Customer {
-  _count: { orders: number };
+export interface CustomerWithOrderCount {
+  id: string;
+  company_id: string;
+  name: string;
+  contacts: unknown;
+  ship_to: unknown;
+  bill_to: unknown;
+  payment_terms: string | null;
+  is_active: boolean;
+  created_at: Date;
+  orderCount: number;
 }

@@ -10,7 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { vendors } from "@/lib/db/schema";
+import { eq, and, asc } from "drizzle-orm";
 import { getCompanyById } from "@/lib/tenant/get-tenant";
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -24,10 +26,11 @@ export default async function VendorsPage({ params }: VendorsPageProps) {
   const { tenant: companyId } = await params;
   const company = await getCompanyById(companyId);
 
-  const vendors = await prisma.vendor.findMany({
-    where: { companyId: company.id, isActive: true },
-    orderBy: { name: "asc" },
-  });
+  const rows = await db
+    .select()
+    .from(vendors)
+    .where(and(eq(vendors.company_id, company.id), eq(vendors.is_active, true)))
+    .orderBy(asc(vendors.name));
 
   return (
     <>
@@ -54,14 +57,14 @@ export default async function VendorsPage({ params }: VendorsPageProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vendors.length === 0 && (
+            {rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
                   No vendors yet.
                 </TableCell>
               </TableRow>
             )}
-            {vendors.map((vendor) => (
+            {rows.map((vendor) => (
               <TableRow key={vendor.id}>
                 <TableCell className="font-medium">{vendor.name}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">

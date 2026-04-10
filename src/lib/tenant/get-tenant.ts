@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { companies, company_members, users } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 /**
@@ -6,11 +8,11 @@ import { notFound } from "next/navigation";
  * Throws notFound() if the company does not exist or is inactive.
  */
 export async function getCompanyById(companyId: string) {
-  const company = await prisma.company.findUnique({
-    where: { id: companyId },
+  const company = await db.query.companies.findFirst({
+    where: eq(companies.id, companyId),
   });
 
-  if (!company || !company.isActive) notFound();
+  if (!company || !company.is_active) notFound();
 
   return company;
 }
@@ -20,8 +22,19 @@ export async function getCompanyById(companyId: string) {
  * Returns the CompanyMember record (with user) or null.
  */
 export async function getCompanyMember(companyId: string, userId: string) {
-  return prisma.companyMember.findFirst({
-    where: { companyId, userId, isActive: true },
-    include: { user: true },
-  });
+  const result = await db
+    .select({ member: company_members, user: users })
+    .from(company_members)
+    .leftJoin(users, eq(users.id, company_members.user_id))
+    .where(
+      and(
+        eq(company_members.company_id, companyId),
+        eq(company_members.user_id, userId),
+        eq(company_members.is_active, true)
+      )
+    )
+    .limit(1);
+
+  if (result.length === 0) return null;
+  return { ...result[0].member, user: result[0].user };
 }

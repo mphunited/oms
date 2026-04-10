@@ -4,9 +4,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { customers, orders } from "@/lib/db/schema";
+import { eq, and, asc, count, sql } from "drizzle-orm";
 import { getCompanyById } from "@/lib/tenant/get-tenant";
-import type { Customer } from "@prisma/client";
+import type { Customer } from "@/lib/db/schema";
 import type { CustomerContact } from "@/types/customer";
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -16,17 +18,30 @@ interface CustomersPageProps {
   params: Promise<{ tenant: string }>;
 }
 
-type CustomerRow = Customer & { _count: { orders: number } };
+type CustomerRow = Customer & { orderCount: number };
 
 export default async function CustomersPage({ params }: CustomersPageProps) {
   const { tenant: companyId } = await params;
   const company = await getCompanyById(companyId);
 
-  const customers = await prisma.customer.findMany({
-    where: { companyId: company.id, isActive: true },
-    include: { _count: { select: { orders: true } } },
-    orderBy: { name: "asc" },
-  });
+  const rows = await db
+    .select({
+      id: customers.id,
+      company_id: customers.company_id,
+      name: customers.name,
+      contacts: customers.contacts,
+      ship_to: customers.ship_to,
+      bill_to: customers.bill_to,
+      payment_terms: customers.payment_terms,
+      is_active: customers.is_active,
+      created_at: customers.created_at,
+      orderCount: count(orders.id),
+    })
+    .from(customers)
+    .leftJoin(orders, eq(orders.customer_id, customers.id))
+    .where(and(eq(customers.company_id, company.id), eq(customers.is_active, true)))
+    .groupBy(customers.id)
+    .orderBy(asc(customers.name));
 
   return (
     <>
@@ -56,14 +71,14 @@ export default async function CustomersPage({ params }: CustomersPageProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers.length === 0 && (
+            {rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   No customers yet.
                 </TableCell>
               </TableRow>
             )}
-            {(customers as CustomerRow[]).map((customer) => {
+            {(rows as CustomerRow[]).map((customer) => {
               const contacts = customer.contacts as CustomerContact[] | null;
               const primary = contacts?.[0];
               return (
@@ -79,11 +94,11 @@ export default async function CustomersPage({ params }: CustomersPageProps) {
                   <TableCell className="text-muted-foreground">
                     {primary ? `${primary.name}${primary.email ? ` · ${primary.email}` : ""}` : "—"}
                   </TableCell>
-                  <TableCell>{customer.paymentTerms ?? "—"}</TableCell>
-                  <TableCell className="text-right">{customer._count.orders}</TableCell>
+                  <TableCell>{customer.payment_terms ?? "—"}</TableCell>
+                  <TableCell className="text-right">{customer.orderCount}</TableCell>
                   <TableCell>
-                    <Badge variant={customer.isActive ? "default" : "secondary"}>
-                      {customer.isActive ? "Active" : "Inactive"}
+                    <Badge variant={customer.is_active ? "default" : "secondary"}>
+                      {customer.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
                 </TableRow>

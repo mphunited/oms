@@ -1,62 +1,73 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { orders, order_line_items } from "@/lib/db/schema";
+import { eq, count } from "drizzle-orm";
 import type { CreateOrderInput, UpdateOrderStatusInput } from "@/types/order";
-import type { OrderStatus } from "@prisma/client";
 
-function generateOrderNumber(count: number): string {
+function generateOrderNumber(currentCount: number): string {
   const year = new Date().getFullYear();
-  const seq = String(count + 1).padStart(4, "0");
+  const seq = String(currentCount + 1).padStart(4, "0");
   return `ORD-${year}-${seq}`;
 }
 
 export async function createOrder(companyId: string, input: CreateOrderInput) {
-  const count = await prisma.order.count({ where: { companyId } });
+  // Count existing orders for this company to generate order number
+  const [{ value: orderCount }] = await db
+    .select({ value: count() })
+    .from(orders)
+    .where(eq(orders.company_id, companyId));
 
-  const order = await prisma.order.create({
-    data: {
-      companyId,
-      customerId: input.customerId,
-      orderNumber: generateOrderNumber(count),
-      salesperson: input.salesperson,
-      csr: input.csr,
-      notes: input.notes,
-      shipDate: input.shipDate,
-      deliveryDate: input.deliveryDate,
-      lineItems: {
-        create: input.lineItems.map((item) => ({
-          vendorId: item.vendorId,
-          description: item.description,
-          qty: item.qty,
-          buyEach: item.buyEach,
-          sellEach: item.sellEach,
-          freightCost: item.freightCost ?? 0,
-          splitLoad: item.splitLoad ?? false,
-        })),
-      },
-    },
-    include: { lineItems: true, customer: true },
-  });
+  const [order] = await db.insert(orders).values({
+    company_id: companyId,
+    customer_id: input.customerId,
+    order_number: generateOrderNumber(Number(orderCount)),
+    salesperson: input.salesperson,
+    csr: input.csr,
+    notes: input.notes,
+    ship_date: input.shipDate ? input.shipDate.toISOString().split('T')[0] : null,
+    delivery_date: input.deliveryDate ? input.deliveryDate.toISOString().split('T')[0] : null,
+  }).returning();
+
+  if (input.lineItems.length > 0) {
+    await db.insert(order_line_items).values(
+      input.lineItems.map((item) => ({
+        order_id: order.id,
+        vendor_id: item.vendorId ?? null,
+        description: item.description,
+        qty: String(item.qty),
+        buy_each: String(item.buyEach),
+        sell_each: String(item.sellEach),
+        freight_cost: String(item.freightCost ?? 0),
+        split_load: item.splitLoad ?? false,
+      }))
+    );
+  }
+
+  const lineItems = await db
+    .select()
+    .from(order_line_items)
+    .where(eq(order_line_items.order_id, order.id));
 
   revalidatePath("/orders", "page");
-  return order;
+  return { ...order, lineItems };
 }
 
 export async function updateOrderStatus(input: UpdateOrderStatusInput) {
-  const order = await prisma.order.update({
-    where: { id: input.orderId },
-    data: {
-      status: input.status as OrderStatus,
+  const [order] = await db.update(orders)
+    .set({
+      status: input.status,
       flag: input.flag,
-    },
-  });
+    })
+    .where(eq(orders.id, input.orderId))
+    .returning();
 
   revalidatePath("/orders", "page");
   return order;
 }
 
 export async function deleteOrder(orderId: string) {
-  await prisma.order.delete({ where: { id: orderId } });
+  await db.delete(orders).where(eq(orders.id, orderId));
   revalidatePath("/orders");
 }

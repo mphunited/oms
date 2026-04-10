@@ -1,30 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { db } from "@/lib/db";
+import { customers } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import type { CreateCustomerInput } from "@/types/customer";
-
-function toJson<T>(value: T | undefined): Prisma.InputJsonValue | undefined {
-  if (value === undefined) return undefined;
-  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
-}
 
 export async function createCustomer(
   companyId: string,
   input: CreateCustomerInput
 ) {
-  const customer = await prisma.customer.create({
-    data: {
-      companyId,
-      name: input.name,
-      contacts: toJson(input.contacts),
-      shipTo: toJson(input.shipTo),
-      billTo: toJson(input.billTo),
-      paymentTerms: input.paymentTerms,
-      notes: input.notes,
-    },
-  });
+  const [customer] = await db.insert(customers).values({
+    company_id: companyId,
+    name: input.name,
+    contacts: input.contacts ?? null,
+    ship_to: input.shipTo ?? null,
+    bill_to: input.billTo ?? null,
+    payment_terms: input.paymentTerms,
+  }).returning();
 
   revalidatePath("/customers", "page");
   return customer;
@@ -34,27 +27,25 @@ export async function updateCustomer(
   customerId: string,
   input: Partial<CreateCustomerInput>
 ) {
-  const customer = await prisma.customer.update({
-    where: { id: customerId },
-    data: {
-      name: input.name,
-      contacts: toJson(input.contacts),
-      shipTo: toJson(input.shipTo),
-      billTo: toJson(input.billTo),
-      paymentTerms: input.paymentTerms,
-      notes: input.notes,
-    },
-  });
+  const [customer] = await db.update(customers)
+    .set({
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.contacts !== undefined && { contacts: input.contacts }),
+      ...(input.shipTo !== undefined && { ship_to: input.shipTo }),
+      ...(input.billTo !== undefined && { bill_to: input.billTo }),
+      ...(input.paymentTerms !== undefined && { payment_terms: input.paymentTerms }),
+    })
+    .where(eq(customers.id, customerId))
+    .returning();
 
   revalidatePath("/customers", "page");
   return customer;
 }
 
 export async function deleteCustomer(customerId: string) {
-  await prisma.customer.update({
-    where: { id: customerId },
-    data: { isActive: false },
-  });
+  await db.update(customers)
+    .set({ is_active: false })
+    .where(eq(customers.id, customerId));
 
   revalidatePath("/customers", "page");
 }

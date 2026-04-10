@@ -1,6 +1,9 @@
-import type { Company, UserRole } from "@prisma/client";
+export type { Company } from "@/lib/db/schema";
 
-export type { Company, UserRole };
+export type MemberRole = 'CSR' | 'ACCOUNTING' | 'WAREHOUSE' | 'ADMIN';
+
+// UserRole is an alias for MemberRole
+export type UserRole = MemberRole;
 
 export interface CompanyContext {
   id: string;
@@ -13,6 +16,6 @@ export interface CompanyMember {
   name: string;
   email: string;
   avatarUrl: string | null;
-  role: UserRole;
+  role: MemberRole;
   createdAt: Date;
 }

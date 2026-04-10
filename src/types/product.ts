@@ -1,7 +1,5 @@
 // In the MPH OMS, goods are tracked as line items on orders supplied by Vendors.
-import type { Vendor } from "@prisma/client";
-
-export type { Vendor };
+export type { Vendor } from "@/lib/db/schema";
 
 export interface CreateVendorInput {
   name: string;

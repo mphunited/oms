@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { customers, orders } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
-import type { Order } from "@prisma/client";
+import type { Order } from "@/lib/db/schema";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,19 +19,20 @@ interface CustomerDetailPageProps {
 export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
   const { tenant: companyId, customerId } = await params;
 
-  const customer = await prisma.customer.findUnique({
-    where: { id: customerId },
-    include: {
-      orders: {
-        orderBy: { createdAt: "desc" },
-        take: 10,
-      },
-    },
+  const customer = await db.query.customers.findFirst({
+    where: eq(customers.id, customerId),
   });
 
   if (!customer) notFound();
 
-  const shipTo = customer.shipTo as Address | null;
+  const recentOrders = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.customer_id, customerId))
+    .orderBy(desc(orders.created_at))
+    .limit(10);
+
+  const shipTo = customer.ship_to as Address | null;
   const contacts = customer.contacts as CustomerContact[] | null;
   const primaryContact = contacts?.[0];
 
@@ -62,10 +65,10 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                   {primaryContact.phone && <p>{primaryContact.phone}</p>}
                 </div>
               )}
-              {customer.paymentTerms && (
+              {customer.payment_terms && (
                 <div>
                   <p className="text-muted-foreground">Payment Terms</p>
-                  <p>{customer.paymentTerms}</p>
+                  <p>{customer.payment_terms}</p>
                 </div>
               )}
               {shipTo && (
@@ -78,12 +81,6 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                   </p>
                 </div>
               )}
-              {customer.notes && (
-                <div>
-                  <p className="text-muted-foreground">Notes</p>
-                  <p>{customer.notes}</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -92,21 +89,21 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
           <Card>
             <CardHeader><CardTitle>Recent Orders</CardTitle></CardHeader>
             <CardContent>
-              {customer.orders.length === 0 ? (
+              {recentOrders.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No orders yet.</p>
               ) : (
                 <ul className="space-y-2">
-                  {(customer.orders as Order[]).map((order) => (
+                  {(recentOrders as Order[]).map((order) => (
                     <li key={order.id} className="flex items-center justify-between text-sm">
                       <Link
                         href={`/${companyId}/orders/${order.id}`}
                         className="font-mono hover:underline"
                       >
-                        {order.orderNumber}
+                        {order.order_number}
                       </Link>
-                      <OrderStatusBadge status={order.status} />
+                      <OrderStatusBadge status={order.status as import("@/types/order").OrderStatus} />
                       <span className="text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString()}
+                        {new Date(order.created_at).toLocaleDateString()}
                       </span>
                     </li>
                   ))}

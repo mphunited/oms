@@ -3,12 +3,14 @@
  *
  * After login, users land here. We:
  *  1. Confirm the Supabase session is valid.
- *  2. Look up the user's company membership via their email.
+ *  2. Look up the user's active company membership via their email.
  *  3. Redirect to /[companyId]/orders.
  */
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
+import { users, company_members, companies } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { buttonVariants } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -22,18 +24,26 @@ export default async function DashboardRedirectPage() {
     redirect("/login");
   }
 
-  // Find the user's DB record and their company memberships
-  const dbUser = await prisma.user.findUnique({
-  where: { email: user.email! },
-  include: { tenants: { include: { company: true } } },
-});
+  // Find the user's first active company membership
+  const [membership] = await db
+    .select({ company_id: company_members.company_id })
+    .from(users)
+    .innerJoin(company_members, eq(company_members.user_id, users.id))
+    .innerJoin(companies, eq(companies.id, company_members.company_id))
+    .where(
+      and(
+        eq(users.email, user.email!),
+        eq(company_members.is_active, true),
+        eq(companies.is_active, true)
+      )
+    )
+    .limit(1);
 
-const activeTenant = dbUser?.tenants.find((t) => t.company?.isActive);
-if (activeTenant) {
-  redirect(`/${activeTenant.companyId}/orders`);
-}
+  if (membership) {
+    redirect(`/${membership.company_id}/orders`);
+  }
 
-  // No company yet — show a prompt
+  // No active company yet — show a prompt
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center space-y-4 max-w-sm">
