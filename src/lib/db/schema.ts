@@ -7,6 +7,8 @@ import {
   date,
   numeric,
   jsonb,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 
 // ─── companies ───────────────────────────────────────────────────────────────
@@ -51,7 +53,11 @@ export const company_members = pgTable('company_members', {
   role: text('role').notNull(), // 'CSR' | 'ACCOUNTING' | 'WAREHOUSE' | 'ADMIN'
   is_active: boolean('is_active').notNull().default(true),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('company_members_company_id_idx').on(t.company_id),
+  index('company_members_user_id_idx').on(t.user_id),
+  uniqueIndex('company_members_company_user_unique').on(t.company_id, t.user_id),
+])
 
 export type CompanyMember = typeof company_members.$inferSelect
 export type NewCompanyMember = typeof company_members.$inferInsert
@@ -68,7 +74,9 @@ export const customers = pgTable('customers', {
   payment_terms: text('payment_terms'),
   is_active: boolean('is_active').notNull().default(true),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('customers_company_id_idx').on(t.company_id),
+])
 
 export type Customer = typeof customers.$inferSelect
 export type NewCustomer = typeof customers.$inferInsert
@@ -83,7 +91,9 @@ export const vendors = pgTable('vendors', {
   notes: text('notes'),
   is_active: boolean('is_active').notNull().default(true),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('vendors_company_id_idx').on(t.company_id),
+])
 
 export type Vendor = typeof vendors.$inferSelect
 export type NewVendor = typeof vendors.$inferInsert
@@ -94,7 +104,7 @@ export const orders = pgTable('orders', {
   id: uuid('id').primaryKey().defaultRandom(),
   company_id: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
   order_number: text('order_number').notNull(),
-  customer_id: uuid('customer_id').notNull().references(() => customers.id),
+  customer_id: uuid('customer_id').notNull().references(() => customers.id, { onDelete: 'restrict' }),
   status: text('status').notNull().default('PENDING'),
   // status values: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
   salesperson: text('salesperson'),
@@ -114,7 +124,12 @@ export const orders = pgTable('orders', {
   flag: boolean('flag').default(false),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('orders_company_id_idx').on(t.company_id),
+  index('orders_customer_id_idx').on(t.customer_id),
+  index('orders_status_idx').on(t.status),
+  uniqueIndex('orders_company_order_number_unique').on(t.company_id, t.order_number),
+])
 
 export type Order = typeof orders.$inferSelect
 export type NewOrder = typeof orders.$inferInsert
@@ -133,7 +148,9 @@ export const order_line_items = pgTable('order_line_items', {
   split_load: boolean('split_load').default(false),
   part_number: text('part_number'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('order_line_items_order_id_idx').on(t.order_id),
+])
 
 export type OrderLineItem = typeof order_line_items.$inferSelect
 export type NewOrderLineItem = typeof order_line_items.$inferInsert
@@ -142,7 +159,7 @@ export type NewOrderLineItem = typeof order_line_items.$inferInsert
 
 export const invoices = pgTable('invoices', {
   id: uuid('id').primaryKey().defaultRandom(),
-  order_id: uuid('order_id').notNull().references(() => orders.id),
+  order_id: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'restrict' }),
   invoice_number: text('invoice_number').notNull(),
   total: numeric('total', { precision: 10, scale: 2 }),
   status: text('status').notNull().default('DRAFT'),
@@ -152,7 +169,10 @@ export const invoices = pgTable('invoices', {
   due_at: timestamp('due_at', { withTimezone: true }),
   paid_at: timestamp('paid_at', { withTimezone: true }),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('invoices_order_id_idx').on(t.order_id),
+  uniqueIndex('invoices_invoice_number_unique').on(t.invoice_number),
+])
 
 export type Invoice = typeof invoices.$inferSelect
 export type NewInvoice = typeof invoices.$inferInsert
@@ -169,7 +189,9 @@ export const bills_of_lading = pgTable('bills_of_lading', {
   pickup_date: date('pickup_date'),
   notes: text('notes'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('bills_of_lading_order_id_idx').on(t.order_id),
+])
 
 export type BillOfLading = typeof bills_of_lading.$inferSelect
 export type NewBillOfLading = typeof bills_of_lading.$inferInsert
@@ -184,7 +206,10 @@ export const dropdown_configs = pgTable('dropdown_configs', {
   values: jsonb('values').notNull().default([]),  // string[]
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('dropdown_configs_company_id_idx').on(t.company_id),
+  uniqueIndex('dropdown_configs_company_type_unique').on(t.company_id, t.type),
+])
 
 export type DropdownConfig = typeof dropdown_configs.$inferSelect
 export type NewDropdownConfig = typeof dropdown_configs.$inferInsert
@@ -194,7 +219,7 @@ export type NewDropdownConfig = typeof dropdown_configs.$inferInsert
 export const forum_posts = pgTable('forum_posts', {
   id: uuid('id').primaryKey().defaultRandom(),
   company_id: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  author_id: uuid('author_id').notNull().references(() => users.id),
+  author_id: uuid('author_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
   title: text('title').notNull(),
   body: text('body').notNull(),
   tag: text('tag'),
@@ -202,7 +227,10 @@ export const forum_posts = pgTable('forum_posts', {
   is_pinned: boolean('is_pinned').notNull().default(false),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('forum_posts_company_id_idx').on(t.company_id),
+  index('forum_posts_author_id_idx').on(t.author_id),
+])
 
 export type ForumPost = typeof forum_posts.$inferSelect
 export type NewForumPost = typeof forum_posts.$inferInsert
@@ -212,10 +240,12 @@ export type NewForumPost = typeof forum_posts.$inferInsert
 export const forum_replies = pgTable('forum_replies', {
   id: uuid('id').primaryKey().defaultRandom(),
   post_id: uuid('post_id').notNull().references(() => forum_posts.id, { onDelete: 'cascade' }),
-  author_id: uuid('author_id').notNull().references(() => users.id),
+  author_id: uuid('author_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
   body: text('body').notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('forum_replies_post_id_idx').on(t.post_id),
+])
 
 export type ForumReply = typeof forum_replies.$inferSelect
 export type NewForumReply = typeof forum_replies.$inferInsert
@@ -228,10 +258,12 @@ export const resources = pgTable('resources', {
   title: text('title').notNull(),
   url: text('url').notNull(),
   kind: text('kind'),  // e.g. 'link' | 'document' | 'video'
-  pinned: boolean('pinned').notNull().default(false),
+  is_pinned: boolean('is_pinned').notNull().default(false),
   notes: text('notes'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('resources_company_id_idx').on(t.company_id),
+])
 
 export type Resource = typeof resources.$inferSelect
 export type NewResource = typeof resources.$inferInsert
@@ -247,7 +279,10 @@ export const audit_logs = pgTable('audit_logs', {
   old_value: jsonb('old_value'),
   new_value: jsonb('new_value'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [
+  index('audit_logs_table_record_idx').on(t.table_name, t.record_id),
+  index('audit_logs_user_id_idx').on(t.user_id),
+])
 
 export type AuditLog = typeof audit_logs.$inferSelect
 export type NewAuditLog = typeof audit_logs.$inferInsert
