@@ -1,13 +1,372 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// MPH United Order Management System — Prisma Schema
+// Multi-tenant: company_id on every table (MPH United now, Harding National later)
+// Prisma 7: url/directUrl live in prisma.config.ts, NOT here
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Company (tenant)
+// ---------------------------------------------------------------------------
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  legalName   String?
+  address     Json?    // { street, city, state, zip, country }
+  email       String?
+  phone       String?
+  logoUrl     String?
+  qboRealmId  String?  // QuickBooks Online realm/company ID
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members        CompanyMember[]
+  customers      Customer[]
+  vendors        Vendor[]
+  orders         Order[]
+  dropdownConfig DropdownConfig[]
+  forumPosts     ForumPost[]
+  resources      Resource[]
+
+  @@map("companies")
+}
+
+// ---------------------------------------------------------------------------
+// CompanyMember — join table for User ↔ Company (many-to-many)
+// ---------------------------------------------------------------------------
+model CompanyMember {
+  id        String   @id @default(cuid())
+  companyId String
+  userId    String
+  role      UserRole @default(CSR)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([companyId])
+  @@index([userId])
+  @@map("company_members")
+}
+
+// ---------------------------------------------------------------------------
+// User
+// ---------------------------------------------------------------------------
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  avatarUrl String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenants      CompanyMember[]
+  forumPosts   ForumPost[]
+  forumReplies ForumReply[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Customer
+// ---------------------------------------------------------------------------
+model Customer {
+  id           String   @id @default(cuid())
+  companyId    String
+  name         String
+  contacts     Json?    // [{ name, email, phone, title }]
+  shipTo       Json?    // { street, city, state, zip, country }
+  billTo       Json?    // { street, city, state, zip, country }
+  paymentTerms String?
+  notes        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orders  Order[]
+
+  @@index([companyId])
+  @@map("customers")
+}
+
+// ---------------------------------------------------------------------------
+// Vendor
+// ---------------------------------------------------------------------------
+model Vendor {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  address   Json?    // { street, city, state, zip, country }
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company       Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orderLineItems OrderLineItem[]
+
+  @@index([companyId])
+  @@map("vendors")
+}
+
+// ---------------------------------------------------------------------------
+// Order
+// ---------------------------------------------------------------------------
+model Order {
+  id          String      @id @default(cuid())
+  companyId   String
+  orderNumber String
+  customerId  String
+  status      OrderStatus @default(QUOTE)
+  salesperson String?
+  csr         String?
+  shipDate    DateTime?
+  deliveryDate DateTime?
+  notes       String?
+  flag        Boolean     @default(false) // attention/priority flag
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer     Customer        @relation(fields: [customerId], references: [id])
+  lineItems    OrderLineItem[]
+  invoice      Invoice?
+  billOfLading BillOfLading?
+
+  @@unique([companyId, orderNumber])
+  @@index([companyId])
+  @@index([customerId])
+  @@index([status])
+  @@map("orders")
+}
+
+// ---------------------------------------------------------------------------
+// OrderLineItem
+// ---------------------------------------------------------------------------
+model OrderLineItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  vendorId    String?
+  description String
+  qty         Decimal  @db.Decimal(10, 3)
+  buyEach     Decimal  @db.Decimal(10, 4)
+  sellEach    Decimal  @db.Decimal(10, 4)
+  freightCost Decimal  @default(0) @db.Decimal(10, 2)
+  splitLoad   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  order  Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  vendor Vendor? @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_line_items")
+}
+
+// ---------------------------------------------------------------------------
+// Invoice
+// ---------------------------------------------------------------------------
+model Invoice {
+  id            String        @id @default(cuid())
+  orderId       String        @unique
+  invoiceNumber String
+  total         Decimal       @db.Decimal(10, 2)
+  status        InvoiceStatus @default(DRAFT)
+  qboInvoiceId  String?       // QuickBooks Online invoice ID after sync
+  issuedAt      DateTime?
+  dueAt         DateTime?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+// ---------------------------------------------------------------------------
+// Bill of Lading
+// ---------------------------------------------------------------------------
+model BillOfLading {
+  id         String    @id @default(cuid())
+  orderId    String    @unique
+  bolNumber  String
+  carrier    String
+  shipFrom   Json?     // { name, street, city, state, zip }
+  shipTo     Json?     // { name, street, city, state, zip }
+  pickupDate DateTime?
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("bills_of_lading")
+}
+
+// ---------------------------------------------------------------------------
+// DropdownConfig — configurable lists (salespeople, CSRs, statuses, carriers…)
+// ---------------------------------------------------------------------------
+model DropdownConfig {
+  id        String       @id @default(cuid())
+  companyId String
+  type      DropdownType
+  values    Json         // string[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, type])
+  @@map("dropdown_configs")
+}
+
+// ---------------------------------------------------------------------------
+// ForumPost
+// ---------------------------------------------------------------------------
+model ForumPost {
+  id        String     @id @default(cuid())
+  companyId String
+  authorId  String
+  title     String
+  body      String
+  tag       String?
+  status    PostStatus @default(OPEN)
+  isPinned  Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  author  User         @relation(fields: [authorId], references: [id])
+  replies ForumReply[]
+
+  @@index([companyId])
+  @@map("forum_posts")
+}
+
+// ---------------------------------------------------------------------------
+// ForumReply
+// ---------------------------------------------------------------------------
+model ForumReply {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post   ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User      @relation(fields: [authorId], references: [id])
+
+  @@index([postId])
+  @@map("forum_replies")
+}
+
+// ---------------------------------------------------------------------------
+// Resource — shared links / documents / videos
+// ---------------------------------------------------------------------------
+model Resource {
+  id        String       @id @default(cuid())
+  companyId String
+  title     String
+  url       String
+  kind      ResourceKind @default(LINK)
+  pinned    Boolean      @default(false)
+  notes     String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("resources")
+}
+
+// ---------------------------------------------------------------------------
+// AuditLog — immutable change log
+// ---------------------------------------------------------------------------
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String?
+  tableName String
+  recordId  String
+  action    AuditAction
+  oldValue  Json?
+  newValue  Json?
+  createdAt DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tableName, recordId])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+enum UserRole {
+  CSR
+  ACCOUNTING
+  WAREHOUSE
+  ADMIN
+}
+
+enum OrderStatus {
+  QUOTE
+  PENDING
+  IN_PROGRESS
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  ON_HOLD
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum DropdownType {
+  SALESPERSON
+  CSR
+  STATUS
+  CARRIER
+  PAYMENT_TERMS
+  ORDER_TAG
+}
+
+enum PostStatus {
+  OPEN
+  RESOLVED
+  CLOSED
+}
+
+enum ResourceKind {
+  LINK
+  DOCUMENT
+  VIDEO
+  OTHER
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
 }
