@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.claude/
+test-db.js
+mph_order_app_forum_tab_ongoing_updates_desc_toggle_no_margin_partnum_in_full_only.html
