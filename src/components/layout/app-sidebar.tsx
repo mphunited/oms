@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/config/nav";
-import { useTenant } from "@/hooks/use-tenant";
 import {
   Sidebar,
   SidebarContent,
@@ -17,16 +16,14 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { UserNav } from "./user-nav";
-import { TenantSwitcher } from "./tenant-switcher";
 
 export function AppSidebar() {
-  const tenant = useTenant();
   const pathname = usePathname();
 
   return (
     <Sidebar>
       <SidebarHeader>
-        <TenantSwitcher />
+        <div className="px-2 py-1.5 text-sm font-semibold">MPH United</div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -34,17 +31,11 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV_ITEMS.map((item) => {
-                const href = `/${tenant}${item.href}`;
-                const isActive =
-                  item.href === ""
-                    ? pathname === `/${tenant}`
-                    : pathname.startsWith(href);
-
+                const isActive = pathname.startsWith(item.href);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    {/* render= replaces the button element with a Link */}
                     <SidebarMenuButton
-                      render={<Link href={href} />}
+                      render={<Link href={item.href} />}
                       isActive={isActive}
                     >
                       <item.icon
