@@ -287,7 +287,7 @@ function MarginCard({ values }: { values: Partial<OrderFormValues> }) {
   const isLow = m.marginPct !== null && m.marginPct < 8
 
   return (
-    <Card className="sticky top-4">
+    <Card className={cn('sticky top-4 transition-colors', isLow && 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950')}>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold">Live Margin</CardTitle>
       </CardHeader>
@@ -338,16 +338,16 @@ function MarginCard({ values }: { values: Partial<OrderFormValues> }) {
         <Separator />
         <div className="flex justify-between font-semibold">
           <span>Net margin</span>
-          <span className={isLow ? 'text-destructive' : ''}>${m.netMargin.toFixed(2)}</span>
+          <span className={isLow ? 'text-red-600 dark:text-red-400' : ''}>${m.netMargin.toFixed(2)}</span>
         </div>
         {m.marginPct !== null && (
           <div className={cn(
             'text-center text-2xl font-bold pt-1',
-            isLow ? 'text-destructive' : 'text-green-600 dark:text-green-400',
+            isLow ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400',
           )}>
             {m.marginPct.toFixed(1)}%
             {isLow && (
-              <p className="text-xs font-normal text-destructive mt-0.5">⚠ below 8% threshold</p>
+              <p className="text-xs font-normal text-red-600 dark:text-red-400 mt-0.5">⚠ below 8% threshold</p>
             )}
           </div>
         )}
@@ -434,7 +434,7 @@ export function NewOrderForm() {
       const res = await fetch('/api/orders', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(data),
+        body:    JSON.stringify({ ...data, split_loads: data.split_loads }),
       })
       if (!res.ok) throw new Error(await res.text())
       const order = await res.json() as { id: string; order_number: string }
