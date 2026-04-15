@@ -5,8 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1775844959609,
-      "tag": "0000_great_captain_midlands",
+      "when": 1776211200000,
+      "tag": "0000_baseline",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776211201000,
+      "tag": "0001_schema_changes",
       "breakpoints": true
     }
   ]
