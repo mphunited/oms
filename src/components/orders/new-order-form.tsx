@@ -1,12 +1,12 @@
 'use client'
 
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ChevronDown, ChevronUp, Mail, Plus, Trash2 } from 'lucide-react'
-import type { Resolver, SubmitHandler } from 'react-hook-form'
+import type { Control, Resolver, SubmitHandler } from 'react-hook-form'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -282,9 +282,10 @@ function AddressFields({
 
 // ─── Margin card ──────────────────────────────────────────────────────────────
 
-function MarginCard({ values }: { values: Partial<OrderFormValues> }) {
-  const m     = computeMargin(values)
-  const isLow = m.marginPct !== null && m.marginPct < 8
+function MarginCard({ control }: { control: Control<OrderFormValues> }) {
+  const values = useWatch({ control })
+  const m      = computeMargin(values)
+  const isLow  = m.marginPct !== null && m.marginPct < 8
 
   return (
     <Card className={cn('sticky top-4 transition-colors', isLow && 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950')}>
@@ -901,7 +902,7 @@ export function NewOrderForm() {
 
       {/* ── Sticky sidebar ─────────────────────────────────────────────── */}
       <aside className="w-64 shrink-0">
-        <MarginCard values={watchedValues} />
+        <MarginCard control={form.control} />
       </aside>
     </form>
   )
