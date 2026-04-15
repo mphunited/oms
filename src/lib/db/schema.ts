@@ -64,8 +64,8 @@ export type Vendor    = typeof vendors.$inferSelect
 export type NewVendor = typeof vendors.$inferInsert
 
 // ─── orders ───────────────────────────────────────────────────────────────────
-// All pricing fields live directly on orders (not on line items).
-// order_split_loads is a child table for split-load line items only.
+// Pricing fields (qty, buy, sell, description, part_number, bottle_*) live on
+// order_split_loads — every order has at least one split load row.
 
 export const orders = pgTable('orders', {
   id:           uuid('id').primaryKey().defaultRandom(),
@@ -84,23 +84,15 @@ export const orders = pgTable('orders', {
   //   'Confirmed To Customer' | 'Rinse And Return Stage' | 'Sent Order To Carrier' |
   //   'Ready To Ship' | 'Ready To Invoice' | 'Complete' | 'Cancelled'
 
-  customer_po:  text('customer_po'),
-  description:  text('description'),
-  part_number:  text('part_number'),
+  customer_po: text('customer_po'),
 
-  qty:                numeric('qty',                { precision: 10, scale: 2 }),
-  buy_price:          numeric('buy_price',          { precision: 10, scale: 2 }),
-  sell_price:         numeric('sell_price',         { precision: 10, scale: 2 }),
-  freight_cost:       numeric('freight_cost',       { precision: 10, scale: 2 }),
-  freight_to_customer:numeric('freight_to_customer',{ precision: 10, scale: 2 }),
-  additional_costs:   numeric('additional_costs',   { precision: 10, scale: 2 }).notNull().default('0'),
-  bottle_cost:        numeric('bottle_cost',        { precision: 10, scale: 2 }),
-  bottle_qty:         numeric('bottle_qty',         { precision: 10, scale: 2 }),
-  mph_freight_bottles:numeric('mph_freight_bottles',{ precision: 10, scale: 2 }),
+  freight_cost:        numeric('freight_cost',        { precision: 10, scale: 2 }),
+  freight_to_customer: numeric('freight_to_customer', { precision: 10, scale: 2 }),
+  additional_costs:    numeric('additional_costs',    { precision: 10, scale: 2 }).notNull().default('0'),
 
-  freight_carrier:  text('freight_carrier'),
-  ship_date:        date('ship_date'),
-  wanted_date:      date('wanted_date'),
+  freight_carrier: text('freight_carrier'),
+  ship_date:       date('ship_date'),
+  wanted_date:     date('wanted_date'),
 
   ship_to:           jsonb('ship_to'),           // { address, city, state, zip }
   bill_to:           jsonb('bill_to'),           // { address, city, state, zip }
@@ -109,12 +101,12 @@ export const orders = pgTable('orders', {
   terms: text('terms'),
   // terms values: 'PPD' | 'PPA' | 'FOB'
 
-  appointment_time:  timestamp('appointment_time', { withTimezone: true }),
-  appointment_notes: text('appointment_notes'),
-  po_notes:          text('po_notes'),
+  appointment_time:      timestamp('appointment_time', { withTimezone: true }),
+  appointment_notes:     text('appointment_notes'),
+  po_notes:              text('po_notes'),
   freight_invoice_notes: text('freight_invoice_notes'),
-  shipper_notes:     text('shipper_notes'),
-  misc_notes:        text('misc_notes'),
+  shipper_notes:         text('shipper_notes'),
+  misc_notes:            text('misc_notes'),
 
   flag: boolean('flag').notNull().default(false),
 
@@ -139,20 +131,24 @@ export type Order    = typeof orders.$inferSelect
 export type NewOrder = typeof orders.$inferInsert
 
 // ─── order_split_loads ────────────────────────────────────────────────────────
-// Child table for split-load line items. One order can have multiple split loads.
-// For non-split orders, all pricing is on the orders table directly.
+// Every order has at least one split load row. Use multiple rows for split-load
+// scenarios (multiple vendors/loads on one order).
 
 export const order_split_loads = pgTable('order_split_loads', {
-  id:           uuid('id').primaryKey().defaultRandom(),
-  order_id:     uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
-  vendor_id:    uuid('vendor_id').references(() => vendors.id),
-  description:  text('description'),
-  qty:          numeric('qty',          { precision: 10, scale: 2 }),
-  buy_each:     numeric('buy_each',     { precision: 10, scale: 2 }),
-  sell_each:    numeric('sell_each',    { precision: 10, scale: 2 }),
-  freight_cost: numeric('freight_cost', { precision: 10, scale: 2 }),
-  part_number:  text('part_number'),
-  created_at:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  id:       uuid('id').primaryKey().defaultRandom(),
+  order_id: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+
+  description:           text('description'),
+  part_number:           text('part_number'),
+  qty:                   numeric('qty',                   { precision: 10, scale: 2 }),
+  buy:                   numeric('buy',                   { precision: 10, scale: 2 }),
+  sell:                  numeric('sell',                  { precision: 10, scale: 2 }),
+  bottle_cost:           numeric('bottle_cost',           { precision: 10, scale: 2 }),
+  bottle_qty:            numeric('bottle_qty',            { precision: 10, scale: 2 }),
+  mph_freight_bottles:   numeric('mph_freight_bottles',   { precision: 10, scale: 2 }),
+  order_number_override: text('order_number_override'),
+
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index('order_split_loads_order_id_idx').on(t.order_id),
 ])

@@ -1,0 +1,2 @@
+-- Baseline snapshot — tables already exist in Supabase.
+-- This file is intentionally empty; 0000_snapshot.json captures the live schema.

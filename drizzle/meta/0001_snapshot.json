@@ -1,6 +1,6 @@
 {
-  "id": "4d7a2c91-3b5e-4f86-a8c0-1e9f3d5b7a2c",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "9e1f4b28-5c7a-4d6e-b3c7-2f0e4a6d8c1b",
+  "prevId": "4d7a2c91-3b5e-4f86-a8c0-1e9f3d5b7a2c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -406,12 +406,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "vendor_id": {
-          "name": "vendor_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "description": {
           "name": "description",
           "type": "text",
@@ -424,26 +418,44 @@
           "primaryKey": false,
           "notNull": false
         },
-        "buy_each": {
-          "name": "buy_each",
+        "buy": {
+          "name": "buy",
           "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": false
         },
-        "sell_each": {
-          "name": "sell_each",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "freight_cost": {
-          "name": "freight_cost",
+        "sell": {
+          "name": "sell",
           "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "part_number": {
           "name": "part_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bottle_cost": {
+          "name": "bottle_cost",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bottle_qty": {
+          "name": "bottle_qty",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mph_freight_bottles": {
+          "name": "mph_freight_bottles",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "order_number_override": {
+          "name": "order_number_override",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -477,16 +489,6 @@
           "schemaTo": "public",
           "columnsTo": ["id"],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "order_split_loads_vendor_id_vendors_id_fk": {
-          "name": "order_split_loads_vendor_id_vendors_id_fk",
-          "tableFrom": "order_split_loads",
-          "columnsFrom": ["vendor_id"],
-          "tableTo": "vendors",
-          "schemaTo": "public",
-          "columnsTo": ["id"],
-          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -562,36 +564,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "part_number": {
-          "name": "part_number",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "qty": {
-          "name": "qty",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "buy_price": {
-          "name": "buy_price",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sell_price": {
-          "name": "sell_price",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
         "freight_cost": {
           "name": "freight_cost",
           "type": "numeric(10, 2)",
@@ -610,24 +582,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'0'::numeric"
-        },
-        "bottle_cost": {
-          "name": "bottle_cost",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bottle_qty": {
-          "name": "bottle_qty",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mph_freight_bottles": {
-          "name": "mph_freight_bottles",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": false
         },
         "freight_carrier": {
           "name": "freight_carrier",
@@ -969,7 +923,10 @@
   "schemas": {},
   "sequences": {},
   "_meta": {
-    "columns": {},
+    "columns": {
+      "public.order_split_loads.buy":  "public.order_split_loads.buy_each",
+      "public.order_split_loads.sell": "public.order_split_loads.sell_each"
+    },
     "schemas": {},
     "tables": {}
   }
