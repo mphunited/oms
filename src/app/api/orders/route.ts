@@ -9,11 +9,11 @@ export async function POST(req: Request) {
 
   // Generate next order number by finding the current max and incrementing
   const rows = await db.execute(
-    sql`SELECT MAX(order_number) as max FROM orders`
-  ) as unknown as [{ max: string | null }]
+    sql`SELECT MAX(CAST(order_number AS INTEGER)) AS max FROM orders`
+  ) as unknown as [{ max: number | null }]
   const { max } = rows[0]
 
-  const nextNum = max ? parseInt(max, 10) + 1 : 1000
+  const nextNum = max !== null ? max + 1 : 11415
   const order_number = String(nextNum)
 
   const result = await db.transaction(async (tx) => {
