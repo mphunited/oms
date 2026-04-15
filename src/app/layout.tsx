@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     default: "Order Management System",
     template: "%s | OMS",
   },
-  description: "Multi-tenant order management system",
+  description: "MPH United Order Management System",
 };
 
 export default function RootLayout({
