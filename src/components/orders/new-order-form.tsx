@@ -417,7 +417,7 @@ export function NewOrderForm() {
     name:    'split_loads',
   })
 
-  const watchedValues    = form.watch()
+  const watchedValues    = useWatch({ control: form.control })
   const orderType        = watchedValues.order_type ?? ''
   const showBottleFields = orderType === 'Bottle' || orderType === 'Rebottle IBC'
 
