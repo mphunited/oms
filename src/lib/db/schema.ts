@@ -11,278 +11,222 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
 
-// ─── companies ───────────────────────────────────────────────────────────────
-
-export const companies = pgTable('companies', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  legal_name: text('legal_name'),
-  address: jsonb('address'),
-  email: text('email'),
-  phone: text('phone'),
-  logo_url: text('logo_url'),
-  qbo_realm_id: text('qbo_realm_id'),
-  is_active: boolean('is_active').notNull().default(true),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
-
-export type Company = typeof companies.$inferSelect
-export type NewCompany = typeof companies.$inferInsert
+// ─── SINGLE TENANT — NO company_id ANYWHERE ───────────────────────────────────
+// MPH United only. No companies table. No company_members table.
+// salesperson_id and csr_id are UUID FKs to users — NOT text dropdowns.
 
 // ─── users ────────────────────────────────────────────────────────────────────
-// id mirrors the Supabase auth.users UUID — no defaultRandom() so it matches auth
+// id mirrors Supabase auth.users UUID — no defaultRandom()
 
 export const users = pgTable('users', {
-  id: uuid('id').primaryKey(),
-  email: text('email').notNull(),
-  name: text('name'),
-  avatar_url: text('avatar_url'),
-  is_active: boolean('is_active').notNull().default(true),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  id:          uuid('id').primaryKey(),
+  email:       text('email').notNull(),
+  name:        text('name'),
+  avatar_url:  text('avatar_url'),
+  entra_id:    text('entra_id'),
+  role:        text('role').notNull().default('CSR'),
+  // role values: 'ADMIN' | 'CSR' | 'SALESPERSON' | 'ACCOUNTING' | 'WAREHOUSE'
+  is_active:   boolean('is_active').notNull().default(true),
+  created_at:  timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-export type User = typeof users.$inferSelect
+export type User    = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
-
-// ─── company_members ──────────────────────────────────────────────────────────
-
-export const company_members = pgTable('company_members', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  company_id: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  user_id: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  role: text('role').notNull(), // 'CSR' | 'ACCOUNTING' | 'WAREHOUSE' | 'ADMIN'
-  is_active: boolean('is_active').notNull().default(true),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index('company_members_company_id_idx').on(t.company_id),
-  index('company_members_user_id_idx').on(t.user_id),
-  uniqueIndex('company_members_company_user_unique').on(t.company_id, t.user_id),
-])
-
-export type CompanyMember = typeof company_members.$inferSelect
-export type NewCompanyMember = typeof company_members.$inferInsert
 
 // ─── customers ────────────────────────────────────────────────────────────────
 
 export const customers = pgTable('customers', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  company_id: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  contacts: jsonb('contacts'),   // array of { name, email, phone, title }
-  ship_to: jsonb('ship_to'),    // { address, city, state, zip }
-  bill_to: jsonb('bill_to'),    // { address, city, state, zip }
+  id:            uuid('id').primaryKey().defaultRandom(),
+  name:          text('name').notNull(),
+  contacts:      jsonb('contacts'),      // [{ name, email, phone, title }]
+  ship_to:       jsonb('ship_to'),       // { address, city, state, zip }
+  bill_to:       jsonb('bill_to'),       // { address, city, state, zip }
   payment_terms: text('payment_terms'),
-  is_active: boolean('is_active').notNull().default(true),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index('customers_company_id_idx').on(t.company_id),
-])
+  is_active:     boolean('is_active').notNull().default(true),
+  created_at:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
 
-export type Customer = typeof customers.$inferSelect
+export type Customer    = typeof customers.$inferSelect
 export type NewCustomer = typeof customers.$inferInsert
 
 // ─── vendors ──────────────────────────────────────────────────────────────────
 
 export const vendors = pgTable('vendors', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  company_id: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  address: jsonb('address'),    // { address, city, state, zip }
-  notes: text('notes'),
-  is_active: boolean('is_active').notNull().default(true),
+  id:         uuid('id').primaryKey().defaultRandom(),
+  name:       text('name').notNull(),
+  address:    jsonb('address'),    // { address, city, state, zip }
+  notes:      text('notes'),
+  is_active:  boolean('is_active').notNull().default(true),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index('vendors_company_id_idx').on(t.company_id),
-])
+})
 
-export type Vendor = typeof vendors.$inferSelect
+export type Vendor    = typeof vendors.$inferSelect
 export type NewVendor = typeof vendors.$inferInsert
 
 // ─── orders ───────────────────────────────────────────────────────────────────
+// All pricing fields live directly on orders (not on line items).
+// order_split_loads is a child table for split-load line items only.
 
 export const orders = pgTable('orders', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  company_id: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  order_number: text('order_number').notNull(),
-  customer_id: uuid('customer_id').notNull().references(() => customers.id, { onDelete: 'restrict' }),
+  id:           uuid('id').primaryKey().defaultRandom(),
+  order_number: text('order_number').notNull().unique(),
+  order_date:   date('order_date'),
+  order_type:   text('order_type'),
+  // order_type values: 'Bottle' | 'Rebottle IBC' | 'Washout IBC' | 'Drums' | 'Parts'
+
+  customer_id:    uuid('customer_id').notNull().references(() => customers.id, { onDelete: 'restrict' }),
+  vendor_id:      uuid('vendor_id').references(() => vendors.id),
+  salesperson_id: uuid('salesperson_id').references(() => users.id),
+  csr_id:         uuid('csr_id').references(() => users.id),
+
   status: text('status').notNull().default('PENDING'),
-  // status values: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
-  salesperson: text('salesperson'),
-  csr: text('csr'),
-  ship_date: date('ship_date'),
-  delivery_date: date('delivery_date'),
-  customer_po: text('customer_po'),
-  freight_carrier: text('freight_carrier'),
-  appointment_time: timestamp('appointment_time', { withTimezone: true }),
-  appointment_notes: text('appointment_notes'),
-  po_notes: text('po_notes'),
-  freight_notes: text('freight_notes'),
-  shipper_notes: text('shipper_notes'),
-  misc_notes: text('misc_notes'),
+  // status values: 'Pending' | 'Waiting On Vendor To Confirm' | 'Waiting To Confirm To Customer' |
+  //   'Confirmed To Customer' | 'Rinse And Return Stage' | 'Sent Order To Carrier' |
+  //   'Ready To Ship' | 'Ready To Invoice' | 'Complete' | 'Cancelled'
+
+  customer_po:  text('customer_po'),
+  description:  text('description'),
+  part_number:  text('part_number'),
+
+  qty:                numeric('qty',                { precision: 10, scale: 2 }),
+  buy_price:          numeric('buy_price',          { precision: 10, scale: 2 }),
+  sell_price:         numeric('sell_price',         { precision: 10, scale: 2 }),
+  freight_cost:       numeric('freight_cost',       { precision: 10, scale: 2 }),
+  freight_to_customer:numeric('freight_to_customer',{ precision: 10, scale: 2 }),
+  additional_costs:   numeric('additional_costs',   { precision: 10, scale: 2 }).notNull().default('0'),
+  bottle_cost:        numeric('bottle_cost',        { precision: 10, scale: 2 }),
+  bottle_qty:         numeric('bottle_qty',         { precision: 10, scale: 2 }),
+  mph_freight_bottles:numeric('mph_freight_bottles',{ precision: 10, scale: 2 }),
+
+  freight_carrier:  text('freight_carrier'),
+  ship_date:        date('ship_date'),
+  wanted_date:      date('wanted_date'),
+
+  ship_to:           jsonb('ship_to'),           // { address, city, state, zip }
+  bill_to:           jsonb('bill_to'),           // { address, city, state, zip }
+  customer_contacts: jsonb('customer_contacts'), // [{ name, email, phone }]
+
   terms: text('terms'),
-  notes: text('notes'),
-  flag: boolean('flag').default(false),
+  // terms values: 'PPD' | 'PPA' | 'FOB'
+
+  appointment_time:  timestamp('appointment_time', { withTimezone: true }),
+  appointment_notes: text('appointment_notes'),
+  po_notes:          text('po_notes'),
+  freight_invoice_notes: text('freight_invoice_notes'),
+  shipper_notes:     text('shipper_notes'),
+  misc_notes:        text('misc_notes'),
+
+  flag: boolean('flag').notNull().default(false),
+
+  invoice_payment_status: text('invoice_payment_status').notNull().default('Not Invoiced'),
+  // values: 'Not Invoiced' | 'Invoiced' | 'Paid'
+
+  commission_status: text('commission_status').notNull().default('Not Eligible'),
+  // values: 'Not Eligible' | 'Eligible' | 'Commission Paid'
+
+  qb_invoice_number: text('qb_invoice_number'),
+
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  index('orders_company_id_idx').on(t.company_id),
   index('orders_customer_id_idx').on(t.customer_id),
   index('orders_status_idx').on(t.status),
-  uniqueIndex('orders_company_order_number_unique').on(t.company_id, t.order_number),
+  index('orders_ship_date_idx').on(t.ship_date),
+  index('orders_invoice_payment_status_idx').on(t.invoice_payment_status),
 ])
 
-export type Order = typeof orders.$inferSelect
+export type Order    = typeof orders.$inferSelect
 export type NewOrder = typeof orders.$inferInsert
 
-// ─── order_line_items ─────────────────────────────────────────────────────────
+// ─── order_split_loads ────────────────────────────────────────────────────────
+// Child table for split-load line items. One order can have multiple split loads.
+// For non-split orders, all pricing is on the orders table directly.
 
-export const order_line_items = pgTable('order_line_items', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  order_id: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
-  vendor_id: uuid('vendor_id').references(() => vendors.id),
-  description: text('description'),
-  qty: numeric('qty', { precision: 10, scale: 2 }),
-  buy_each: numeric('buy_each', { precision: 10, scale: 2 }),
-  sell_each: numeric('sell_each', { precision: 10, scale: 2 }),
+export const order_split_loads = pgTable('order_split_loads', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  order_id:     uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  vendor_id:    uuid('vendor_id').references(() => vendors.id),
+  description:  text('description'),
+  qty:          numeric('qty',          { precision: 10, scale: 2 }),
+  buy_each:     numeric('buy_each',     { precision: 10, scale: 2 }),
+  sell_each:    numeric('sell_each',    { precision: 10, scale: 2 }),
   freight_cost: numeric('freight_cost', { precision: 10, scale: 2 }),
-  split_load: boolean('split_load').default(false),
-  part_number: text('part_number'),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  part_number:  text('part_number'),
+  created_at:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  index('order_line_items_order_id_idx').on(t.order_id),
+  index('order_split_loads_order_id_idx').on(t.order_id),
 ])
 
-export type OrderLineItem = typeof order_line_items.$inferSelect
-export type NewOrderLineItem = typeof order_line_items.$inferInsert
-
-// ─── invoices ─────────────────────────────────────────────────────────────────
-
-export const invoices = pgTable('invoices', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  order_id: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'restrict' }),
-  invoice_number: text('invoice_number').notNull(),
-  total: numeric('total', { precision: 10, scale: 2 }),
-  status: text('status').notNull().default('DRAFT'),
-  // status values: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'VOID'
-  qbo_invoice_id: text('qbo_invoice_id'),
-  issued_at: timestamp('issued_at', { withTimezone: true }),
-  due_at: timestamp('due_at', { withTimezone: true }),
-  paid_at: timestamp('paid_at', { withTimezone: true }),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index('invoices_order_id_idx').on(t.order_id),
-  uniqueIndex('invoices_invoice_number_unique').on(t.invoice_number),
-])
-
-export type Invoice = typeof invoices.$inferSelect
-export type NewInvoice = typeof invoices.$inferInsert
+export type OrderSplitLoad    = typeof order_split_loads.$inferSelect
+export type NewOrderSplitLoad = typeof order_split_loads.$inferInsert
 
 // ─── bills_of_lading ──────────────────────────────────────────────────────────
 
 export const bills_of_lading = pgTable('bills_of_lading', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  order_id: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
-  bol_number: text('bol_number'),
-  carrier: text('carrier'),
-  ship_from: jsonb('ship_from'),  // { name, address, city, state, zip }
-  ship_to: jsonb('ship_to'),     // { name, address, city, state, zip }
+  id:          uuid('id').primaryKey().defaultRandom(),
+  order_id:    uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  bol_number:  text('bol_number'),
+  carrier:     text('carrier'),
+  ship_from:   jsonb('ship_from'), // { name, address, city, state, zip }
+  ship_to:     jsonb('ship_to'),   // { name, address, city, state, zip }
   pickup_date: date('pickup_date'),
-  notes: text('notes'),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  notes:       text('notes'),
+  created_at:  timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index('bills_of_lading_order_id_idx').on(t.order_id),
 ])
 
-export type BillOfLading = typeof bills_of_lading.$inferSelect
+export type BillOfLading    = typeof bills_of_lading.$inferSelect
 export type NewBillOfLading = typeof bills_of_lading.$inferInsert
+
+// ─── company_settings ─────────────────────────────────────────────────────────
+// Singleton row — MPH United company profile.
+
+export const company_settings = pgTable('company_settings', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  name:         text('name').notNull(),
+  legal_name:   text('legal_name'),
+  address:      jsonb('address'),
+  email:        text('email'),
+  phone:        text('phone'),
+  logo_url:     text('logo_url'),
+  qbo_realm_id: text('qbo_realm_id'),
+  created_at:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export type CompanySettings    = typeof company_settings.$inferSelect
+export type NewCompanySettings = typeof company_settings.$inferInsert
 
 // ─── dropdown_configs ─────────────────────────────────────────────────────────
 
 export const dropdown_configs = pgTable('dropdown_configs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  company_id: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  type: text('type').notNull(),
-  // type values: 'SALESPERSON' | 'CSR' | 'STATUS' | 'CARRIER' | 'PAYMENT_TERMS'
-  values: jsonb('values').notNull().default([]),  // string[]
+  id:         uuid('id').primaryKey().defaultRandom(),
+  type:       text('type').notNull().unique(),
+  // type values: 'STATUS' | 'CARRIER' | 'PAYMENT_TERMS' | 'ORDER_TYPE'
+  values:     jsonb('values').notNull().default([]), // string[]
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index('dropdown_configs_company_id_idx').on(t.company_id),
-  uniqueIndex('dropdown_configs_company_type_unique').on(t.company_id, t.type),
-])
+})
 
-export type DropdownConfig = typeof dropdown_configs.$inferSelect
+export type DropdownConfig    = typeof dropdown_configs.$inferSelect
 export type NewDropdownConfig = typeof dropdown_configs.$inferInsert
-
-// ─── forum_posts ──────────────────────────────────────────────────────────────
-
-export const forum_posts = pgTable('forum_posts', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  company_id: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  author_id: uuid('author_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
-  title: text('title').notNull(),
-  body: text('body').notNull(),
-  tag: text('tag'),
-  status: text('status').notNull().default('OPEN'),  // 'OPEN' | 'RESOLVED' | 'CLOSED'
-  is_pinned: boolean('is_pinned').notNull().default(false),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index('forum_posts_company_id_idx').on(t.company_id),
-  index('forum_posts_author_id_idx').on(t.author_id),
-])
-
-export type ForumPost = typeof forum_posts.$inferSelect
-export type NewForumPost = typeof forum_posts.$inferInsert
-
-// ─── forum_replies ────────────────────────────────────────────────────────────
-
-export const forum_replies = pgTable('forum_replies', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  post_id: uuid('post_id').notNull().references(() => forum_posts.id, { onDelete: 'cascade' }),
-  author_id: uuid('author_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
-  body: text('body').notNull(),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index('forum_replies_post_id_idx').on(t.post_id),
-])
-
-export type ForumReply = typeof forum_replies.$inferSelect
-export type NewForumReply = typeof forum_replies.$inferInsert
-
-// ─── resources ────────────────────────────────────────────────────────────────
-
-export const resources = pgTable('resources', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  company_id: uuid('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
-  title: text('title').notNull(),
-  url: text('url').notNull(),
-  kind: text('kind'),  // e.g. 'link' | 'document' | 'video'
-  is_pinned: boolean('is_pinned').notNull().default(false),
-  notes: text('notes'),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [
-  index('resources_company_id_idx').on(t.company_id),
-])
-
-export type Resource = typeof resources.$inferSelect
-export type NewResource = typeof resources.$inferInsert
 
 // ─── audit_logs ───────────────────────────────────────────────────────────────
 
 export const audit_logs = pgTable('audit_logs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  user_id: uuid('user_id').references(() => users.id),
+  id:         uuid('id').primaryKey().defaultRandom(),
+  user_id:    uuid('user_id').references(() => users.id),
   table_name: text('table_name').notNull(),
-  record_id: uuid('record_id').notNull(),
-  action: text('action').notNull(),  // 'INSERT' | 'UPDATE' | 'DELETE'
-  old_value: jsonb('old_value'),
-  new_value: jsonb('new_value'),
+  record_id:  uuid('record_id').notNull(),
+  action:     text('action').notNull(), // 'INSERT' | 'UPDATE' | 'DELETE'
+  old_value:  jsonb('old_value'),
+  new_value:  jsonb('new_value'),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index('audit_logs_table_record_idx').on(t.table_name, t.record_id),
   index('audit_logs_user_id_idx').on(t.user_id),
 ])
 
-export type AuditLog = typeof audit_logs.$inferSelect
+export type AuditLog    = typeof audit_logs.$inferSelect
 export type NewAuditLog = typeof audit_logs.$inferInsert
