@@ -1,6 +1,18 @@
 # MPH United OMS — Agent Conventions
 
-Read this file completely at the start of every session before writing any code.
+Read this file completely at the start of every session, then immediately read PRD.md.
+Both files must be read before writing any code.
+
+---
+
+## SESSION STARTUP SEQUENCE
+
+1. Read AGENTS.md (this file) — technical conventions and architecture rules
+2. Read PRD.md — product requirements, feature scope, business rules, build order
+3. Read src/lib/db/schema.ts — current schema before writing any queries or API routes
+4. Then proceed with the task
+
+**Do not skip any of these steps. Do not rely on memory from a previous session.**
 
 ---
 
@@ -20,32 +32,39 @@ A custom Order Management System (OMS) for MPH United — a single-company inter
 replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 
 **This is single-tenant. MPH United only. No multi-tenant architecture.**
+**Full requirements are in PRD.md. Read it.**
 
 ---
 
 ## CRITICAL ARCHITECTURE RULES
 
 1. **NO company_id columns anywhere.** No companies table. No company_members table.
-   If you are about to add company_id to anything, stop and re-read this file.
+   If you are about to add company_id to anything, stop and re-read PRD.md.
 
 2. **NO RLS policies.** Single company, trusted internal employees.
 
-3. **salesperson_id and csr_id are UUID FKs to the users table.** They are NOT text
-   dropdowns. Always join to users to get names.
+3. **salesperson_id and csr_id are UUID FKs to the users table.** NOT text dropdowns.
 
 4. **order_split_loads is the universal line items table.** Every order has at least one
-   row in order_split_loads. Single-product orders have exactly one row. Split loads have
-   2–4 rows. Freight lives on the orders header, not on lines.
+   row. Pricing lives here, not on orders.
 
 5. **Pricing fields (buy, sell, qty, description, part_number, bottle_cost, bottle_qty,
    mph_freight_bottles) live on order_split_loads — NOT on the orders table.**
-   The orders table holds header data only: customer, vendor, dates, freight, addresses,
-   status, notes, flags.
 
 6. **Do NOT reference a table called order_line_items.** It does not exist.
 
-7. **invoice_payment_status lives on the orders table.** It is NOT derived from a
-   separate invoices table. Values: 'Not Invoiced' | 'Invoiced' | 'Paid'
+7. **invoice_payment_status lives on the orders table.** NOT derived from a separate
+   invoices table. Values: 'Not Invoiced' | 'Invoiced' | 'Paid'
+
+8. **customer_contacts on orders is a TEXT column** — not jsonb. Free-text field.
+   Extract emails via regex for Outlook deeplinks.
+
+9. **Supabase anon key is used only for Supabase Auth** (sign-in and session checks).
+   All business data queries go through Drizzle via DATABASE_URL (server-only env var).
+   Never expose DATABASE_URL to the browser.
+
+10. **@react-pdf/renderer routes must declare:** `export const runtime = 'nodejs'`
+    Without this, Vercel may run them on the Edge runtime and they will crash silently.
 
 ---
 
@@ -79,36 +98,23 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-us-west-2.pooler.supab
 
 ## SCHEMA OVERVIEW
 
-Tables: users, customers, vendors, orders, order_split_loads, bills_of_lading,
-        company_settings, dropdown_configs, audit_logs
+Tables: users, customers, vendors, orders, order_split_loads, recycling_orders,
+        bills_of_lading, company_settings, dropdown_configs, audit_logs
 
 Schema file: src/lib/db/schema.ts — this is the source of truth. Always read it before
-writing queries or API routes.
+writing queries or API routes. Full field-level detail is in PRD.md Section 5.
 
-### order_split_loads columns
-id, order_id (FK→orders), description, part_number, qty, buy, sell,
-bottle_cost, bottle_qty, mph_freight_bottles, order_number_override, created_at
+---
 
-order_number_override is nullable — used only when a line has a different MPH PO
-than the parent order.
+## ORDER NUMBER FORMAT
 
-### orders table — header fields only
-id, order_number, order_date, order_type, customer_id, vendor_id, salesperson_id,
-csr_id, status, customer_po, freight_cost, freight_to_customer, additional_costs,
-freight_carrier, ship_date, wanted_date, ship_to (jsonb), bill_to (jsonb),
-customer_contacts (jsonb), terms, appointment_time, appointment_notes, po_notes,
-freight_invoice_notes, shipper_notes, misc_notes, flag, invoice_payment_status,
-commission_status, qb_invoice_number, created_at, updated_at
-
-### Address JSONB shape (ship_to, bill_to)
-{ name, street, city, state, zip, phone, shipping_notes }
-shipping_notes is a free-text field for docking hours, contact titles, extra phones, etc.
+Format: `[Initials]-MPH[Number]` — e.g., `CB-MPH15001`
+Uses a Postgres sequence: `SELECT nextval('order_number_seq')`
+Do NOT use MAX(order_number) + 1 — race condition.
 
 ---
 
 ## MARGIN FORMULA
-
-Calculate across all order_split_loads rows for the order:
 
 ```
 Profit =
@@ -121,7 +127,6 @@ Profit =
   - additional_costs                             [order level]
 
 Profit % = Profit ÷ ( SUM(sell × qty) + freight_to_customer )
-
 Red threshold: Profit % < 8%
 ```
 
@@ -130,11 +135,18 @@ NOT eligible: Drums, Parts
 
 ---
 
-## ORDER STATUS VALUES
+## ORDER STATUS VALUES (STANDARD)
 
 Pending | Waiting On Vendor To Confirm | Waiting To Confirm To Customer |
 Confirmed To Customer | Rinse And Return Stage | Sent Order To Carrier |
 Ready To Ship | Ready To Invoice | Complete | Cancelled
+
+## ORDER STATUS VALUES (RECYCLING)
+
+Acknowledged Order | PO Request To Accounting | Waiting On Vendor To Confirm |
+Credit Sent In | Confirmed To Customer | Waiting For Customer To Confirm |
+Ready To Pickup | Picked Up | Sent Order To Carrier | Ready To Ship |
+Ready To Invoice | Complete | Canceled
 
 ---
 
@@ -155,75 +167,72 @@ ADMIN | CSR | SALESPERSON | ACCOUNTING | WAREHOUSE
 All email actions use Outlook Web deeplinks — NOT mailto: links (fixes Mac compatibility).
 
 ```
-https://outlook.office.com/mail/deeplink/compose?to=...&cc=orders@mphunited.com&subject=...&body=...
+https://outlook.office.com/mail/deeplink/compose?to=...&cc=...&subject=...&body=...
 ```
 
-orders@mphunited.com is always CC'd on POs and invoices.
+- PO emails: CC includes orders@mphunited.com
+- BOL emails: orders@mphunited.com is NOT CC'd
+- Customer confirmations: extract emails from free-text customer_contacts field via regex
+- Full email rules in PRD.md Section 11
 
 ---
 
 ## DOCUMENT GENERATION
 
-- Purchase Order (PO): PDF generated from order + lines data. No separate DB table.
-- Bill of Lading (BOL): PDF stored in bills_of_lading table.
-- Invoice: Phase 2.
-- Weekly Schedule (admin): all orders grouped by vendor, includes financial data.
-- Frontline Schedule (vendors): no buy price, no freight cost, filterable by vendor.
-
----
-
-## APPLICATION ROUTES
-
-/login — Entra SSO sign in
-/dashboard — redirects to /orders
-/orders — ongoing orders table
-/orders/new — add new order
-/orders/[orderId] — order detail and edit
-/customers — customer list
-/customers/[customerId] — customer detail
-/vendors — vendor list
-/vendors/[vendorId] — vendor detail
-/financials — financial reports
-/invoicing — invoice queue
-/settings — admin settings
-/team — user management
+- PO PDF: `GET /api/orders/[orderId]/po-pdf` — server-side, nodejs runtime, no separate DB record
+- BOL PDF: stored in bills_of_lading table
+- Weekly schedules: admin version (with pricing) and vendor/Frontline version (no pricing)
+- Full spec in PRD.md Section 12
 
 ---
 
 ## PHASE BOUNDARIES
 
-Phase 1 (now): All routes above, PO PDF, BOL PDF, Weekly Schedule PDFs, commission
-               report, data import from Excel.
+**Phase 1 (now):** Everything in PRD.md Section 18.
+**Phase 2 (after launch):** Everything in PRD.md Section 19.
 
-Phase 2 (after launch): QuickBooks Online integration, Invoice PDF, Resend email,
-                        Forum tab, Resources tab, audit log UI, mobile optimization,
-                        salesperson online forms.
-
-Do NOT build Phase 2 features during Phase 1.
+**If asked to build a Phase 2 feature, refuse and explain it is Phase 2.**
 
 ---
 
-## FILE STRUCTURE
+## APPLICATION ROUTES
 
-src/lib/db/schema.ts      — Drizzle schema, source of truth
-src/lib/db/index.ts       — Drizzle client
-src/app/(dashboard)/      — all authenticated pages
-src/app/login/            — login page
-src/components/layout/    — sidebar, header, nav
-src/config/nav.ts         — navigation items
-reference/                — HTML prototype, UI reference only (not a spec)
+Full route table in PRD.md Section 17.
 
----
-
-## PROTOTYPE NOTE
-
-The HTML prototype in /reference/ is a UI reference only. It is incomplete and predates
-the current schema. This AGENTS.md and MPH-OMS-HANDOFF.md are the authoritative specs.
-When the prototype conflicts with this file, follow this file.
+Key routes:
+- /orders — ongoing orders table (working)
+- /orders/new — new order form (built, needs testing + fixes)
+- /orders/[orderId] — order detail/edit (not started)
+- /recycling — recycling orders (not started)
+- /customers, /vendors — management pages (not started)
+- /schedules — weekly schedule generation (not started)
+- /commission — commission report (not started)
 
 ---
 
 ## COLLABORATION
 
-Jack (IT lead) and Keith (coworker) both use Claude Code on this repo. Work is split by
-feature to avoid merge conflicts. Both push/pull from github.com/mphunited/oms.
+Jack (IT lead) builds alone currently. Keith (coworker) will return to the project later.
+Both use Claude Code on github.com/mphunited/oms.
+
+---
+
+## WORKTREE DISCIPLINE
+
+Claude Code creates git worktrees under .claude/worktrees/ for each task. This is by design.
+**After every task Claude Code must:**
+1. Commit all changes in the worktree
+2. Merge the worktree branch to main
+3. Push to origin
+4. Never leave work on a claude/ branch without merging
+
+Verify with `git log --oneline -5` after every task.
+Do not trust Claude Code's success confirmations — verify with git log yourself.
+
+---
+
+## PROTOTYPE NOTE
+
+The HTML prototype in /reference/ is a UI reference only. It predates the current schema
+and uses different data structures. This AGENTS.md and PRD.md are the authoritative specs.
+When the prototype conflicts with either file, follow AGENTS.md and PRD.md.
