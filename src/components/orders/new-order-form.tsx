@@ -62,7 +62,6 @@ const numericField = z
 const contactSchema = z.object({
   name:  z.string().optional(),
   email: z.string().optional(),
-  phone: z.string().optional(),
 })
 
 const splitLoadSchema = z.object({
@@ -132,7 +131,7 @@ const EMPTY_LOAD: z.infer<typeof splitLoadSchema> = {
 
 // ─── Margin calculation ───────────────────────────────────────────────────────
 
-const COMMISSION_KEYWORDS = ['New IBC', 'New Bottle', 'Rebottle', 'Washout', 'Wash & Return']
+const COMMISSION_KEYWORDS = ['New IBC', 'Bottle', 'Rebottle', 'Washout', 'Wash & Return']
 
 function computeMargin(values: Partial<OrderFormValues>) {
   const loads     = values.split_loads ?? []
@@ -458,7 +457,7 @@ export function NewOrderForm() {
 
   const watchedValues = useWatch({ control: form.control })
   const orderType     = watchedValues.order_type ?? ''
-  const showBottleFields = ['Bottle', 'Rebottle IBC', 'Washout IBC'].some(kw => orderType.includes(kw))
+  const showBottleFields = ['Bottle', 'Rebottle', 'Washout', 'Wash & Return'].some(kw => orderType.includes(kw))
 
   const salespersonOptions: Option[] = users
     .filter(u => u.role === 'SALESPERSON' || u.role === 'ADMIN')
@@ -477,7 +476,10 @@ export function NewOrderForm() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(data),
       })
-      if (!res.ok) throw new Error(await res.text())
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: res.statusText }))
+        throw new Error(errBody.detail ?? errBody.error ?? 'Failed to save order')
+      }
       const order = await res.json() as { id: string; order_number: string }
       setSavedOrder(order)
     } catch (err) {
@@ -857,7 +859,7 @@ export function NewOrderForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendContact({ name: '', email: '', phone: '' })}
+                  onClick={() => appendContact({ name: '', email: '' })}
                 >
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
                   Add Contact
@@ -869,7 +871,7 @@ export function NewOrderForm() {
                 </p>
               )}
               {contactFields.map((field, idx) => (
-                <div key={field.id} className="grid grid-cols-7 gap-2 rounded-md border p-3">
+                <div key={field.id} className="grid grid-cols-5 gap-2 rounded-md border p-3">
                   <div className="col-span-2 space-y-1">
                     <Label className="text-xs text-muted-foreground">Name</Label>
                     <Input
@@ -879,18 +881,11 @@ export function NewOrderForm() {
                   </div>
                   <div className="col-span-3 space-y-1">
                     <Label className="text-xs text-muted-foreground">Email</Label>
-                    <Input
-                      type="email"
-                      placeholder="email@company.com"
-                      {...form.register(`customer_contacts.${idx}.email`)}
-                    />
-                  </div>
-                  <div className="col-span-2 space-y-1">
-                    <Label className="text-xs text-muted-foreground">Phone</Label>
                     <div className="flex gap-1.5">
                       <Input
-                        placeholder="555-000-0000"
-                        {...form.register(`customer_contacts.${idx}.phone`)}
+                        type="email"
+                        placeholder="email@company.com"
+                        {...form.register(`customer_contacts.${idx}.email`)}
                       />
                       <Button
                         type="button"
