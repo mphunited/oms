@@ -168,8 +168,9 @@ Margin % = Profit ÷ (SUM(sell × qty) + freight_to_customer)
 Red threshold: Margin % < 8%
 ```
 
-Commission deduction applies only to: Bottle, Rebottle IBC, Washout IBC.
-NOT eligible: Drums, Parts.
+Commission deduction applies to order types whose name contains any of these keywords:
+`New IBC`, `New Bottle`, `Rebottle`, `Washout`, `Wash & Return`.
+Match is keyword-based (substring), not an exact type list.
 
 ---
 
@@ -183,7 +184,13 @@ Ready To Ship | Ready To Invoice | Complete | Cancelled
 
 ## 9. Order Types
 
-Bottle | Rebottle IBC | Washout IBC | Drums | Parts
+135 Gal New IBC | 275 Gal New Bottle | 275 Gal New IBC | 275 Gal Rebottle IBC |
+275 Gal Washout IBC | 275 Gal Wash & Return Program | 330 Gal New Bottle |
+330 Gal New IBC | 330 Gal Rebottle IBC | 330 Gal Wash & Return Program |
+330 Gal Washout IBC | 55 Gal Drums | Other — Parts & Supplies
+
+Commission eligibility is keyword-based: any type containing `New IBC`, `New Bottle`,
+`Rebottle`, `Washout`, or `Wash & Return` is eligible.
 
 ---
 
