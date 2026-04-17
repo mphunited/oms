@@ -5,7 +5,7 @@ import { eq, sql } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 
 function deriveCommissionStatus(orderType: string): string {
-  const eligible = ['New IBC', 'New Bottle', 'Rebottle', 'Washout', 'Wash & Return']
+  const eligible = ['New IBC', 'Bottle', 'Rebottle', 'Washout', 'Wash & Return']
   return eligible.some(kw => orderType.includes(kw)) ? 'Eligible' : 'Not Eligible'
 }
 
