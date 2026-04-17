@@ -7,9 +7,8 @@ import { vendors } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { CreateVendorInput } from "@/types/product";
 
-export async function createVendor(companyId: string, input: CreateVendorInput) {
+export async function createVendor(input: CreateVendorInput) {
   const [vendor] = await db.insert(vendors).values({
-    company_id: companyId,
     name: input.name,
     address: input.address ?? null,
     notes: input.notes,

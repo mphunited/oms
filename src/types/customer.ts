@@ -26,7 +26,6 @@ export interface CreateCustomerInput {
 
 export interface CustomerWithOrderCount {
   id: string;
-  company_id: string;
   name: string;
   contacts: unknown;
   ship_to: unknown;
