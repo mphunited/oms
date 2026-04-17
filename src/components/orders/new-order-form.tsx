@@ -615,25 +615,6 @@ export function NewOrderForm() {
                 <p className="text-xs text-destructive">{form.formState.errors.csr_id.message}</p>
               )}
             </div>
-            <div className="col-span-2 space-y-1.5">
-              <Label>Order Type *</Label>
-              <Select
-                value={watchedValues.order_type ?? ''}
-                onValueChange={(v: string | null) => {
-                  if (!v) return
-                  setOrderTypeManuallySet(true)
-                  form.setValue('order_type', v, { shouldValidate: true })
-                }}
-              >
-                <SelectTrigger><SelectValue placeholder="Select order type" /></SelectTrigger>
-                <SelectContent>
-                  {ORDER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.order_type && (
-                <p className="text-xs text-destructive">{form.formState.errors.order_type.message}</p>
-              )}
-            </div>
           </div>
         </section>
 
@@ -728,6 +709,27 @@ export function NewOrderForm() {
                     {...form.register(`split_loads.${index}.part_number`)}
                   />
                 </div>
+                {index === 0 && (
+                  <div className="col-span-4 space-y-1.5">
+                    <Label>Order Type *</Label>
+                    <Select
+                      value={watchedValues.order_type ?? ''}
+                      onValueChange={(v: string | null) => {
+                        if (!v) return
+                        setOrderTypeManuallySet(true)
+                        form.setValue('order_type', v, { shouldValidate: true })
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select order type" /></SelectTrigger>
+                      <SelectContent>
+                        {ORDER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    {form.formState.errors.order_type && (
+                      <p className="text-xs text-destructive">{form.formState.errors.order_type.message}</p>
+                    )}
+                  </div>
+                )}
                 <div className="col-span-2 space-y-1.5">
                   <Label>Qty</Label>
                   <Input
