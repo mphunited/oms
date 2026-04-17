@@ -6,12 +6,8 @@ import { customers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { CreateCustomerInput } from "@/types/customer";
 
-export async function createCustomer(
-  companyId: string,
-  input: CreateCustomerInput
-) {
+export async function createCustomer(input: CreateCustomerInput) {
   const [customer] = await db.insert(customers).values({
-    company_id: companyId,
     name: input.name,
     contacts: input.contacts ?? null,
     ship_to: input.shipTo ?? null,

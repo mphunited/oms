@@ -1,43 +1,52 @@
-export type { Order, OrderLineItem } from "@/lib/db/schema";
-export type { Invoice, BillOfLading } from "@/lib/db/schema";
+export type { Order, OrderSplitLoad, BillOfLading } from "@/lib/db/schema";
 export type { Customer, Vendor } from "@/lib/db/schema";
 
-export type OrderStatus = 'QUOTE' | 'PENDING' | 'IN_PROGRESS' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'ON_HOLD';
+export type OrderStatus =
+  | 'Pending'
+  | 'Waiting On Vendor To Confirm'
+  | 'Waiting To Confirm To Customer'
+  | 'Confirmed To Customer'
+  | 'Rinse And Return Stage'
+  | 'Sent Order To Carrier'
+  | 'Ready To Ship'
+  | 'Ready To Invoice'
+  | 'Complete'
+  | 'Cancelled';
 
-import type { Order, OrderLineItem, Customer, Vendor, Invoice, BillOfLading } from "@/lib/db/schema";
+import type { Order, OrderSplitLoad, Customer, BillOfLading } from "@/lib/db/schema";
 
 export interface OrderRow extends Order {
   customer: Pick<Customer, "id" | "name">;
-  lineItems: OrderLineItem[];
+  splitLoads: OrderSplitLoad[];
 }
 
 export interface OrderWithRelations extends Order {
   customer: Customer;
-  lineItems: (OrderLineItem & { vendor: Vendor | null })[];
-  invoice: Invoice | null;
+  splitLoads: OrderSplitLoad[];
   billOfLading: BillOfLading | null;
 }
 
 export interface CreateOrderInput {
   customerId: string;
-  salesperson?: string;
-  csr?: string;
-  notes?: string;
+  vendorId?: string;
+  salespersonId?: string;
+  csrId?: string;
+  orderType?: string;
+  orderDate?: Date;
   shipDate?: Date;
-  deliveryDate?: Date;
-  lineItems: {
-    vendorId?: string;
-    description: string;
-    qty: number;
-    buyEach: number;
-    sellEach: number;
-    freightCost?: number;
-    splitLoad?: boolean;
+  wantedDate?: Date;
+  customerPo?: string;
+  splitLoads: {
+    description?: string;
+    partNumber?: string;
+    qty?: number;
+    buy?: number;
+    sell?: number;
   }[];
 }
 
 export interface UpdateOrderStatusInput {
   orderId: string;
-  status: OrderStatus;
+  status: string;
   flag?: boolean;
 }

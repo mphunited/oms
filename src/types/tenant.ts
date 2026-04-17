@@ -1,5 +1,3 @@
-export type { Company } from "@/lib/db/schema";
-
 export type MemberRole = 'CSR' | 'ACCOUNTING' | 'WAREHOUSE' | 'ADMIN';
 
 // UserRole is an alias for MemberRole
