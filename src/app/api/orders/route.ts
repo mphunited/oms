@@ -4,7 +4,10 @@ import { orders, order_split_loads, users, vendors } from '@/lib/db/schema'
 import { eq, sql } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 
-const COMMISSION_ELIGIBLE = new Set(['Bottle', 'Rebottle IBC', 'Washout IBC'])
+function deriveCommissionStatus(orderType: string): string {
+  const eligible = ['New IBC', 'New Bottle', 'Rebottle', 'Washout', 'Wash & Return']
+  return eligible.some(kw => orderType.includes(kw)) ? 'Eligible' : 'Not Eligible'
+}
 
 function deriveInitials(name: string | null | undefined): string {
   if (!name?.trim()) return 'XX'
@@ -36,9 +39,7 @@ export async function POST(req: Request) {
     const order_number = `${initials}-MPH${num}`
 
     // ── 5. Commission status ───────────────────────────────────────────────────
-    const commission_status = COMMISSION_ELIGIBLE.has(orderFields.order_type)
-      ? 'Eligible'
-      : 'Not Eligible'
+    const commission_status = deriveCommissionStatus(orderFields.order_type ?? '')
 
     // ── 6. Vendor checklist template → order checklist ─────────────────────────
     let checklist: unknown = null

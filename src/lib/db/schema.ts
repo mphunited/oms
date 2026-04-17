@@ -78,7 +78,7 @@ export const orders = pgTable('orders', {
   order_number: text('order_number').notNull().unique(),
   order_date:   date('order_date'),
   order_type:   text('order_type'),
-  // order_type values: 'Bottle' | 'Rebottle IBC' | 'Washout IBC' | 'Drums' | 'Parts'
+  // order_type values: see PRD Section 9 for full list (keyword-based commission eligibility)
 
   customer_id:    uuid('customer_id').notNull().references(() => customers.id, { onDelete: 'restrict' }),
   vendor_id:      uuid('vendor_id').references(() => vendors.id),
@@ -102,7 +102,7 @@ export const orders = pgTable('orders', {
 
   ship_to:           jsonb('ship_to'),           // { address, city, state, zip }
   bill_to:           jsonb('bill_to'),           // { address, city, state, zip }
-  customer_contacts: text('customer_contacts'),  // free text — extract emails via regex
+  customer_contacts: jsonb('customer_contacts'), // [{ name, email, phone }]
 
   terms: text('terms'),
   // terms values: 'PPD' | 'PPA' | 'FOB'

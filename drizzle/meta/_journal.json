@@ -29,6 +29,13 @@
       "when": 1776397419169,
       "tag": "0003_add_orders_fields_and_recycling_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776404136521,
+      "tag": "0004_orders_customer_contacts_to_jsonb",
+      "breakpoints": true
     }
   ]
 }

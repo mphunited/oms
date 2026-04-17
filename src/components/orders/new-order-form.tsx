@@ -59,6 +59,12 @@ const numericField = z
   .union([z.nan().transform(() => undefined), z.number().min(0)])
   .optional()
 
+const contactSchema = z.object({
+  name:  z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+})
+
 const splitLoadSchema = z.object({
   description:           z.string().optional(),
   part_number:           z.string().optional(),
@@ -68,7 +74,7 @@ const splitLoadSchema = z.object({
   bottle_cost:           numericField,
   bottle_qty:            numericField,
   mph_freight_bottles:   numericField,
-  order_number_override: z.string().optional(),
+  order_number_override: z.string().optional(), // kept for DB compat, not rendered
 })
 
 const orderFormSchema = z.object({
@@ -99,11 +105,11 @@ const orderFormSchema = z.object({
   ship_to: addressSchema.optional(),
   bill_to: addressSchema.optional(),
 
-  customer_contacts: z.string().optional(),
+  customer_contacts: z.array(contactSchema).default([]),
 
   po_notes:              z.string().optional(),
   freight_invoice_notes: z.string().optional(),
-  shipper_notes:         z.string().optional(),
+  shipper_notes:         z.string().optional(), // kept for DB compat, not rendered
   misc_notes:            z.string().optional(),
 
   flag:              z.boolean().default(false),
@@ -126,7 +132,7 @@ const EMPTY_LOAD: z.infer<typeof splitLoadSchema> = {
 
 // ─── Margin calculation ───────────────────────────────────────────────────────
 
-const COMMISSION_TYPES = new Set(['Bottle', 'Rebottle IBC', 'Washout IBC'])
+const COMMISSION_KEYWORDS = ['New IBC', 'New Bottle', 'Rebottle', 'Washout', 'Wash & Return']
 
 function computeMargin(values: Partial<OrderFormValues>) {
   const loads     = values.split_loads ?? []
@@ -151,7 +157,8 @@ function computeMargin(values: Partial<OrderFormValues>) {
   const freightToCustomer   = Number(values.freight_to_customer) || 0
   const freightCost         = Number(values.freight_cost)        || 0
   const additionalCosts     = Number(values.additional_costs)    || 0
-  const commissionDeduction = COMMISSION_TYPES.has(orderType) ? 3 * totalQty : 0
+  const isCommissionEligible = COMMISSION_KEYWORDS.some(kw => orderType.includes(kw))
+  const commissionDeduction  = isCommissionEligible ? 3 * totalQty : 0
 
   const totalTopLine = totalRevenue + freightToCustomer
   const grossMargin  = totalTopLine - totalCOGS - totalBottleCost
@@ -244,14 +251,16 @@ function Combobox({
 function AddressFields({
   prefix,
   register,
+  notesLabel,
 }: {
   prefix: 'ship_to' | 'bill_to'
   register: ReturnType<typeof useForm<OrderFormValues>>['register']
+  notesLabel: string
 }) {
   return (
     <div className="grid grid-cols-6 gap-3">
       <div className="col-span-6 space-y-1.5">
-        <Label>Name / company</Label>
+        <Label>Name / Company</Label>
         <Input placeholder="Name or company" {...register(`${prefix}.name`)} />
       </div>
       <div className="col-span-6 space-y-1.5">
@@ -275,7 +284,7 @@ function AddressFields({
         <Input placeholder="Phone" {...register(`${prefix}.phone`)} />
       </div>
       <div className="col-span-6 space-y-1.5">
-        <Label>Shipping notes</Label>
+        <Label>{notesLabel}</Label>
         <Input placeholder="Optional" {...register(`${prefix}.shipping_notes`)} />
       </div>
     </div>
@@ -301,7 +310,7 @@ function MarginCard({ control }: { control: Control<OrderFormValues> }) {
         </div>
         {m.freightToCustomer > 0 && (
           <div className="flex justify-between text-muted-foreground">
-            <span>+ Freight to customer</span>
+            <span>+ Customer freight</span>
             <span>${m.freightToCustomer.toFixed(2)}</span>
           </div>
         )}
@@ -322,7 +331,7 @@ function MarginCard({ control }: { control: Control<OrderFormValues> }) {
         </div>
         {m.freightCost > 0 && (
           <div className="flex justify-between text-muted-foreground">
-            <span>− Freight cost</span>
+            <span>− MPH freight</span>
             <span>${m.freightCost.toFixed(2)}</span>
           </div>
         )}
@@ -374,8 +383,23 @@ const STATUSES = [
   'Cancelled',
 ]
 
-const ORDER_TYPES = ['Bottle', 'Rebottle IBC', 'Washout IBC', 'Drums', 'Parts']
-const TERMS       = ['PPD', 'PPA', 'FOB']
+const ORDER_TYPES = [
+  '135 Gal New IBC',
+  '275 Gal New Bottle',
+  '275 Gal New IBC',
+  '275 Gal Rebottle IBC',
+  '275 Gal Washout IBC',
+  '275 Gal Wash & Return Program',
+  '330 Gal New Bottle',
+  '330 Gal New IBC',
+  '330 Gal Rebottle IBC',
+  '330 Gal Wash & Return Program',
+  '330 Gal Washout IBC',
+  '55 Gal Drums',
+  'Other — Parts & Supplies',
+]
+
+const TERMS = ['PPD', 'PPA', 'FOB']
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 
@@ -413,6 +437,7 @@ export function NewOrderForm() {
       is_blind_shipment: false,
       is_revised:        false,
       additional_costs:  0,
+      customer_contacts: [],
       split_loads:       [EMPTY_LOAD],
     },
   })
@@ -422,9 +447,18 @@ export function NewOrderForm() {
     name:    'split_loads',
   })
 
-  const watchedValues    = useWatch({ control: form.control })
-  const orderType        = watchedValues.order_type ?? ''
-  const showBottleFields = orderType === 'Bottle' || orderType === 'Rebottle IBC' || orderType === 'Washout IBC'
+  const {
+    fields:  contactFields,
+    append:  appendContact,
+    remove:  removeContact,
+  } = useFieldArray({
+    control: form.control,
+    name:    'customer_contacts',
+  })
+
+  const watchedValues = useWatch({ control: form.control })
+  const orderType     = watchedValues.order_type ?? ''
+  const showBottleFields = ['Bottle', 'Rebottle IBC', 'Washout IBC'].some(kw => orderType.includes(kw))
 
   const salespersonOptions: Option[] = users
     .filter(u => u.role === 'SALESPERSON' || u.role === 'ADMIN')
@@ -441,7 +475,7 @@ export function NewOrderForm() {
       const res = await fetch('/api/orders', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ ...data, split_loads: data.split_loads }),
+        body:    JSON.stringify(data),
       })
       if (!res.ok) throw new Error(await res.text())
       const order = await res.json() as { id: string; order_number: string }
@@ -453,12 +487,14 @@ export function NewOrderForm() {
     }
   }
 
+  // Extract emails from structured contacts array for Outlook deeplink
+  const contactEmails = (watchedValues.customer_contacts ?? [])
+    .map(c => c.email?.trim())
+    .filter((e): e is string => !!e && e.length > 0)
 
-  const contactsText  = watchedValues.customer_contacts ?? ''
-  const emailMatches  = contactsText.match(/[\w.+-]+@[\w-]+\.[\w.]+/g) ?? []
-  const orderSubject  = savedOrder ? `Order #${savedOrder.order_number}` : ''
-  const outlookHref   = emailMatches.length > 0 && savedOrder
-    ? `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(emailMatches.join(';'))}&subject=${encodeURIComponent(orderSubject)}`
+  const orderSubject = savedOrder ? `Order #${savedOrder.order_number}` : ''
+  const outlookHref  = contactEmails.length > 0 && savedOrder
+    ? `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(contactEmails.join(';'))}&cc=${encodeURIComponent('orders@mphunited.com')}&subject=${encodeURIComponent(orderSubject)}`
     : null
 
   // ── Post-save banner ──────────────────────────────────────────────────────
@@ -474,15 +510,15 @@ export function NewOrderForm() {
               <a href={outlookHref} target="_blank" rel="noreferrer">
                 <Button variant="outline" size="sm">
                   <Mail className="mr-2 h-4 w-4" />
-                  Email contacts via Outlook
+                  Email Contacts Via Outlook
                 </Button>
               </a>
             )}
             <Button variant="outline" size="sm" onClick={() => router.push('/orders')}>
-              View orders
+              View Orders
             </Button>
             <Button variant="outline" size="sm" onClick={() => { setSavedOrder(null); form.reset() }}>
-              New order
+              New Order
             </Button>
           </div>
         </div>
@@ -504,7 +540,7 @@ export function NewOrderForm() {
           </h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="order_date">Order date *</Label>
+              <Label htmlFor="order_date">Order Date *</Label>
               <Input id="order_date" type="date" {...form.register('order_date')} />
               {form.formState.errors.order_date && (
                 <p className="text-xs text-destructive">{form.formState.errors.order_date.message}</p>
@@ -544,7 +580,7 @@ export function NewOrderForm() {
               )}
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Order type *</Label>
+              <Label>Order Type *</Label>
               <Select onValueChange={v => form.setValue('order_type', v as string, { shouldValidate: true })}>
                 <SelectTrigger><SelectValue placeholder="Select order type" /></SelectTrigger>
                 <SelectContent>
@@ -595,7 +631,7 @@ export function NewOrderForm() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="freight_carrier">Freight carrier</Label>
+              <Label htmlFor="freight_carrier">Freight Carrier</Label>
               <Input id="freight_carrier" placeholder="Carrier name" {...form.register('freight_carrier')} />
             </div>
           </div>
@@ -611,7 +647,7 @@ export function NewOrderForm() {
             </h2>
             <Button type="button" variant="outline" size="sm" onClick={() => append(EMPTY_LOAD)}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Add split load
+              Add Split Load
             </Button>
           </div>
 
@@ -679,19 +715,12 @@ export function NewOrderForm() {
                     {...form.register(`split_loads.${index}.sell`, { valueAsNumber: true })}
                   />
                 </div>
-                <div className="col-span-6 space-y-1.5">
-                  <Label>Order # override</Label>
-                  <Input
-                    placeholder="Optional"
-                    {...form.register(`split_loads.${index}.order_number_override`)}
-                  />
-                </div>
               </div>
 
               {showBottleFields && (
                 <div className="grid grid-cols-3 gap-3 pt-2 border-t">
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Bottle cost</Label>
+                    <Label className="text-xs text-muted-foreground">Bottle Cost</Label>
                     <Input
                       type="number"
                       min="0"
@@ -701,7 +730,7 @@ export function NewOrderForm() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Bottle qty</Label>
+                    <Label className="text-xs text-muted-foreground">Bottle Qty</Label>
                     <Input
                       type="number"
                       min="0"
@@ -711,7 +740,7 @@ export function NewOrderForm() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">MPH freight bottles</Label>
+                    <Label className="text-xs text-muted-foreground">MPH Freight Bottles</Label>
                     <Input
                       type="number"
                       min="0"
@@ -735,7 +764,7 @@ export function NewOrderForm() {
           </h2>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="freight_cost">Freight cost</Label>
+              <Label htmlFor="freight_cost">MPH Freight Cost</Label>
               <Input
                 id="freight_cost"
                 type="number"
@@ -746,7 +775,7 @@ export function NewOrderForm() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="freight_to_customer">Freight to customer</Label>
+              <Label htmlFor="freight_to_customer">Customer Freight Cost</Label>
               <Input
                 id="freight_to_customer"
                 type="number"
@@ -766,7 +795,7 @@ export function NewOrderForm() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="additional_costs">Additional costs</Label>
+              <Label htmlFor="additional_costs">Additional Costs</Label>
               <Input
                 id="additional_costs"
                 type="number"
@@ -777,15 +806,15 @@ export function NewOrderForm() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ship_date">Ship date</Label>
+              <Label htmlFor="ship_date">Ship Date</Label>
               <Input id="ship_date" type="date" {...form.register('ship_date')} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wanted_date">Wanted date</Label>
+              <Label htmlFor="wanted_date">Wanted Date</Label>
               <Input id="wanted_date" type="date" {...form.register('wanted_date')} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="appointment_time">Appointment time</Label>
+              <Label htmlFor="appointment_time">Appointment Time</Label>
               <Input
                 id="appointment_time"
                 placeholder="e.g. 9:00 AM – 10:00 AM"
@@ -793,7 +822,7 @@ export function NewOrderForm() {
               />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label htmlFor="appointment_notes">Appointment notes</Label>
+              <Label htmlFor="appointment_notes">Appointment Notes</Label>
               <Input
                 id="appointment_notes"
                 placeholder="Optional"
@@ -812,24 +841,70 @@ export function NewOrderForm() {
           </h2>
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-3">
-              <p className="text-sm font-medium">Ship to</p>
-              <AddressFields prefix="ship_to" register={form.register} />
+              <p className="text-sm font-medium">Ship To</p>
+              <AddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" />
             </div>
             <div className="space-y-3">
-              <p className="text-sm font-medium">Bill to</p>
-              <AddressFields prefix="bill_to" register={form.register} />
+              <p className="text-sm font-medium">Bill To</p>
+              <AddressFields prefix="bill_to" register={form.register} notesLabel="Bill To Notes" />
             </div>
-            <div className="col-span-2 space-y-1.5">
-              <Label htmlFor="customer_contacts">Customer contacts</Label>
-              <Textarea
-                id="customer_contacts"
-                placeholder="Names, phone numbers, and email addresses"
-                rows={3}
-                {...form.register('customer_contacts')}
-              />
-              <p className="text-xs text-muted-foreground">
-                Include email addresses to generate an Outlook compose link after saving.
-              </p>
+
+            {/* Structured customer contacts */}
+            <div className="col-span-2 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Customer Contacts For Order Confirmations</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendContact({ name: '', email: '', phone: '' })}
+                >
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Add Contact
+                </Button>
+              </div>
+              {contactFields.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No contacts added. Add a contact with an email to generate an Outlook link after saving.
+                </p>
+              )}
+              {contactFields.map((field, idx) => (
+                <div key={field.id} className="grid grid-cols-7 gap-2 rounded-md border p-3">
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Name</Label>
+                    <Input
+                      placeholder="Full name"
+                      {...form.register(`customer_contacts.${idx}.name`)}
+                    />
+                  </div>
+                  <div className="col-span-3 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Email</Label>
+                    <Input
+                      type="email"
+                      placeholder="email@company.com"
+                      {...form.register(`customer_contacts.${idx}.email`)}
+                    />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Phone</Label>
+                    <div className="flex gap-1.5">
+                      <Input
+                        placeholder="555-000-0000"
+                        {...form.register(`customer_contacts.${idx}.phone`)}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeContact(idx)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -847,7 +922,7 @@ export function NewOrderForm() {
           <CollapsibleContent className="space-y-4 pt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="po_notes">PO notes</Label>
+                <Label htmlFor="po_notes">PO Notes</Label>
                 <Textarea
                   id="po_notes"
                   placeholder="Appears on the purchase order"
@@ -856,7 +931,7 @@ export function NewOrderForm() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="freight_invoice_notes">Freight / invoice notes</Label>
+                <Label htmlFor="freight_invoice_notes">Freight/Invoice Notes</Label>
                 <Textarea
                   id="freight_invoice_notes"
                   placeholder="Delivery, invoicing, or carrier instructions"
@@ -864,17 +939,8 @@ export function NewOrderForm() {
                   {...form.register('freight_invoice_notes')}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="shipper_notes">Shipper notes</Label>
-                <Textarea
-                  id="shipper_notes"
-                  placeholder="Notes for the shipper or BOL"
-                  rows={3}
-                  {...form.register('shipper_notes')}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="misc_notes">Misc notes</Label>
+              <div className="col-span-2 space-y-1.5">
+                <Label htmlFor="misc_notes">Misc Notes</Label>
                 <Textarea
                   id="misc_notes"
                   placeholder="Internal notes"
@@ -897,7 +963,7 @@ export function NewOrderForm() {
                 checked={watchedValues.flag ?? false}
                 onCheckedChange={v => form.setValue('flag', v)}
               />
-              <Label htmlFor="flag" className="cursor-pointer">Flag this order</Label>
+              <Label htmlFor="flag" className="cursor-pointer">Flag This Order</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch
@@ -905,7 +971,7 @@ export function NewOrderForm() {
                 checked={watchedValues.is_blind_shipment ?? false}
                 onCheckedChange={v => form.setValue('is_blind_shipment', v)}
               />
-              <Label htmlFor="is_blind_shipment" className="cursor-pointer">Blind shipment</Label>
+              <Label htmlFor="is_blind_shipment" className="cursor-pointer">Blind Shipment</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch
