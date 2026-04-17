@@ -15,6 +15,13 @@
       "when": 1776211201000,
       "tag": "0001_schema_changes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776396834750,
+      "tag": "0002_add_vendor_contact_fields",
+      "breakpoints": true
     }
   ]
 }

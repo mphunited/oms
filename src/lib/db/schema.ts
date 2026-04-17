@@ -52,12 +52,18 @@ export type NewCustomer = typeof customers.$inferInsert
 // ─── vendors ──────────────────────────────────────────────────────────────────
 
 export const vendors = pgTable('vendors', {
-  id:         uuid('id').primaryKey().defaultRandom(),
-  name:       text('name').notNull(),
-  address:    jsonb('address'),    // { address, city, state, zip }
-  notes:      text('notes'),
-  is_active:  boolean('is_active').notNull().default(true),
-  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  id:                  uuid('id').primaryKey().defaultRandom(),
+  name:                text('name').notNull(),
+  address:             jsonb('address'),    // { address, city, state, zip }
+  notes:               text('notes'),
+  lead_contact:        text('lead_contact'),
+  dock_info:           text('dock_info'),
+  po_contacts:         jsonb('po_contacts'),
+  bol_contacts:        jsonb('bol_contacts'),
+  invoice_contacts:    jsonb('invoice_contacts'),
+  checklist_template:  jsonb('checklist_template'),
+  is_active:           boolean('is_active').notNull().default(true),
+  created_at:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 export type Vendor    = typeof vendors.$inferSelect
