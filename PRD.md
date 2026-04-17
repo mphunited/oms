@@ -184,8 +184,8 @@ Ready To Ship | Ready To Invoice | Complete | Cancelled
 
 ## 9. Order Types
 
-135 Gal New IBC | 275 Gal New Bottle | 275 Gal New IBC | 275 Gal Rebottle IBC |
-275 Gal Washout IBC | 275 Gal Wash & Return Program | 330 Gal New Bottle |
+135 Gal New IBC | 275 Gal Bottle | 275 Gal New IBC | 275 Gal Rebottle IBC |
+275 Gal Washout IBC | 275 Gal Wash & Return Program | 330 Gal Bottle |
 330 Gal New IBC | 330 Gal Rebottle IBC | 330 Gal Wash & Return Program |
 330 Gal Washout IBC | 55 Gal Drums | Other — Parts & Supplies
 
