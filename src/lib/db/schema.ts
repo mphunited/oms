@@ -8,7 +8,6 @@ import {
   numeric,
   jsonb,
   index,
-  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 
 // ─── SINGLE TENANT — NO company_id ANYWHERE ───────────────────────────────────
@@ -56,6 +55,7 @@ export const vendors = pgTable('vendors', {
   name:                text('name').notNull(),
   address:             jsonb('address'),    // { address, city, state, zip }
   notes:               text('notes'),
+  contacts:            jsonb('contacts'),   // [{ name, email, phone, is_primary }]
   lead_contact:        text('lead_contact'),
   dock_info:           text('dock_info'),
   po_contacts:         jsonb('po_contacts'),
@@ -102,7 +102,7 @@ export const orders = pgTable('orders', {
 
   ship_to:           jsonb('ship_to'),           // { address, city, state, zip }
   bill_to:           jsonb('bill_to'),           // { address, city, state, zip }
-  customer_contacts: jsonb('customer_contacts'), // [{ name, email, phone }]
+  customer_contacts: text('customer_contacts'),  // free text — extract emails via regex
 
   terms: text('terms'),
   // terms values: 'PPD' | 'PPA' | 'FOB'
@@ -123,6 +123,10 @@ export const orders = pgTable('orders', {
   // values: 'Not Eligible' | 'Eligible' | 'Commission Paid'
 
   qb_invoice_number: text('qb_invoice_number'),
+
+  is_blind_shipment: boolean('is_blind_shipment').notNull().default(false),
+  is_revised:        boolean('is_revised').notNull().default(false),
+  checklist:         jsonb('checklist'),
 
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -213,6 +217,68 @@ export const dropdown_configs = pgTable('dropdown_configs', {
 
 export type DropdownConfig    = typeof dropdown_configs.$inferSelect
 export type NewDropdownConfig = typeof dropdown_configs.$inferInsert
+
+// ─── recycling_orders ─────────────────────────────────────────────────────────
+
+export const recycling_orders = pgTable('recycling_orders', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  order_number: text('order_number').notNull().unique(),
+  order_date:   date('order_date'),
+  order_type:   text('order_type'),
+
+  customer_id:    uuid('customer_id').notNull().references(() => customers.id, { onDelete: 'restrict' }),
+  vendor_id:      uuid('vendor_id').references(() => vendors.id),
+  salesperson_id: uuid('salesperson_id').references(() => users.id),
+  csr_id:         uuid('csr_id').references(() => users.id),
+
+  status: text('status').notNull().default('Acknowledged Order'),
+  // status values: 'Acknowledged Order' | 'PO Request To Accounting' |
+  //   'Waiting On Vendor To Confirm' | 'Credit Sent In' | 'Confirmed To Customer' |
+  //   'Waiting For Customer To Confirm' | 'Ready To Pickup' | 'Picked Up' |
+  //   'Sent Order To Carrier' | 'Ready To Ship' | 'Ready To Invoice' | 'Complete' | 'Canceled'
+
+  customer_po: text('customer_po'),
+
+  pick_up_date:  date('pick_up_date'),
+  delivery_date: date('delivery_date'),
+
+  ship_from:         jsonb('ship_from'),   // { name, street, city, state, zip } — drum orders
+  ship_to:           jsonb('ship_to'),
+  bill_to:           jsonb('bill_to'),
+  customer_contacts: text('customer_contacts'),
+
+  freight_carrier:       text('freight_carrier'),
+  freight_cost:          numeric('freight_cost',          { precision: 10, scale: 2 }),
+  freight_to_customer:   numeric('freight_to_customer',   { precision: 10, scale: 2 }),
+  freight_credit_amount: numeric('freight_credit_amount', { precision: 10, scale: 2 }),
+  additional_costs:      numeric('additional_costs',      { precision: 10, scale: 2 }).notNull().default('0'),
+
+  invoice_status:          text('invoice_status').default('No Charge'),
+  // values: 'Credit' | 'Invoice' | 'No Charge'
+  invoice_customer_amount: numeric('invoice_customer_amount', { precision: 10, scale: 2 }),
+  invoice_payment_status:  text('invoice_payment_status').notNull().default('Not Invoiced'),
+  // values: 'Not Invoiced' | 'Invoiced' | 'Paid'
+
+  terms:      text('terms'),
+  bol_number: text('bol_number'),
+  po_notes:   text('po_notes'),
+  misc_notes: text('misc_notes'),
+
+  flag:              boolean('flag').notNull().default(false),
+  checklist:         jsonb('checklist'),
+  commission_status: text('commission_status').notNull().default('Not Eligible'),
+  // values: 'Not Eligible' | 'Eligible' | 'Commission Paid'
+
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('recycling_orders_customer_id_idx').on(t.customer_id),
+  index('recycling_orders_status_idx').on(t.status),
+  index('recycling_orders_pick_up_date_idx').on(t.pick_up_date),
+])
+
+export type RecyclingOrder    = typeof recycling_orders.$inferSelect
+export type NewRecyclingOrder = typeof recycling_orders.$inferInsert
 
 // ─── audit_logs ───────────────────────────────────────────────────────────────
 
