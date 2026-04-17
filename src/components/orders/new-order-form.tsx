@@ -400,6 +400,32 @@ const ORDER_TYPES = [
 
 const TERMS = ['PPD', 'PPA', 'FOB']
 
+const DESCRIPTION_TYPE_MAP: Array<{ keywords: string[]; orderType: string }> = [
+  { keywords: ['Wash & Return', '275'], orderType: '275 Gal Wash & Return Program' },
+  { keywords: ['Wash & Return', '330'], orderType: '330 Gal Wash & Return Program' },
+  { keywords: ['Wash & Return'],        orderType: '275 Gal Wash & Return Program' },
+  { keywords: ['Rebottle', '275'],      orderType: '275 Gal Rebottle IBC' },
+  { keywords: ['Rebottle', '330'],      orderType: '330 Gal Rebottle IBC' },
+  { keywords: ['Rebottle'],             orderType: '275 Gal Rebottle IBC' },
+  { keywords: ['Washout', '275'],       orderType: '275 Gal Washout IBC' },
+  { keywords: ['Washout', '330'],       orderType: '330 Gal Washout IBC' },
+  { keywords: ['Washout'],              orderType: '275 Gal Washout IBC' },
+  { keywords: ['275', 'Bottle'],        orderType: '275 Gal Bottle' },
+  { keywords: ['330', 'Bottle'],        orderType: '330 Gal Bottle' },
+  { keywords: ['135'],                  orderType: '135 Gal New IBC' },
+  { keywords: ['275'],                  orderType: '275 Gal New IBC' },
+  { keywords: ['330'],                  orderType: '330 Gal New IBC' },
+  { keywords: ['Drum'],                 orderType: '55 Gal Drums' },
+]
+
+function matchOrderType(description: string): string | null {
+  const lower = description.toLowerCase()
+  for (const { keywords, orderType } of DESCRIPTION_TYPE_MAP) {
+    if (keywords.every(kw => lower.includes(kw.toLowerCase()))) return orderType
+  }
+  return null
+}
+
 // ─── Main form ────────────────────────────────────────────────────────────────
 
 type UserOption = { id: string; name: string | null; role: string }
@@ -410,10 +436,11 @@ export function NewOrderForm() {
   const [customers,    setCustomers]    = useState<Option[]>([])
   const [vendors,      setVendors]      = useState<Option[]>([])
   const [users,        setUsers]        = useState<UserOption[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [savedOrder,   setSavedOrder]   = useState<{ id: string; order_number: string } | null>(null)
-  const [submitError,  setSubmitError]  = useState<string | null>(null)
-  const [notesOpen,    setNotesOpen]    = useState(true)
+  const [isSubmitting,          setIsSubmitting]          = useState(false)
+  const [savedOrder,            setSavedOrder]            = useState<{ id: string; order_number: string } | null>(null)
+  const [submitError,           setSubmitError]           = useState<string | null>(null)
+  const [notesOpen,             setNotesOpen]             = useState(true)
+  const [orderTypeManuallySet,  setOrderTypeManuallySet]  = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -458,6 +485,13 @@ export function NewOrderForm() {
   const watchedValues = useWatch({ control: form.control })
   const orderType     = watchedValues.order_type ?? ''
   const showBottleFields = ['Bottle', 'Rebottle', 'Washout', 'Wash & Return'].some(kw => orderType.includes(kw))
+
+  const firstDescription = watchedValues.split_loads?.[0]?.description ?? ''
+  useEffect(() => {
+    if (orderTypeManuallySet) return
+    const matched = matchOrderType(firstDescription)
+    if (matched) form.setValue('order_type', matched as string, { shouldValidate: true })
+  }, [firstDescription, orderTypeManuallySet, form])
 
   const salespersonOptions: Option[] = users
     .filter(u => u.role === 'SALESPERSON' || u.role === 'ADMIN')
@@ -519,7 +553,7 @@ export function NewOrderForm() {
             <Button variant="outline" size="sm" onClick={() => router.push('/orders')}>
               View Orders
             </Button>
-            <Button variant="outline" size="sm" onClick={() => { setSavedOrder(null); form.reset() }}>
+            <Button variant="outline" size="sm" onClick={() => { setSavedOrder(null); setOrderTypeManuallySet(false); form.reset() }}>
               New Order
             </Button>
           </div>
@@ -583,7 +617,14 @@ export function NewOrderForm() {
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Order Type *</Label>
-              <Select onValueChange={v => form.setValue('order_type', v as string, { shouldValidate: true })}>
+              <Select
+                value={watchedValues.order_type ?? ''}
+                onValueChange={(v: string | null) => {
+                  if (!v) return
+                  setOrderTypeManuallySet(true)
+                  form.setValue('order_type', v, { shouldValidate: true })
+                }}
+              >
                 <SelectTrigger><SelectValue placeholder="Select order type" /></SelectTrigger>
                 <SelectContent>
                   {ORDER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
