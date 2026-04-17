@@ -106,7 +106,9 @@ const orderFormSchema = z.object({
   shipper_notes:         z.string().optional(),
   misc_notes:            z.string().optional(),
 
-  flag: z.boolean().default(false),
+  flag:              z.boolean().default(false),
+  is_blind_shipment: z.boolean().default(false),
+  is_revised:        z.boolean().default(false),
 
   split_loads: z.array(splitLoadSchema).min(1),
 })
@@ -387,7 +389,8 @@ export function NewOrderForm() {
   const [users,        setUsers]        = useState<UserOption[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [savedOrder,   setSavedOrder]   = useState<{ id: string; order_number: string } | null>(null)
-  const [notesOpen,    setNotesOpen]    = useState(false)
+  const [submitError,  setSubmitError]  = useState<string | null>(null)
+  const [notesOpen,    setNotesOpen]    = useState(true)
 
   useEffect(() => {
     Promise.all([
@@ -404,11 +407,13 @@ export function NewOrderForm() {
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema) as Resolver<OrderFormValues>,
     defaultValues: {
-      order_date:       new Date().toISOString().slice(0, 10),
-      status:           'Pending',
-      flag:             false,
-      additional_costs: 0,
-      split_loads:      [EMPTY_LOAD],
+      order_date:        new Date().toISOString().slice(0, 10),
+      status:            'Pending',
+      flag:              false,
+      is_blind_shipment: false,
+      is_revised:        false,
+      additional_costs:  0,
+      split_loads:       [EMPTY_LOAD],
     },
   })
 
@@ -419,7 +424,7 @@ export function NewOrderForm() {
 
   const watchedValues    = useWatch({ control: form.control })
   const orderType        = watchedValues.order_type ?? ''
-  const showBottleFields = orderType === 'Bottle' || orderType === 'Rebottle IBC'
+  const showBottleFields = orderType === 'Bottle' || orderType === 'Rebottle IBC' || orderType === 'Washout IBC'
 
   const salespersonOptions: Option[] = users
     .filter(u => u.role === 'SALESPERSON' || u.role === 'ADMIN')
@@ -430,6 +435,7 @@ export function NewOrderForm() {
     .map(u => ({ id: u.id, name: u.name ?? u.id }))
 
   const onSubmit: SubmitHandler<OrderFormValues> = async (data) => {
+    setSubmitError(null)
     setIsSubmitting(true)
     try {
       const res = await fetch('/api/orders', {
@@ -441,7 +447,7 @@ export function NewOrderForm() {
       const order = await res.json() as { id: string; order_number: string }
       setSavedOrder(order)
     } catch (err) {
-      console.error(err)
+      setSubmitError(err instanceof Error ? err.message : 'Failed to save order. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -603,12 +609,10 @@ export function NewOrderForm() {
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Line Items
             </h2>
-            {fields.length < 4 && (
-              <Button type="button" variant="outline" size="sm" onClick={() => append(EMPTY_LOAD)}>
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                Add split load
-              </Button>
-            )}
+            <Button type="button" variant="outline" size="sm" onClick={() => append(EMPTY_LOAD)}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Add split load
+            </Button>
           </div>
 
           {fields.map((field, index) => (
@@ -884,19 +888,44 @@ export function NewOrderForm() {
 
         <Separator />
 
-        {/* Flag & submit */}
-        <div className="flex items-center justify-between pb-8">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="flag"
-              checked={watchedValues.flag ?? false}
-              onCheckedChange={v => form.setValue('flag', v)}
-            />
-            <Label htmlFor="flag" className="cursor-pointer">Flag this order</Label>
+        {/* Flag, toggles & submit */}
+        <div className="space-y-4 pb-8">
+          <div className="flex flex-wrap gap-6">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="flag"
+                checked={watchedValues.flag ?? false}
+                onCheckedChange={v => form.setValue('flag', v)}
+              />
+              <Label htmlFor="flag" className="cursor-pointer">Flag this order</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="is_blind_shipment"
+                checked={watchedValues.is_blind_shipment ?? false}
+                onCheckedChange={v => form.setValue('is_blind_shipment', v)}
+              />
+              <Label htmlFor="is_blind_shipment" className="cursor-pointer">Blind shipment</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="is_revised"
+                checked={watchedValues.is_revised ?? false}
+                onCheckedChange={v => form.setValue('is_revised', v)}
+              />
+              <Label htmlFor="is_revised" className="cursor-pointer">Revised PO</Label>
+            </div>
           </div>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving…' : 'Save Order'}
-          </Button>
+          <div className="flex items-center justify-between">
+            <div>
+              {submitError && (
+                <p className="text-sm text-destructive">{submitError}</p>
+              )}
+            </div>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving…' : 'Save Order'}
+            </Button>
+          </div>
         </div>
       </div>
 
