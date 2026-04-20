@@ -13,9 +13,13 @@ MAKE ALL FIXES AND CODE CHANGES AS SIMPLE AS HUMANLY POSSIBLE. THEY SHOULD ONLY 
 1. Read AGENTS.md (this file) — technical conventions and architecture rules
 2. Read PRD.md — product requirements, feature scope, business rules, build order
 3. Read src/lib/db/schema.ts — current schema before writing any queries or API routes
-4. Then proceed with the task
+4. Review the TECHNOLOGY STACK section in this file before writing any code
+5. Then proceed with the task
 
 **Do not skip any of these steps. Do not rely on memory from a previous session.**
+
+**Before writing a single line of code, confirm you have read PRD.md in this session.
+If you have not read it, stop and read it now. Do not proceed on memory alone.**
 
 ---
 
@@ -89,20 +93,83 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 
 ## TECHNOLOGY STACK
 
-| Layer        | Technology                                      |
-|--------------|-------------------------------------------------|
-| Language     | TypeScript (full stack)                         |
-| Framework    | Next.js 16 (React frontend + API routes)        |
-| Database     | Supabase (managed PostgreSQL)                   |
-| ORM          | Drizzle ORM — Prisma was removed, do not add it |
-| Hosting      | Vercel                                          |
-| UI           | shadcn/ui + Tailwind CSS                        |
-| Charts       | Recharts                                        |
-| PDFs         | @react-pdf/renderer                             |
-| Auth         | Supabase Auth + Microsoft Entra SSO             |
-| Repository   | github.com/mphunited/oms                        |
+| Layer            | Technology                                                        |
+|------------------|-------------------------------------------------------------------|
+| Language         | TypeScript (full stack)                                           |
+| Framework        | Next.js 16 (React frontend + API routes)                          |
+| Database         | Supabase (managed PostgreSQL)                                     |
+| ORM              | Drizzle ORM — Prisma was removed, do not add it                   |
+| Hosting          | Vercel Pro                                                        |
+| UI Components    | shadcn/ui + Tailwind CSS                                          |
+| UI Primitives    | @base-ui/react — underlies shadcn/ui components, do NOT add Radix |
+| Charts           | Recharts                                                          |
+| PDFs             | @react-pdf/renderer                                               |
+| Auth             | Supabase Auth + Microsoft Entra SSO via @supabase/ssr             |
+| Theme            | next-themes (light/dark toggle)                                   |
+| Forms            | react-hook-form + @hookform/resolvers                             |
+| Validation       | zod v4 — import from 'zod'. Use zodResolver directly in useForm(). Do NOT create a custom useZodForm wrapper. |
+| Notifications    | sonner (toast notifications)                                      |
+| Icons            | lucide-react v1.x                                                 |
+| Repository       | github.com/mphunited/oms                                          |
+
+**Removed packages — do NOT re-add:**
+- `next-auth` — removed, unused. Auth is handled entirely by Supabase Auth + @supabase/ssr.
+- `prisma` — removed. ORM is Drizzle only.
 
 ---
+
+## PACKAGE DISCIPLINE — READ BEFORE ADDING ANY DEPENDENCY
+
+Before installing any new npm package, you must:
+
+1. **Check if the existing stack already solves the problem.**
+   - Need UI components? → shadcn/ui first
+   - Need charts? → Recharts (already installed)
+   - Need date handling? → Check if date-fns or native JS Date is sufficient
+   - Need PDF? → @react-pdf/renderer (already installed)
+   - Need forms/validation? → Check if react-hook-form or zod is already present
+   - Need state management? → React built-ins (useState, useReducer, Context) first
+
+2. **If no existing package solves it**, ask: can it be solved with ~20 lines of TypeScript?
+   If yes, write the utility. Do not add a dependency.
+
+3. **Only if neither of the above works**, may you add a new package. When you do:
+   - Add it to the TECHNOLOGY STACK table in this file with a one-line reason
+   - Use the most minimal, well-maintained package available
+   - Do NOT add packages that duplicate existing stack capabilities
+
+**Never add a package silently. If you add one, it must appear in this file.**
+
+---
+
+## FILE MODULARITY RULES — NO MONOLITHS
+
+This project must remain navigable by a non-professional developer (Jack) and maintainable
+when Keith returns. Monolithic files make debugging harder and AI-assisted edits riskier.
+
+**Hard rules:**
+
+1. **No file may exceed 300 lines.** If a file is approaching this limit, split it.
+
+2. **One component per file.** Do not define multiple exported React components in the
+   same file. Each component gets its own file under the appropriate `src/components/` subdirectory.
+
+3. **Split by concern, not by size.** Separate:
+   - UI layout from data-fetching logic
+   - Form components from page components
+   - Utility/helper functions into `src/lib/` files
+   - API route handlers from their business logic (extract logic into `src/lib/`)
+
+4. **Reuse before you duplicate.** Before creating a new component, check
+   `src/components/` for an existing one that can be extended or parameterized.
+
+5. **Name files after what they do.** `order-status-badge.tsx`, not `helpers.tsx`.
+   `use-order-form.ts` for hooks, `format-currency.ts` for utilities.
+
+6. **If a new API route needs a helper function longer than ~30 lines**, extract it to
+   `src/lib/[domain]/[name].ts` and import it. Do not inline complex logic in route files.
+
+**When in doubt: smaller files, clearer names, one responsibility each.**
 
 ## DATABASE CONNECTION
 
@@ -258,3 +325,15 @@ Do not trust Claude Code's success confirmations — verify with git log yoursel
 The HTML prototype in /reference/ is a UI reference only. It predates the current schema
 and uses different data structures. This AGENTS.md and PRD.md are the authoritative specs.
 When the prototype conflicts with either file, follow AGENTS.md and PRD.md.
+
+---
+
+## KNOWN ACCEPTABLE VULNERABILITIES
+
+Do not attempt to fix the following — the fix breaks the toolchain:
+
+- **esbuild <=0.24.2** inside `drizzle-kit` (via @esbuild-kit/core-utils → @esbuild-kit/esm-loader)
+  - Severity: moderate
+  - Risk: only exploitable if running `drizzle-kit studio` locally while browsing a malicious site simultaneously
+  - Fix would downgrade drizzle-kit to 0.18.1 — a breaking change from current 0.31.x
+  - Decision: accept the risk. Never run `npm audit fix --force` to resolve this.
