@@ -23,14 +23,18 @@ invoicing. They do not manufacture or warehouse product.
 | Person | Role in App | Notes |
 |--------|-------------|-------|
 | Jack Schlaack | Admin / IT Lead | Builds the app using Claude Code. Not a professional developer. |
-| Keith Ferrell | CSR | Will use the app. Will eventually contribute to building it. Currently unavailable. |
+| Keith Ferrell | CSR & Admin | Will use the app. Will eventually contribute to building it. Currently unavailable. |
 | Christina Bayne | CSR / General Manager | Primary CSR user. Early tester target. |
-| Jordan Mannering | CSR / Purchasing | CSR user. |
-| Gracie | CSR | CSR user. |
-| Renee | Salesperson | Commission report user. Sees only her own orders. |
-| Others | Salesperson / Accounting / Warehouse | Roles exist in schema; users TBD. |
-
-**Goal: Get Christina testing by week 6–7. Don't wait for launch.**
+| Jordan Mannering | CSR | CSR user. |
+| Gracie Medley | Accounting & CSR | Accounting & CSR user. |
+| Renee Sauvageau | Salesperson | Commission report user. Sees only her own orders. |
+| Jennifer Wilkes | Salesperson | Sees only her own orders. |
+| Larry Mitchum | Salesperson | Sees only his own orders. |
+| Mike Harding | Salesperson / Owner | Sees everything. |
+| David Harding | CFO / Owner | Sees everything |
+| Peter Mannering | Accounting / Controller | Accounting user.| 
+| Matt Cozik | CSR | CSR for Recycling Orders | 
+| Suzanne Ridenour | CSR | CSR for Empties | 
 
 ---
 
@@ -138,7 +142,7 @@ shipping_notes is free text for dock hours, contact titles, extra phones, appoin
 **Format: `[Initials]-MPH[Number]`** — e.g., `CB-MPH15001`
 
 - Initials = the authenticated user's initials at time of order creation
-- Number = auto-incrementing integer from a Postgres sequence, starting at ~11416
+- Number = auto-incrementing integer from a Postgres sequence, starting at ~PM-MPH12127
 - Stored as text in order_number column
 - The sequence is managed via: `SELECT nextval('order_number_seq')`
 - **Do NOT use `MAX(order_number) + 1`** — race condition risk
@@ -169,7 +173,7 @@ Red threshold: Margin % < 8%
 ```
 
 Commission deduction applies to order types whose name contains any of these keywords:
-`New IBC`, `New Bottle`, `Rebottle`, `Washout`, `Wash & Return`.
+`New IBC`, `Bottle`, `Rebottle`, `Washout`, `Wash & Return`.
 Match is keyword-based (substring), not an exact type list.
 
 ---
@@ -189,21 +193,23 @@ Ready To Ship | Ready To Invoice | Complete | Cancelled
 330 Gal New IBC | 330 Gal Rebottle IBC | 330 Gal Wash & Return Program |
 330 Gal Washout IBC | 55 Gal Drums | Other — Parts & Supplies
 
-Commission eligibility is keyword-based: any type containing `New IBC`, `New Bottle`,
+Commission eligibility is keyword-based: any type containing `New IBC`, `Bottle`,
 `Rebottle`, `Washout`, or `Wash & Return` is eligible.
 
 ---
 
 ## 10. User Roles
 
-ADMIN | CSR | SALESPERSON | ACCOUNTING | WAREHOUSE
+ADMIN | CSR | SALES | ACCOUNTING | 
 
 Role-based access rules:
-- SALESPERSON: sees only their own orders and their personal commission/dashboard
+- SALES: sees only their own orders and their personal commission/dashboard
 - CSR: full order CRUD, POs, BOLs, schedules, customers, vendors
 - ADMIN: everything including financial snapshots and user management
 - ACCOUNTING: invoice management, payment tracking, commission reports
-- WAREHOUSE: BOL creation, shipment status updates
+- Role is enforced as a PostgreSQL enum (user_role) in the database.
+- Default role for new users: CSR
+- Note: SALESPERSON and WAREHOUSE were considered but not implemented.
 
 ---
 
@@ -327,8 +333,8 @@ Ready To Invoice | Complete | Canceled
 ## 15. Ongoing Orders Table — Column Specification
 
 Default visible columns (in order):
-Flag | Order # | Status | Customer | Vendor | Description | Qty | Ship Date |
-Wanted Date | Customer PO | Buy Total | Sell Total | Margin % | Actions
+Flag | MPH PO | Status | Customer | Vendor | Description | Qty | Ship Date |
+Wanted Date | Customer PO | Buy | Sell | Freight | Actions
 
 Rules:
 - Margin % shows red indicator when below 8%
@@ -378,7 +384,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 
 | Route | Page | Phase |
 |-------|------|-------|
-| /login | Microsoft Entra SSO sign in | 1 — Done |
+| /auth/callback | OAuth callback handler | Microsoft Entra SSO sign in | 1 — Done |
 | /dashboard | Hero stats, status distribution, weekly chart | 1 |
 | /orders | Ongoing orders table | 1 — Done |
 | /orders/new | New order form | 1 — Built, needs testing |
@@ -525,7 +531,8 @@ When Keith eventually resumes:
 src/lib/db/schema.ts          — Drizzle schema, always read before writing queries
 src/lib/db/index.ts           — Drizzle client
 src/app/(dashboard)/          — all authenticated pages
-src/app/login/                — login page
+src/app/(auth)/login/         — login page
+src/proxy.ts                  — session handler (Next.js 16 middleware equivalent) 
 src/app/api/                  — all API routes
 src/components/layout/        — sidebar, header, nav
 src/components/orders/        — order components including new-order-form.tsx
