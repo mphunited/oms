@@ -1,35 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-/**
- * Proxy (formerly middleware) — runs on every matched request.
- *
- * Responsibilities:
- *  1. Refresh the Supabase session cookie (keeps the user logged in).
- *  2. Protect dashboard routes — redirect unauthenticated users to /login.
- */
-export async function proxy(req: NextRequest) {
-  const res = NextResponse.next();
+export async function proxy(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
 
-  // TODO: integrate Supabase session refresh here once AUTH_SECRET is set.
-  // Example with @supabase/ssr:
-  //   const supabase = createServerClient(url, key, { cookies: ... });
-  //   const { data: { session } } = await supabase.auth.getSession();
-  //   if (!session && req.nextUrl.pathname.startsWith("/")) {
-  //     return NextResponse.redirect(new URL("/login", req.url));
-  //   }
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
 
-  return res;
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user && !request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (user && request.nextUrl.pathname.startsWith("/login")) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  return supabaseResponse;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all paths except:
-     *  - _next/static  (static assets)
-     *  - _next/image   (image optimisation)
-     *  - favicon.ico
-     *  - public files
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
