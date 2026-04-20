@@ -429,9 +429,9 @@ This is the primary mechanism for repeat customer orders where most info stays t
 4. ✅ COMPLETE — Verify /api/customers, /api/vendors, /api/users return real data. All three confirmed returning correct data with auth protection working.
 
 ### Core pages
-5. Customers page — list + detail with contacts editor
-6. Vendors page — list + detail with PO/BOL contacts sections + checklist template editor
-7. Order detail/edit page — full edit form + checklist UI + PO PDF button + BOL button + Duplicate button
+5. ✅ COMPLETE — Customers page — list + detail with contacts editor
+6. ✅ COMPLETE — Vendors page — list + detail with PO/BOL contacts sections + checklist template editor
+7. ✅ COMPLETE — Order detail/edit page — full edit form + checklist UI + PO PDF button (stubbed) + BOL button (stubbed) + Duplicate button (stubs to /orders/new, no pre-fill yet)
 8. PO PDF route — /api/orders/[orderId]/po-pdf
 
 ### Documents and schedules
@@ -498,6 +498,8 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | Bottle fields (bottle_cost, bottle_qty, mph_freight_bottles) on order_split_loads autofill from vendor defaults when the CSR expands the bottle section on a line item. Fields remain editable for exceptions. Vendor record stores three new fields: default_bottle_cost, default_bottle_qty, default_mph_freight_bottles. These are set and updated on the vendor detail page. The margin calculation in the OMS is a secondary accountability check — primary pricing is handled in the quote tool. |
 | order_number_seq | Sequence set to 12127 per PRD. First test order was JS-MPH12129 due to two failed attempts during initial testing consuming 12127 and 12128. Sequence is working correctly. |
 | .env vs .env.local | drizzle.config.ts loads .env.local explicitly via dotenv. Never put real credentials in .env — it is a blank template only. Real values go in .env.local which is gitignored. |
+| Duplicate order button | Redirects to /orders/new without pre-fill. Full duplicate logic per Section 16 is a follow-up task. |
+| LF/CRLF line endings | Git warns on src/app/api/orders/route.ts. Harmless on Windows. Do not run git config --global core.autocrlf to fix — leave as is. |
 ---
 
 ## 21. What the Current Prototype Is NOT

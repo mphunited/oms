@@ -299,9 +299,12 @@ Full route table in PRD.md Section 17.
 Key routes:
 - /orders — ongoing orders table (working)
 - /orders/new — new order form (built, tested, working)
-- /orders/[orderId] — order detail/edit (not started)
+- /orders/[orderId] — order detail/edit (built, working — duplicate button stubs to /orders/new, no pre-fill yet)
+- /customers — customer list (built, working)
+- /customers/[customerId] — customer detail + contacts editor (built, working)
+- /vendors — vendor list (built, working)
+- /vendors/[vendorId] — vendor detail + contacts + checklist template (built, working)
 - /recycling — recycling orders (not started)
-- /customers, /vendors — management pages (not started)
 - /schedules — weekly schedule generation (not started)
 - /commission — commission report (not started)
 
