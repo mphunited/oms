@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { orders, order_split_loads, users, vendors } from '@/lib/db/schema'
 import { eq, sql } from 'drizzle-orm'
@@ -18,30 +18,27 @@ function deriveInitials(name: string | null | undefined): string {
 
 export async function POST(req: Request) {
   try {
-    // ── 1. Auth check ──────────────────────────────────────────────────────────
     const supabase = await createClient()
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // ── 2. Resolve user name for initials ──────────────────────────────────────
     const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) })
     const initials = deriveInitials(user?.name)
 
-    // ── 3. Parse body ──────────────────────────────────────────────────────────
     const body = await req.json()
     const { split_loads, ...orderFields } = body
+    for (const key of ['order_date', 'ship_date', 'wanted_date', 'appointment_time']) {
+      if (orderFields[key] === '') orderFields[key] = null
+    }
 
-    // ── 4. Order number via sequence ───────────────────────────────────────────
     const seqResult = await db.execute(sql`SELECT nextval('order_number_seq') AS num`)
     const num = (seqResult as unknown as Array<{ num: string | number }>)[0].num
     const order_number = `${initials}-MPH${num}`
 
-    // ── 5. Commission status ───────────────────────────────────────────────────
     const commission_status = deriveCommissionStatus(orderFields.order_type ?? '')
 
-    // ── 6. Vendor checklist template → order checklist ─────────────────────────
     let checklist: unknown = null
     if (orderFields.vendor_id) {
       const vendor = await db.query.vendors.findFirst({
@@ -50,7 +47,6 @@ export async function POST(req: Request) {
       checklist = vendor?.checklist_template ?? null
     }
 
-    // ── 7. Transaction: insert order + split loads ─────────────────────────────
     const result = await db.transaction(async (tx) => {
       const [newOrder] = await tx
         .insert(orders)
@@ -59,7 +55,6 @@ export async function POST(req: Request) {
 
       if (split_loads?.length) {
         await tx.insert(order_split_loads).values(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           split_loads.map((load: any) => ({ ...load, order_id: newOrder.id }))
         )
       }
