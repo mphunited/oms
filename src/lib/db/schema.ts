@@ -1,5 +1,6 @@
 import {
   pgTable,
+  pgEnum,
   uuid,
   text,
   boolean,
@@ -9,6 +10,8 @@ import {
   jsonb,
   index,
 } from 'drizzle-orm/pg-core'
+
+export const userRoleEnum = pgEnum('user_role', ['ADMIN', 'CSR', 'ACCOUNTING', 'SALES'])
 
 // ─── SINGLE TENANT — NO company_id ANYWHERE ───────────────────────────────────
 // MPH United only. No companies table. No company_members table.
@@ -23,8 +26,8 @@ export const users = pgTable('users', {
   name:        text('name'),
   avatar_url:  text('avatar_url'),
   entra_id:    text('entra_id'),
-  role:        text('role').notNull().default('CSR'),
-  // role values: 'ADMIN' | 'CSR' | 'SALESPERSON' | 'ACCOUNTING' | 'WAREHOUSE'
+  role:        userRoleEnum('role').notNull().default('CSR'),
+  // role values: 'ADMIN' | 'CSR' | 'ACCOUNTING' | 'SALES'
   is_active:   boolean('is_active').notNull().default(true),
   created_at:  timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
