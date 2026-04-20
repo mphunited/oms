@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, userRoleEnum } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function inviteMember(email: string, name: string, role: string = "CSR") {
+type UserRole = (typeof userRoleEnum.enumValues)[number]
+
+export async function inviteMember(email: string, name: string, role: UserRole = "CSR") {
   const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
   if (existing) return existing;
 
@@ -20,7 +22,7 @@ export async function inviteMember(email: string, name: string, role: string = "
   return created;
 }
 
-export async function updateMemberRole(userId: string, role: string) {
+export async function updateMemberRole(userId: string, role: UserRole) {
   const [user] = await db.update(users)
     .set({ role })
     .where(eq(users.id, userId))
