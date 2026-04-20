@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   let res = NextResponse.next();
 
   const supabase = createServerClient(
@@ -26,16 +26,16 @@ export async function proxy(req: NextRequest) {
   );
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { pathname } = req.nextUrl;
 
-  if (!session && pathname !== "/login") {
+  if (!user && pathname !== "/login" && pathname !== "/auth/callback") {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (session && pathname === "/login") {
+  if (user && pathname === "/login") {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
@@ -44,6 +44,6 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|auth/callback).*)",
   ],
 };
