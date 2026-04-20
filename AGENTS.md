@@ -79,7 +79,9 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     expands it on the order form. Fields remain editable per order.
     Migration required before building the vendor page.
 
-12. Git verification rule — Claude Code pushes to remote but does not always update local main. Always run git pull origin main before running git log to verify commits. Never trust Claude Code's success confirmations — verify with git log only after pulling.
+12. **Git verification rule** — Claude Code pushes to remote but does not always update
+    local main. Always run git pull origin main before running git log to verify commits.
+    Never trust Claude Code's success confirmations — verify with git log only after pulling.
 
 13. **Session handling uses src/proxy.ts — NOT src/middleware.ts.**
     Next.js 16 renamed middleware.ts to proxy.ts with a `proxy` export.
@@ -88,6 +90,16 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 14. **Vercel Framework Preset must be set to Next.js.**
     If deploying a new Vercel project, go to Settings → General → Framework Preset
     and set it to Next.js. Leaving it as "Other" causes 404 on all routes.
+
+15. **Stale .next cache causes all routes to 404 on Turbopack.**
+    If all routes return 404 and nothing appears in the dev server terminal when
+    hitting them, delete .next and restart:
+    `Remove-Item -Recurse -Force .next` then `npm run dev`.
+    This is the first debugging step for any unexplained 404s.
+
+16. **drizzle.config.ts loads .env.local via dotenv.**
+    `npm run db:migrate` and other drizzle-kit CLI commands work without any
+    manual env var setup. Do not remove the dotenv import from drizzle.config.ts.
 
 ---
 
@@ -171,14 +183,13 @@ when Keith returns. Monolithic files make debugging harder and AI-assisted edits
 
 **When in doubt: smaller files, clearer names, one responsibility each.**
 
+---
+
 ## DATABASE CONNECTION
 
 Use Transaction Pooler only — port 6543.
 No DIRECT_URL needed. No Session Pooler.
-
-```
 DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-us-west-2.pooler.supabase.com:6543/postgres
-```
 
 ---
 
@@ -201,20 +212,20 @@ Do NOT use MAX(order_number) + 1 — race condition.
 ---
 
 ## MARGIN FORMULA
-
-```
 Profit =
-  SUM per line: (sell - buy) × qty
-  + freight_to_customer                          [order level]
-  - freight_cost                                 [order level]
-  - SUM per line: bottle_cost × bottle_qty
-  - SUM per line: (mph_freight_bottles / 90) × bottle_qty
-  - SUM commission-eligible units × $3
-  - additional_costs                             [order level]
+SUM per line: (sell - buy) × qty
+
+freight_to_customer                          [order level]
+
+
+freight_cost                                 [order level]
+SUM per line: bottle_cost × bottle_qty
+SUM per line: (mph_freight_bottles / 90) × bottle_qty
+SUM commission-eligible units × $3
+additional_costs                             [order level]
 
 Profit % = Profit ÷ ( SUM(sell × qty) + freight_to_customer )
 Red threshold: Profit % < 8%
-```
 
 Commission-eligible order types: Bottle, Rebottle IBC, Washout IBC
 NOT eligible: Drums, Parts
@@ -254,10 +265,7 @@ Default role for new users: CSR
 ## EMAIL PATTERN
 
 All email actions use Outlook Web deeplinks — NOT mailto: links (fixes Mac compatibility).
-
-```
 https://outlook.office.com/mail/deeplink/compose?to=...&cc=...&subject=...&body=...
-```
 
 - PO emails: CC includes orders@mphunited.com
 - BOL emails: orders@mphunited.com is NOT CC'd
@@ -290,7 +298,7 @@ Full route table in PRD.md Section 17.
 
 Key routes:
 - /orders — ongoing orders table (working)
-- /orders/new — new order form (built, needs testing + fixes)
+- /orders/new — new order form (built, tested, working)
 - /orders/[orderId] — order detail/edit (not started)
 - /recycling — recycling orders (not started)
 - /customers, /vendors — management pages (not started)
@@ -317,6 +325,25 @@ Claude Code creates git worktrees under .claude/worktrees/ for each task. This i
 
 Verify with `git log --oneline -5` after every task.
 Do not trust Claude Code's success confirmations — verify with git log yourself.
+
+---
+
+## FILE STRUCTURE REFERENCE
+src/lib/db/schema.ts          — Drizzle schema, always read before writing queries
+src/lib/db/index.ts           — Drizzle client
+src/app/(dashboard)/          — all authenticated pages
+src/app/(auth)/login/         — login page
+src/proxy.ts                  — session handler (Next.js 16 middleware equivalent)
+src/app/api/                  — all API routes
+src/actions/team.ts           — server actions for user/team management (invite, role update, deactivate)
+src/components/layout/        — sidebar, header, nav
+src/components/orders/        — order components including new-order-form.tsx
+src/components/recycling/     — recycling order components
+src/config/nav.ts             — navigation items
+reference/                    — HTML prototype (UI reference only, not a spec)
+AGENTS.md                     — technical conventions, read at every session
+PRD.md                        — product requirements, read at every session
+drizzle/                      — migration SQL files and snapshots
 
 ---
 
