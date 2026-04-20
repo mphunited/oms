@@ -98,7 +98,7 @@ All tables are in Supabase. Migrations managed via Drizzle in `drizzle/`.
 id, order_number (text, unique), order_date, order_type, customer_id, vendor_id,
 salesperson_id, csr_id, status, customer_po, freight_cost, freight_to_customer,
 additional_costs, freight_carrier, ship_date, wanted_date, ship_to (jsonb), bill_to (jsonb),
-customer_contacts (TEXT — not jsonb), terms, appointment_time, appointment_notes,
+customer_contacts (jsonb — [{name, email}], extract emails directly for Outlook deeplinks), terms, appointment_time, appointment_notes,
 po_notes, freight_invoice_notes, shipper_notes, misc_notes, flag, is_blind_shipment,
 is_revised, invoice_payment_status, commission_status, qb_invoice_number,
 checklist (jsonb), created_at, updated_at
@@ -124,9 +124,16 @@ bill_to (jsonb),
 contacts (jsonb array — {name, email, phone_office, phone_cell, role, is_primary, notes}),
 created_at
 
-### Contact object shape (vendors and customers)
+### Contact object shape
+
+**Customer contacts** (full shape):
 ```json
-{ "name": "Isabel Martinez", "email": "email@domain.com", "phone": "832-721-3423", "is_primary": true }
+{ "name": "Isabel Martinez", "email": "isabel@acme.com", "phone_office": "832-721-3423", "phone_cell": "832-555-0101", "role": "Purchasing", "is_primary": true, "notes": "" }
+```
+
+**Vendor contacts** (simplified shape — po_contacts, bol_contacts, invoice_contacts, general contacts):
+```json
+{ "name": "Isabel Martinez", "email": "isabel@vendor.com", "phone": "832-721-3423", "is_primary": true }
 ```
 
 ### Address JSONB shape (ship_to, bill_to on orders)
@@ -224,7 +231,7 @@ https://outlook.office.com/mail/deeplink/compose?to=...&cc=...&subject=...&body=
 
 - **PO emails to vendors:** To = vendor's po_contacts (primary first), CC = remaining po_contacts + orders@mphunited.com
 - **BOL emails to vendors:** To = vendor's bol_contacts (primary first), CC = remaining bol_contacts. orders@mphunited.com is NOT CC'd on BOLs.
-- **Customer confirmations:** To = order's customer_contacts field (free text, extract emails via regex)
+- **Customer confirmations:** To = order's customer_contacts field (jsonb [{name, email}], extract emails directly from array)
 - **Invoice emails:** To = customer invoice contacts. orders@mphunited.com CC'd on invoices (Phase 2).
 - **Weekly schedules:** Open in Outlook Web button on the schedule generation screen.
 
@@ -416,7 +423,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 ## 18. Phase 1 Build Order (Priority Sequence)
 
 ### Immediate (unblock the order form)
-1. Schema migration — add is_blind_shipment, is_revised to orders; add po_contacts, bol_contacts, invoice_contacts, dock_info, lead_contact, checklist_template to vendors; change customer_contacts on orders from jsonb to text
+1. Schema migration — add is_blind_shipment, is_revised to orders (if not present); add po_contacts, bol_contacts, invoice_contacts, dock_info, lead_contact, checklist_template, default_bottle_cost, default_bottle_qty, default_mph_freight_bottles to vendors
 2. Fix new-order-form.tsx — add error state on submit failure, add is_blind_shipment field, add is_revised field, add CC to Outlook deeplink where appropriate, default notes section to open
 3. Test form end-to-end — submit one real order, verify in Supabase
 4. Verify /api/customers, /api/vendors, /api/users return real data
@@ -474,7 +481,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 
 | Issue | Decision |
 |-------|----------|
-| customer_contacts on orders is jsonb [{name, email}] — structured contact array, extract emails for Outlook deeplink directly from array |
+| customer_contacts on orders | jsonb [{name, email}]. Extract emails directly from array for Outlook deeplinks. NOT free text. |
 | Order number format | [Initials]-MPH[Number]. Uses Postgres sequence, not MAX()+1. |
 | Vendor email contacts | Three separate jsonb arrays: po_contacts, bol_contacts, invoice_contacts. |
 | BOL CC rule | orders@mphunited.com is NOT CC'd on BOLs. Only on PO and invoice emails. |
@@ -559,6 +566,6 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 
 ---
 
-*Last updated: April 2026*
+*Last updated: April 2026 — customer_contacts confirmed jsonb; customers.contacts shape updated to full shape; vendor bottle default fields added to schema; Phase 1 migration list updated.*
 *This document should be updated whenever significant decisions are made or scope changes.*
 *Retire: New_MPH_Order_Management_App.docx and MPH-OMS-HANDOFF.md once this file is committed to the repo.*
