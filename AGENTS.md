@@ -56,8 +56,8 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 7. **invoice_payment_status lives on the orders table.** NOT derived from a separate
    invoices table. Values: 'Not Invoiced' | 'Invoiced' | 'Paid'
 
-8. **customer_contacts on orders is a TEXT column** — not jsonb. Free-text field.
-   Extract emails via regex for Outlook deeplinks.
+8. **customer_contacts on orders is JSONB** — stored as [{name, email}] array.
+   Extract emails directly from the array for Outlook deeplinks.
 
 9. **Supabase anon key is used only for Supabase Auth** (sign-in and session checks).
    All business data queries go through Drizzle via DATABASE_URL (server-only env var).
@@ -65,6 +65,14 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 
 10. **@react-pdf/renderer routes must declare:** `export const runtime = 'nodejs'`
     Without this, Vercel may run them on the Edge runtime and they will crash silently.
+
+11. **Vendor bottle defaults** — vendors table has three nullable columns:
+    default_bottle_cost, default_bottle_qty, default_mph_freight_bottles.
+    These autofill the bottle section on order_split_loads when a CSR
+    expands it on the order form. Fields remain editable per order.
+    Migration required before building the vendor page.
+
+12. Git verification rule — Claude Code pushes to remote but does not always update local main. Always run git pull origin main before running git log to verify commits. Never trust Claude Code's success confirmations — verify with git log only after pulling.
 
 ---
 
