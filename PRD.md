@@ -135,21 +135,21 @@ created_at
 ```
 shipping_notes is free text for dock hours, contact titles, extra phones, appointment instructions.
 
----
+--- 
 
 ## 6. Order Number Format
 
 **Format: `[Initials]-MPH[Number]`** — e.g., `CB-MPH15001`
 
 - Initials = the authenticated user's initials at time of order creation
-- Number = auto-incrementing integer from a Postgres sequence, starting at ~PM-MPH12127
+- Number = auto-incrementing integer from a Postgres sequence, starting at ~12127
 - Stored as text in order_number column
 - The sequence is managed via: `SELECT nextval('order_number_seq')`
 - **Do NOT use `MAX(order_number) + 1`** — race condition risk
 
 Sequence setup SQL (already applied to Supabase):
 ```sql
-CREATE SEQUENCE IF NOT EXISTS order_number_seq START 11416;
+CREATE SEQUENCE IF NOT EXISTS order_number_seq START 12127;
 ```
 
 ---
@@ -333,8 +333,8 @@ Ready To Invoice | Complete | Canceled
 ## 15. Ongoing Orders Table — Column Specification
 
 Default visible columns (in order):
-Flag | MPH PO | Status | Customer | Vendor | Description | Qty | Ship Date |
-Wanted Date | Customer PO | Buy | Sell | Freight | Actions
+Flag | MPH PO | Status | Customer | Customer PO | Description | Qty | Ship Date |
+Wanted Date | Vendor | Buy | Sell | Ship To | Freight | Actions
 
 Rules:
 - Margin % shows red indicator when below 8%
