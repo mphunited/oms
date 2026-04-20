@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -13,17 +12,17 @@ function ThemeToggle() {
 
   useEffect(() => setMounted(true), []);
 
+  if (!mounted) return null;
+
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      disabled={!mounted}
       aria-label="Toggle theme"
+      className="relative inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
     >
       <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
       <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-    </Button>
+    </button>
   );
 }
 
