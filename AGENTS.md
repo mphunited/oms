@@ -74,6 +74,14 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 
 12. Git verification rule — Claude Code pushes to remote but does not always update local main. Always run git pull origin main before running git log to verify commits. Never trust Claude Code's success confirmations — verify with git log only after pulling.
 
+13. **Session handling uses src/proxy.ts — NOT src/middleware.ts.**
+    Next.js 16 renamed middleware.ts to proxy.ts with a `proxy` export.
+    Never create src/middleware.ts — it will conflict and break the build.
+
+14. **Vercel Framework Preset must be set to Next.js.**
+    If deploying a new Vercel project, go to Settings → General → Framework Preset
+    and set it to Next.js. Leaving it as "Other" causes 404 on all routes.
+
 ---
 
 ## TECHNOLOGY STACK
@@ -166,7 +174,10 @@ Bottle | Rebottle IBC | Washout IBC | Drums | Parts
 
 ## USER ROLES
 
-ADMIN | CSR | SALESPERSON | ACCOUNTING | WAREHOUSE
+ADMIN | CSR | ACCOUNTING | SALES
+
+Role is enforced as a PostgreSQL enum (user_role) in the database.
+Default role for new users: CSR
 
 ---
 
