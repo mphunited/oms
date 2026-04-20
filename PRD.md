@@ -425,8 +425,8 @@ This is the primary mechanism for repeat customer orders where most info stays t
 ### Immediate (unblock the order form)
 1. Schema migration — add is_blind_shipment, is_revised to orders (if not present); add po_contacts, bol_contacts, invoice_contacts, dock_info, lead_contact, checklist_template, default_bottle_cost, default_bottle_qty, default_mph_freight_bottles to vendors
 2. Fix new-order-form.tsx — add error state on submit failure, add is_blind_shipment field, add is_revised field, add CC to Outlook deeplink where appropriate, default notes section to open
-3. Test form end-to-end — submit one real order, verify in Supabase
-4. Verify /api/customers, /api/vendors, /api/users return real data
+3. ✅ COMPLETE — Test form end-to-end — submit one real order, verify in Supabase. First real order: JS-MPH12129 (275 Gal Bottle, commission_status=Eligible). order_number_seq set to start at 12127.
+4. ✅ COMPLETE — Verify /api/customers, /api/vendors, /api/users return real data. All three confirmed returning correct data with auth protection working.
 
 ### Core pages
 5. Customers page — list + detail with contacts editor
@@ -496,7 +496,8 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | Recycling orders | Separate section of app, separate DB table, separate routes. Shares customers/vendors/users. |
 | CSR checklist | Template on vendor record, copied to order on creation. Each item: {label, done}. CSR can add/remove per order. |
 | Bottle fields (bottle_cost, bottle_qty, mph_freight_bottles) on order_split_loads autofill from vendor defaults when the CSR expands the bottle section on a line item. Fields remain editable for exceptions. Vendor record stores three new fields: default_bottle_cost, default_bottle_qty, default_mph_freight_bottles. These are set and updated on the vendor detail page. The margin calculation in the OMS is a secondary accountability check — primary pricing is handled in the quote tool. |
-
+| order_number_seq | Sequence set to 12127 per PRD. First test order was JS-MPH12129 due to two failed attempts during initial testing consuming 12127 and 12128. Sequence is working correctly. |
+| .env vs .env.local | drizzle.config.ts loads .env.local explicitly via dotenv. Never put real credentials in .env — it is a blank template only. Real values go in .env.local which is gitignored. |
 ---
 
 ## 21. What the Current Prototype Is NOT
