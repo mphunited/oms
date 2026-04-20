@@ -468,7 +468,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 
 | Issue | Decision |
 |-------|----------|
-| customer_contacts on orders was jsonb | Changed to text. Free-text field, extract emails via regex for Outlook link. |
+| customer_contacts on orders is jsonb [{name, email}] — structured contact array, extract emails for Outlook deeplink directly from array |
 | Order number format | [Initials]-MPH[Number]. Uses Postgres sequence, not MAX()+1. |
 | Vendor email contacts | Three separate jsonb arrays: po_contacts, bol_contacts, invoice_contacts. |
 | BOL CC rule | orders@mphunited.com is NOT CC'd on BOLs. Only on PO and invoice emails. |
@@ -482,6 +482,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | Prototype in /reference/ | HTML prototype is UI reference only. It predates the current schema. This PRD and AGENTS.md are authoritative. |
 | Recycling orders | Separate section of app, separate DB table, separate routes. Shares customers/vendors/users. |
 | CSR checklist | Template on vendor record, copied to order on creation. Each item: {label, done}. CSR can add/remove per order. |
+| Bottle fields (bottle_cost, bottle_qty, mph_freight_bottles) on order_split_loads autofill from vendor defaults when the CSR expands the bottle section on a line item. Fields remain editable for exceptions. Vendor record stores three new fields: default_bottle_cost, default_bottle_qty, default_mph_freight_bottles. These are set and updated on the vendor detail page. The margin calculation in the OMS is a secondary accountability check — primary pricing is handled in the quote tool. |
 
 ---
 
