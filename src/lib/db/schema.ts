@@ -156,6 +156,8 @@ export const vendors = pgTable("vendors", {
   // [{ name, email, is_primary }]
   invoice_contacts: jsonb("invoice_contacts"),
   // [{ name, email, is_primary }] — Phase 2 usage, schema added now
+  schedule_contacts: jsonb("schedule_contacts"),
+  // [{ name, email, is_primary }] — recipients for vendor schedule email
   checklist_template: jsonb("checklist_template"),
   // [{ label, done }]
   default_bottle_cost: numeric("default_bottle_cost", {
@@ -244,12 +246,21 @@ export const orders = pgTable(
       .default("Not Invoiced"),
     // See INVOICE_PAYMENT_STATUSES constant above.
 
+    // ── Invoice / QB fields ───────────────────────────────────────────────────
+    qb_invoice_number: text("qb_invoice_number"),
+    // QB invoice number — entered manually until Phase 2 QB integration
+    invoice_paid_date: date("invoice_paid_date"),
+    // Date customer paid the invoice — set by Accounting, triggers commission payout
+    commission_paid_date: date("commission_paid_date"),
+    // Friday payroll date when commission was paid to salesperson — set from /commission page
+    qb_synced_at: timestamp("qb_synced_at", { withTimezone: true }),
+    // Stamped by QB integration (Phase 2) after successful push/pull — null until then
+
     commission_status: text("commission_status")
       .notNull()
       .default("Not Eligible"),
     // See COMMISSION_STATUSES constant above.
 
-    qb_invoice_number: text("qb_invoice_number"),
     sales_order_number: text("sales_order_number"),
 
     is_blind_shipment: boolean("is_blind_shipment").notNull().default(false),
@@ -300,6 +311,8 @@ export const order_split_loads = pgTable(
       .references(() => orders.id, { onDelete: "cascade" }),
 
     description: text("description"),
+    // CSR convention: use "|" to separate product specs. BOL uses text before first "|".
+    // Example: "275 Gal Washout IBC | Valve-ANY QD | Lid-ANY NON-VENTED"
     part_number: text("part_number"),
     qty: numeric("qty", { precision: 10, scale: 2 }),
     buy: numeric("buy", { precision: 10, scale: 2 }),
@@ -366,7 +379,12 @@ export const company_settings = pgTable("company_settings", {
   email: text("email"),
   phone: text("phone"),
   logo_url: text("logo_url"),
-  // qbo_realm_id is Phase 2 (QuickBooks integration). Schema added now to avoid future migration.
+  // ── Schedule email distribution ───────────────────────────────────────────
+  admin_schedule_recipients: jsonb("admin_schedule_recipients"),
+  // [{ name, email }] — internal CSRs/owners who receive the admin schedule
+  frontline_schedule_contacts: jsonb("frontline_schedule_contacts"),
+  // [{ name, email }] — Frontline carrier contacts who receive the Frontline schedule
+  // ── Phase 2 (QuickBooks) ──────────────────────────────────────────────────
   qbo_realm_id: text("qbo_realm_id"),
   created_at: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -516,9 +534,3 @@ export const audit_logs = pgTable(
 
 export type AuditLog = typeof audit_logs.$inferSelect;
 export type NewAuditLog = typeof audit_logs.$inferInsert;
-
-// On order_split_loads, add this comment to description field:
-// CSR convention: use "|" to separate product specs. BOL uses text before first "|".
-// Example: "275 Gal Washout IBC | Valve-ANY QD | Lid-ANY NON-VENTED"
-
-// sales_order_number was added in session 3 — required by some vendors (e.g. Alliance)
