@@ -327,7 +327,7 @@ export default function OrderDetailPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Status</Label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status} onValueChange={(value) => { if (value !== null) setStatus(value); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {ORDER_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -336,7 +336,7 @@ export default function OrderDetailPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Order Type</Label>
-            <Select value={orderType} onValueChange={setOrderType}>
+            <Select value={orderType} onValueChange={(value) => { if (value !== null) setOrderType(value); }}>
               <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
               <SelectContent>
                 {ORDER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
@@ -353,7 +353,7 @@ export default function OrderDetailPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Terms</Label>
-            <Select value={terms} onValueChange={setTerms}>
+            <Select value={terms} onValueChange={(value) => { if (value !== null) setTerms(value); }}>
               <SelectTrigger><SelectValue placeholder="PPD / PPA / FOB" /></SelectTrigger>
               <SelectContent>
                 {TERMS_VALUES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
@@ -503,7 +503,7 @@ export default function OrderDetailPage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>Invoice Payment Status</Label>
-            <Select value={invoicePaymentStatus} onValueChange={setInvoicePaymentStatus}>
+            <Select value={invoicePaymentStatus} onValueChange={(value) => { if (value !== null) setInvoicePaymentStatus(value); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {INVOICE_PAYMENT_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -512,7 +512,7 @@ export default function OrderDetailPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Commission Status</Label>
-            <Select value={commissionStatus} onValueChange={setCommissionStatus}>
+            <Select value={commissionStatus} onValueChange={(value) => { if (value !== null) setCommissionStatus(value); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {COMMISSION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
