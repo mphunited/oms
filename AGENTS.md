@@ -117,6 +117,25 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 20. **PO PDF logic lives in src/lib/orders/build-po-pdf.tsx**
     **BOL PDF logic lives in src/lib/orders/build-bol-pdf.tsx**
     Route files handle data fetching only. PDF components handle rendering only.
+
+21. **invoice_paid_date and commission_paid_date are date columns on orders.**
+    invoice_paid_date = when customer paid. commission_paid_date = Friday payroll
+    date when commission was paid to salesperson. Both nullable. Set by Accounting.
+    commission_paid_date is set in bulk from /commission page, not the order form.
+
+22. **schedule_contacts is a jsonb array on vendors** — [{name, email, is_primary}]
+    Same shape as po_contacts. Used for vendor schedule email distribution.
+    Frontline and admin schedule recipients live in company_settings.
+
+23. **inArray() from drizzle-orm must be used for IN queries.** Never use
+    manual .in() on a column. Import inArray from 'drizzle-orm'.
+
+24. **Date display format is MM/DD/YYYY throughout the UI.** Stored format in
+    the database remains YYYY-MM-DD. Format on display only, never on storage.
+
+25. **Outlook Web deeplinks cannot attach files.** The email button opens a
+    compose window with pre-filled recipients, subject, and body. The PDF must
+    be attached manually by the user. Never claim otherwise in email body text.
 ---
 
 ## TECHNOLOGY STACK
@@ -321,8 +340,13 @@ Key routes:
 - /vendors — vendor list (built, working)
 - /vendors/[vendorId] — vendor detail + contacts + checklist template (built, working)
 - /recycling — recycling orders (not started)
-- /schedules — weekly schedule generation (not started)
-- /commission — commission report (not started)
+- /schedules — weekly schedule generation (built, needs inArray fix and real data test)
+- /commission — commission report with mark-paid workflow (built, needs real data test)
+- /api/schedules/admin-pdf — POST admin schedule PDF
+- /api/schedules/vendor-pdf — POST vendor/Frontline schedule PDF
+- /api/commission — GET commission data, role-filtered
+- /api/commission/mark-paid — POST bulk mark commission paid
+- /api/me — GET current user id/name/email/role
 
 ---
 
