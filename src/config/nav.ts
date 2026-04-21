@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
   ShoppingCart,
   Users,
@@ -8,7 +9,14 @@ import {
   Settings,
 } from "lucide-react";
 
-export const NAV_ITEMS = [
+export type NavItem = {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+  children?: NavItem[];
+};
+
+export const NAV_ITEMS: NavItem[] = [
   {
     title: "Orders",
     href: "/orders",
@@ -35,13 +43,15 @@ export const NAV_ITEMS = [
     icon: Receipt,
   },
   {
-    title: "Team",
-    href: "/team",
-    icon: UsersRound,
-  },
-  {
     title: "Settings",
     href: "/settings",
     icon: Settings,
+    children: [
+      {
+        title: "Team",
+        href: "/team",
+        icon: UsersRound,
+      },
+    ],
   },
-] as const;
+];
