@@ -314,7 +314,7 @@ function MarginCard({ control }: { control: Control<OrderFormValues> }) {
           </div>
         )}
         <div className="flex justify-between text-muted-foreground">
-          <span>âˆ’ COGS</span>
+          <span>− COGS</span>
           <span>${m.totalCOGS.toFixed(2)}</span>
         </div>
         {m.totalBottleCost > 0 && (
