@@ -101,6 +101,22 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     `npm run db:migrate` and other drizzle-kit CLI commands work without any
     manual env var setup. Do not remove the dotenv import from drizzle.config.ts.
 
+17. **@react-pdf/renderer cannot render SVG.** Always use PNG or JPG for images
+    in PDF components. Logo must be PNG. Stored at /public/mph-logo.png and
+    referenced via https://oms-jade.vercel.app/mph-logo.png in company_settings.
+
+18. **BOL description extraction uses bolDescription() helper** in
+    src/lib/orders/build-bol-pdf.tsx. Strips "SPLIT LOAD n — " prefix, takes
+    text before first "|". CSR convention: always use "|" to separate product
+    specs in description field.
+
+19. **product_weights table** stores canonical BOL product names and weights.
+    Seeded with 17 products. Do not hardcode weights anywhere — always query
+    this table.
+
+20. **PO PDF logic lives in src/lib/orders/build-po-pdf.tsx**
+    **BOL PDF logic lives in src/lib/orders/build-bol-pdf.tsx**
+    Route files handle data fetching only. PDF components handle rendering only.
 ---
 
 ## TECHNOLOGY STACK
