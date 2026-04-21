@@ -27,7 +27,7 @@ export function UserNav() {
             </Avatar>
             <div className="flex flex-col gap-0.5 leading-none">
               <span className="font-medium">User Name</span>
-              <span className="text-xs text-muted-foreground">user@example.com</span>
+              <span className="text-xs text-white/60">user@example.com</span>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-56">

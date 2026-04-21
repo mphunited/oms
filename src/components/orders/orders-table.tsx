@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Flag, Pencil, Copy } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { OrderStatusBadge } from '@/components/orders/order-status-badge'
+import { OrderStatusBadge, InvoiceStatusBadge } from '@/components/orders/order-status-badge'
 import type { OrderStatus } from '@/types/order'
 
 type SplitLoad = {
@@ -137,12 +136,7 @@ export function OrdersTable() {
                   {marginPct !== null ? `${marginPct.toFixed(1)}%` : '—'}
                 </td>
                 <td className="px-3 py-2">
-                  <Badge variant={
-                    order.invoice_payment_status === 'Paid'     ? 'default'      :
-                    order.invoice_payment_status === 'Invoiced' ? 'secondary'    : 'outline'
-                  }>
-                    {order.invoice_payment_status}
-                  </Badge>
+                  <InvoiceStatusBadge status={order.invoice_payment_status} />
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-1">
