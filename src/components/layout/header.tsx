@@ -19,10 +19,15 @@ function ThemeToggle() {
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       aria-label="Toggle theme"
-      className="relative inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-white/10 transition-colors text-white/80 hover:text-white"
+      className="inline-flex items-center gap-1.5 px-2 h-8 rounded-md hover:bg-white/10 transition-colors text-white/80 hover:text-white"
     >
-      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span className="relative inline-flex size-4 shrink-0">
+        <Sun className="absolute h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      </span>
+      <span className="text-sm text-white/80">
+        {theme === "dark" ? "Dark Mode" : "Light Mode"}
+      </span>
     </button>
   );
 }
