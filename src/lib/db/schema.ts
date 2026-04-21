@@ -516,3 +516,9 @@ export const audit_logs = pgTable(
 
 export type AuditLog = typeof audit_logs.$inferSelect;
 export type NewAuditLog = typeof audit_logs.$inferInsert;
+
+// On order_split_loads, add this comment to description field:
+// CSR convention: use "|" to separate product specs. BOL uses text before first "|".
+// Example: "275 Gal Washout IBC | Valve-ANY QD | Lid-ANY NON-VENTED"
+
+// sales_order_number was added in session 3 — required by some vendors (e.g. Alliance)
