@@ -519,6 +519,21 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | PO logo | mph-logo.png committed to /public. logo_url in company_settings set to 
   https://oms-jade.vercel.app/mph-logo.png. SVG cannot be used — @react-pdf/renderer 
   requires PNG or JPG. |
+| Outlook schedule email attachment | Outlook Web deeplinks cannot attach files 
+  programmatically. The Open in Outlook button pre-populates recipients, subject, 
+  and a text body including the schedule summary. The PDF must be attached manually. |
+| commission_paid_date | Set in bulk from /commission page by ADMIN or ACCOUNTING. 
+  Not editable on the order form. Represents the Friday payroll date. |
+| invoice_paid_date | Set on the order edit form by Accounting. Date the customer 
+  paid the invoice. Triggers commission payout eligibility. |
+| Date display format | MM/DD/YYYY throughout the UI. Database stores YYYY-MM-DD. 
+  Display formatting only — never change the stored value. |
+| /register route | Public register route exists and should be removed — 
+  single-tenant app, user management is admin-only via /team. Phase 1 cleanup item. |
+| schedule_contacts on vendors | jsonb array [{name, email, is_primary}]. Must be 
+  seeded per vendor in Supabase Studio before schedule emails pre-populate correctly. |
+| frontline_schedule_contacts and admin_schedule_recipients | jsonb arrays on 
+  company_settings. Must be seeded in Supabase Studio before use. |
 ---
 
 ## 22. What the Current Prototype Is NOT
