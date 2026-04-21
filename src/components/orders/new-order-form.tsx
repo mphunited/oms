@@ -116,8 +116,9 @@ const orderFormSchema = z.object({
   is_blind_shipment: z.boolean().default(false),
   is_revised:        z.boolean().default(false),
 
-  qb_invoice_number: z.string().optional(),
-  invoice_paid_date: z.string().optional(),
+  invoice_payment_status: z.string().optional(),
+  qb_invoice_number:      z.string().optional(),
+  invoice_paid_date:      z.string().optional(),
 
   split_loads: z.array(splitLoadSchema).min(1),
 })
@@ -1040,7 +1041,7 @@ export function NewOrderForm() {
       {/* â”€â”€ Sticky sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <aside className="w-64 shrink-0 space-y-4">
         <MarginCard control={form.control} />
-        <InvoicePanel register={form.register} />
+        <InvoicePanel control={form.control} />
       </aside>
     </form>
   )
