@@ -305,14 +305,15 @@ export default function OrderDetailPage() {
             <Copy className="h-3.5 w-3.5" />
             Duplicate
           </button>
-          <button
-            disabled
-            className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm opacity-50 cursor-not-allowed"
-            title="PO PDF — coming soon"
+          <a
+            href={`/api/orders/${orderId}/po-pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
           >
             <FileText className="h-3.5 w-3.5" />
             PO PDF
-          </button>
+          </a>
           <button
             disabled
             className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm opacity-50 cursor-not-allowed"
