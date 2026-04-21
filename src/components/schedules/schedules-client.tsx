@@ -263,7 +263,7 @@ export function SchedulesClient() {
           {loadingVendors ? (
             <div className="text-sm text-muted-foreground">Loading vendors…</div>
           ) : (
-            <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+            <Select value={selectedVendorId} onValueChange={(v) => setSelectedVendorId(v ?? '')}>
               <SelectTrigger id="vendor-select" className="h-8 w-64 text-sm">
                 <SelectValue placeholder="Choose a vendor" />
               </SelectTrigger>

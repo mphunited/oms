@@ -111,6 +111,7 @@ export async function fetchScheduleOrders(
     const split = splitMap.get(r.id);
     return {
       ...r,
+      ship_date: r.ship_date as string,
       vendorName: r.vendorName ?? "Unknown Vendor",
       vendorId: r.vendorId ?? "",
       shipTo: r.shipTo as Record<string, string> | null,

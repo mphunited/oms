@@ -113,14 +113,14 @@ export async function POST(req: NextRequest) {
       vendorName,
       isFrontline,
       generatedAt,
-    })
+    }) as React.ReactElement<any>
   );
 
   const filename = isFrontline
     ? `MPH-Frontline-Schedule-${startDate}-${endDate}.pdf`
     : `MPH-${vendorName}-Schedule-${startDate}-${endDate}.pdf`;
 
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(pdfBuffer as unknown as BodyInit, {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

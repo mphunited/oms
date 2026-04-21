@@ -182,7 +182,7 @@ export function CommissionClient() {
           {canMarkPaid && (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Salesperson</Label>
-              <Select value={salespersonId} onValueChange={setSalespersonId}>
+              <Select value={salespersonId} onValueChange={(v) => setSalespersonId(v ?? '')}>
                 <SelectTrigger className="h-8 w-44 text-sm">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
@@ -201,7 +201,7 @@ export function CommissionClient() {
           {/* Commission Status */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Commission Status</Label>
-            <Select value={commissionStatus} onValueChange={setCommissionStatus}>
+            <Select value={commissionStatus} onValueChange={(v) => setCommissionStatus(v ?? '')}>
               <SelectTrigger className="h-8 w-44 text-sm">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
@@ -217,7 +217,7 @@ export function CommissionClient() {
           {/* Invoice Status */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Invoice Status</Label>
-            <Select value={invoiceStatus} onValueChange={setInvoiceStatus}>
+            <Select value={invoiceStatus} onValueChange={(v) => setInvoiceStatus(v ?? '')}>
               <SelectTrigger className="h-8 w-40 text-sm">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
