@@ -11,7 +11,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -19,7 +18,17 @@ import {
 } from "@/components/ui/sidebar";
 import { UserNav } from "./user-nav";
 
-export function AppSidebar() {
+type CurrentUser = {
+  name: string | null;
+  email: string;
+  avatar_url: string | null;
+} | null;
+
+interface AppSidebarProps {
+  currentUser: CurrentUser;
+}
+
+export function AppSidebar({ currentUser }: AppSidebarProps) {
   const pathname = usePathname();
   const { setOpen } = useSidebar();
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,10 +48,6 @@ export function AppSidebar() {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <SidebarHeader>
-        <div className="px-2 py-1.5 text-sm font-semibold text-white">MPH United</div>
-      </SidebarHeader>
-
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -78,7 +83,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <UserNav />
+        <UserNav user={currentUser} />
       </SidebarFooter>
     </Sidebar>
   );
