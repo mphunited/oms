@@ -344,9 +344,8 @@ Flag | MPH PO | Status | Customer | Customer PO | Description | Qty | Ship Date 
 Wanted Date | Vendor | Buy | Sell | Ship To | Freight | Actions
 
 Rules:
-- Margin % shows red indicator when below 8%
 - Description has compact/full toggle
-- Flag column shows flag icon; clickable to toggle
+- Flag column shows flag icon; clickable to toggle; Flag column: lucide Flag icon, gold filled when true, gray outline when false.
 - Actions column: Edit, Duplicate, View PO, View BOL (when applicable)
 - Status is inline-editable
 - Table supports multi-select for bulk actions (bulk status update, bulk flag)
