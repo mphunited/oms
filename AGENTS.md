@@ -383,3 +383,13 @@ Do not attempt to fix the following — the fix breaks the toolchain:
   - Risk: only exploitable if running `drizzle-kit studio` locally while browsing a malicious site simultaneously
   - Fix would downgrade drizzle-kit to 0.18.1 — a breaking change from current 0.31.x
   - Decision: accept the risk. Never run `npm audit fix --force` to resolve this.
+
+  ## BRAND & THEME CONVENTIONS
+
+Colors: --mph-navy #00205B, --mph-gold #B88A44, --mph-gold-light #E5C678
+Sidebar: collapsible="icon" rail, navy background, gold active border, 
+         text-[15px] font-medium nav items, hover to expand/collapse (300ms debounce)
+Header: navy background, MPH logo left, white text/icons
+Login: navy gradient background, logo above card
+Primary buttons: navy bg, gold hover
+Status badges: color-coded lookup map in order-status-badge.tsx
