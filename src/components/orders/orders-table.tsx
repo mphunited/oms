@@ -75,6 +75,20 @@ export function OrdersTable() {
       .catch(err => { setError(err.message); setLoading(false) })
   }, [])
 
+  async function toggleFlag(id: string, current: boolean) {
+    setOrderRows(rows => rows.map(r => r.id === id ? { ...r, flag: !current } : r))
+    try {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flag: !current }),
+      })
+      if (!res.ok) throw new Error('Failed')
+    } catch {
+      setOrderRows(rows => rows.map(r => r.id === id ? { ...r, flag: current } : r))
+    }
+  }
+
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading orders…</p>
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
   if (!orderRows.length) return <p className="p-6 text-sm text-muted-foreground">No orders found.</p>
@@ -105,9 +119,16 @@ export function OrdersTable() {
           {orderRows.map(order => (
             <tr key={order.id} className="hover:bg-muted/30 transition-colors">
               <td className="px-2 py-2">
-                <Flag
-                  className={`h-4 w-4 ${order.flag ? 'text-[#B88A44] fill-[#B88A44]' : 'text-slate-300'}`}
-                />
+                <button
+                  type="button"
+                  onClick={() => toggleFlag(order.id, order.flag)}
+                  className="flex items-center justify-center h-6 w-6 rounded hover:bg-muted transition-colors"
+                  aria-label={order.flag ? 'Remove flag' : 'Flag order'}
+                >
+                  <Flag
+                    className={`h-4 w-4 ${order.flag ? 'text-[#B88A44] fill-[#B88A44]' : 'text-slate-300 hover:text-slate-400'}`}
+                  />
+                </button>
               </td>
               <td className="px-3 py-2 font-mono font-medium">
                 <Link href={`/orders/${order.id}`} className="hover:underline text-primary">
