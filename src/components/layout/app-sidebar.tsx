@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -14,14 +15,30 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { UserNav } from "./user-nav";
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { setOpen } = useSidebar();
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleMouseEnter() {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpen(true);
+  }
+
+  function handleMouseLeave() {
+    closeTimer.current = setTimeout(() => setOpen(false), 300);
+  }
 
   return (
-    <Sidebar>
+    <Sidebar
+      collapsible="icon"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <SidebarHeader>
         <div className="px-2 py-1.5 text-sm font-semibold text-white">MPH United</div>
       </SidebarHeader>
