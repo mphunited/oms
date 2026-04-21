@@ -23,7 +23,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="px-2 py-1.5 text-sm font-semibold">MPH United</div>
+        <div className="px-2 py-1.5 text-sm font-semibold text-white">MPH United</div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -37,11 +37,17 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       render={<Link href={item.href} />}
                       isActive={isActive}
+                      className={cn(
+                        "text-[15px] font-medium rounded-none",
+                        isActive
+                          ? "border-l-[3px] border-[#E5C678] bg-white/10 text-white font-semibold"
+                          : "text-white/70 hover:bg-white/10 hover:text-white border-l-[3px] border-transparent"
+                      )}
                     >
                       <item.icon
                         className={cn(
                           "size-4",
-                          isActive ? "text-primary" : "text-muted-foreground"
+                          isActive ? "text-[#E5C678]" : "text-white/50"
                         )}
                       />
                       <span>{item.title}</span>
