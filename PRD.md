@@ -432,29 +432,30 @@ This is the primary mechanism for repeat customer orders where most info stays t
 5. ✅ COMPLETE — Customers page — list + detail with contacts editor
 6. ✅ COMPLETE — Vendors page — list + detail with PO/BOL contacts sections + checklist template editor
 7. ✅ COMPLETE — Order detail/edit page — full edit form + checklist UI + PO PDF button (stubbed) + BOL button (stubbed) + Duplicate button (stubs to /orders/new, no pre-fill yet)
-8. PO PDF route — /api/orders/[orderId]/po-pdf
 
 ### Documents and schedules
-9. BOL PDF route
-10. Schedules page — admin schedule PDF + vendor/Frontline schedule PDF
+8.  ✅ COMPLETE — PO PDF route — /api/orders/[orderId]/po-pdf
+9.  ✅ COMPLETE — BOL PDF route — /api/orders/[orderId]/bol-pdf
+10. ✅ COMPLETE — Duplicate order button — /api/orders/duplicate/[orderId]
+11. Schedules page — admin schedule PDF + vendor/Frontline schedule PDF
 
 ### Recycling
-11. Recycling orders table + new recycling order form + detail page
+12. Recycling orders table + new recycling order form + detail page
 
 ### Reports and admin
-12. Commission report page
-13. Invoicing queue
-14. Admin/settings page (company settings, dropdown config, order number sequence)
-15. Dashboard (hero stats, status distribution, weekly chart)
-16. Financial snapshot (admin only)
+13. Commission report page
+14. Invoicing queue
+15. Admin/settings page (company settings, dropdown config, order number sequence)
+16. Dashboard (hero stats, status distribution, weekly chart)
+17. Financial snapshot (admin only)
 
 ### Data migration
-17. Import last 12 months from Excel
-18. Team/user management page
+18. Import last 12 months from Excel
+19. Team/user management page
 
 ---
 
-## 19. Phase 2 Features (Do NOT Build in Phase 1)
+## 20. Phase 2 Features (Do NOT Build in Phase 1)
 
 - QuickBooks Online integration (OAuth, push invoices/bills, payment sync, commission auto-trigger)
 - Invoice PDF generation and emailing
@@ -477,7 +478,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 
 ---
 
-## 20. Known Issues and Decisions Already Made
+## 21. Known Issues and Decisions Already Made
 
 | Issue | Decision |
 |-------|----------|
@@ -500,9 +501,28 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | .env vs .env.local | drizzle.config.ts loads .env.local explicitly via dotenv. Never put real credentials in .env — it is a blank template only. Real values go in .env.local which is gitignored. |
 | Duplicate order button | Redirects to /orders/new without pre-fill. Full duplicate logic per Section 16 is a follow-up task. |
 | LF/CRLF line endings | Git warns on src/app/api/orders/route.ts. Harmless on Windows. Do not run git config --global core.autocrlf to fix — leave as is. |
+| BOL ship-from | Always vendor → customer (standard). Reverse BOLs (customer → vendor) 
+  are rare and handled by manually editing the downloaded PDF. No toggle built. |
+| BOL description extraction | bolDescription() helper strips "SPLIT LOAD n — " prefix 
+  and takes everything before first "|". CSRs must use "|" to separate product specs 
+  in description field. Weights looked up from product_weights table by matching 
+  extracted name. Silent fallback to full description if no pipe present. |
+| BOL description alternative | bol_description dropdown on order_split_loads is the 
+  controlled alternative. Not built in Phase 1. If pipe convention proves unreliable, 
+  migrate to this approach. |
+| Sales order number | sales_order_number text column added to orders. Shown on PO as 
+  "SALES ORDER #". Required by at least one vendor. |
+| Product weights | product_weights table seeded with 17 canonical BOL product names 
+  and weights. Editable via future admin UI. |
+| BOL DB record | No bills_of_lading record created on BOL generation. Generated on 
+  demand only, same pattern as PO. bills_of_lading table remains in schema for 
+  future use. |
+| PO logo | mph-logo.png committed to /public. logo_url in company_settings set to 
+  https://oms-jade.vercel.app/mph-logo.png. SVG cannot be used — @react-pdf/renderer 
+  requires PNG or JPG. |
 ---
 
-## 21. What the Current Prototype Is NOT
+## 22. What the Current Prototype Is NOT
 
 The HTML prototype in `reference/` was built before the current schema. It uses different
 field names, different data structures, and different logic. Specifically:
@@ -518,7 +538,7 @@ data model reference or a logic reference.
 
 ---
 
-## 22. Development Workflow
+## 23. Development Workflow
 
 - Jack builds alone currently. Keith will return to the project eventually.
 - Claude Code creates git worktrees under `.claude/worktrees/` for each task.
@@ -535,7 +555,7 @@ When Keith eventually resumes:
 
 ---
 
-## 23. File Structure Reference
+## 24. File Structure Reference
 
 ```
 src/lib/db/schema.ts          — Drizzle schema, always read before writing queries
@@ -556,7 +576,7 @@ drizzle/                      — migration SQL files and snapshots
 
 ---
 
-## 24. Environment Variables
+## 25. Environment Variables
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://[project-ref].supabase.co
