@@ -19,6 +19,7 @@ import {
 import { OrderChecklist, type ChecklistItem } from '@/components/orders/order-checklist'
 import { OrderSplitLoadsEditor, type SplitLoadValue } from '@/components/orders/order-split-loads-editor'
 import { ORDER_STATUSES, ORDER_TYPES, INVOICE_PAYMENT_STATUSES, COMMISSION_STATUSES, TERMS_VALUES } from '@/lib/db/schema'
+import { toast } from 'sonner'
 
 type AddressValue = {
   name: string
@@ -265,9 +266,15 @@ export default function OrderDetailPage() {
 
   async function handleDuplicate() {
     if (!order) return
-    router.push('/orders/new')
-    // The new order form doesn't support pre-fill yet — this is a placeholder
-    // per PRD Phase 1 item 7. Full duplicate logic is a follow-up task.
+    try {
+      const res = await fetch(`/api/orders/duplicate/${orderId}`, { method: 'POST' })
+      if (!res.ok) throw new Error(`${res.status}`)
+      const data = await res.json() as { id: string }
+      toast.success('Order duplicated successfully')
+      router.push(`/orders/${data.id}`)
+    } catch (err) {
+      toast.error('Failed to duplicate order: ' + (err instanceof Error ? err.message : String(err)))
+    }
   }
 
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>
