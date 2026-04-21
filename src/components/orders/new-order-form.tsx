@@ -41,6 +41,7 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { InvoicePanel } from '@/components/orders/invoice-panel'
 
 // â”€â”€â”€ Schemas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -114,6 +115,9 @@ const orderFormSchema = z.object({
   flag:              z.boolean().default(false),
   is_blind_shipment: z.boolean().default(false),
   is_revised:        z.boolean().default(false),
+
+  qb_invoice_number: z.string().optional(),
+  invoice_paid_date: z.string().optional(),
 
   split_loads: z.array(splitLoadSchema).min(1),
 })
@@ -1034,8 +1038,9 @@ export function NewOrderForm() {
       </div>
 
       {/* â”€â”€ Sticky sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <aside className="w-64 shrink-0">
+      <aside className="w-64 shrink-0 space-y-4">
         <MarginCard control={form.control} />
+        <InvoicePanel register={form.register} />
       </aside>
     </form>
   )
