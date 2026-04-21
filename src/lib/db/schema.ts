@@ -250,6 +250,7 @@ export const orders = pgTable(
     // See COMMISSION_STATUSES constant above.
 
     qb_invoice_number: text("qb_invoice_number"),
+    sales_order_number: text("sales_order_number"),
 
     is_blind_shipment: boolean("is_blind_shipment").notNull().default(false),
     is_revised: boolean("is_revised").notNull().default(false),
@@ -273,6 +274,18 @@ export const orders = pgTable(
 
 export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
+
+// ─── product_weights ──────────────────────────────────────────────────────────
+
+export const product_weights = pgTable("product_weights", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  product_name: text("product_name").notNull().unique(),
+  weight_lbs: numeric("weight_lbs", { precision: 6, scale: 1 }).notNull(),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ProductWeight = typeof product_weights.$inferSelect;
+export type NewProductWeight = typeof product_weights.$inferInsert;
 
 // ─── order_split_loads ────────────────────────────────────────────────────────
 // Every order has at least one split load row. Use multiple rows for split-load
