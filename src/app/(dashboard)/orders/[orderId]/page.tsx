@@ -314,14 +314,15 @@ export default function OrderDetailPage() {
             <FileText className="h-3.5 w-3.5" />
             PO PDF
           </a>
-          <button
-            disabled
-            className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm opacity-50 cursor-not-allowed"
-            title="BOL — coming soon"
+          <a
+            href={`/api/orders/${orderId}/bol-pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
           >
             <Truck className="h-3.5 w-3.5" />
             BOL
-          </button>
+          </a>
         </div>
       </div>
 
