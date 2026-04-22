@@ -24,6 +24,7 @@ import { toast } from 'sonner'
 import { getMailToken } from '@/lib/email/msal-client'
 import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
 import { buildPoEmail, type OrderForPoEmail } from '@/lib/email/build-po-email'
+import { formatDate } from '@/lib/utils/format-date'
 
 type AddressValue = {
   name: string
@@ -84,6 +85,7 @@ type OrderDetail = {
 type VendorRow = {
   name: string
   po_contacts: unknown
+  bol_contacts: unknown
   address: unknown
 }
 
@@ -166,6 +168,10 @@ export default function OrderDetailPage() {
   const [greetingModalOpen, setGreetingModalOpen] = useState(false)
   const [defaultGreetingName, setDefaultGreetingName] = useState('')
   const [vendorForEmail, setVendorForEmail] = useState<VendorRow | null>(null)
+  const [emailingBol, setEmailingBol] = useState(false)
+  const [bolGreetingOpen, setBolGreetingOpen] = useState(false)
+  const [defaultBolGreeting, setDefaultBolGreeting] = useState('')
+  const [bolVendor, setBolVendor] = useState<VendorRow | null>(null)
 
   // Form state
   const [orderDate, setOrderDate]           = useState('')
@@ -364,6 +370,64 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function handleEmailBolClick() {
+    if (!order) return
+    let vendor: VendorRow | null = null
+    if (order.vendor_id) {
+      const res = await fetch(`/api/vendors/${order.vendor_id}`)
+      if (res.ok) vendor = await res.json() as VendorRow
+    }
+    setBolVendor(vendor)
+    const contacts = (vendor?.bol_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
+    const primary = contacts.find(c => c.is_primary) ?? contacts[0] ?? null
+    const firstName = primary ? (primary.name.split(' ')[0] ?? primary.name) : (vendor?.name ?? '')
+    setDefaultBolGreeting(firstName)
+    setBolGreetingOpen(true)
+  }
+
+  async function handleSendBolEmail(greetingName: string) {
+    setBolGreetingOpen(false)
+    setEmailingBol(true)
+    const toastId = toast.loading('Creating draft…')
+    try {
+      const contacts = (bolVendor?.bol_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
+      const primary = contacts.find(c => c.is_primary) ?? contacts[0] ?? null
+      const others = contacts.filter(c => c !== primary)
+      const to = primary?.email ? [primary.email] : []
+      const cc = others.map(c => c.email).filter((e): e is string => Boolean(e))
+
+      const vendorName = bolVendor?.name ?? order!.vendor_name ?? ''
+      const shipToAddr = shipTo
+      const shipToLine = shipToAddr
+        ? [shipToAddr.name, [shipToAddr.city, shipToAddr.state].filter(Boolean).join(', ')].filter(Boolean).join(', ')
+        : '—'
+      const shipDateFmt = formatDate(shipDate || order!.ship_date)
+
+      const subject = `MPH United BOL ${order!.order_number} -- ${vendorName} | Ship ${shipDateFmt}`
+
+      const bodyHtml = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;max-width:700px;line-height:1.6;">
+  <p style="margin:0 0 16px;">Hello ${greetingName},</p>
+  <p style="margin:0 0 16px;">Please find attached the Bill of Lading for MPH United order ${order!.order_number}, shipping to ${shipToLine} on ${shipDateFmt}.</p>
+  <p style="margin:0 0 24px;">Please confirm receipt at your earliest convenience.</p>
+  <p style="margin:0;">Thank you,<br/>MPH United</p>
+</div>`
+
+      const token = await getMailToken()
+      const pdfRes = await fetch(`/api/orders/${orderId}/bol-pdf`)
+      if (!pdfRes.ok) throw new Error('Failed to fetch BOL PDF')
+      const pdfBlob = await pdfRes.blob()
+      const base64 = await blobToBase64(pdfBlob)
+      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml })
+      await attachFileToDraft(token, messageId, `MPH BOL ${order!.order_number}.pdf`, base64)
+      toast.success('Draft created — opening Outlook', { id: toastId })
+      openDraft(webLink)
+    } catch (err) {
+      toast.error('Failed to create draft: ' + (err instanceof Error ? err.message : String(err)), { id: toastId })
+    } finally {
+      setEmailingBol(false)
+    }
+  }
+
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
   if (!order)  return null
@@ -416,8 +480,16 @@ export default function OrderDetailPage() {
             className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
           >
             <Truck className="h-3.5 w-3.5" />
-            BOL
+            Download BOL
           </a>
+          <button
+            onClick={handleEmailBolClick}
+            disabled={emailingBol}
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            {emailingBol ? 'Creating…' : 'Email BOL'}
+          </button>
         </div>
       </div>
 
@@ -663,6 +735,12 @@ export default function OrderDetailPage() {
         defaultName={defaultGreetingName}
         onConfirm={handleSendPoEmail}
         onCancel={() => setGreetingModalOpen(false)}
+      />
+      <GreetingModal
+        open={bolGreetingOpen}
+        defaultName={defaultBolGreeting}
+        onConfirm={handleSendBolEmail}
+        onCancel={() => setBolGreetingOpen(false)}
       />
 
     </div>
