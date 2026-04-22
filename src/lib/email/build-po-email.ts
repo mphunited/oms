@@ -43,7 +43,7 @@ export type OrderWithRelations = {
   po_notes: string | null
   vendor: VendorForEmail | null
   customer: CustomerForEmail | null
-  split_loads: SplitLoad[]
+  order_split_loads: SplitLoad[]
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ export function buildPoEmail(
   const headerRow = `<tr>${headers.map((h, i) => th(h, i === lastIdx ? 'right' : 'left')).join('')}</tr>`
 
   const dataRows = orders.flatMap(order =>
-    order.split_loads.map(load => {
+    order.order_split_loads.map(load => {
       const mpoPo = load.order_number_override || order.order_number
       const qty = load.qty != null ? parseFloat(load.qty) : null
       const sell = load.sell != null ? parseFloat(load.sell) : null

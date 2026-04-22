@@ -162,7 +162,7 @@ export function OrdersTable() {
         po_notes: o.po_notes ?? null,
         vendor: { name: vendor.name, address: vendor.address ?? null, po_contacts: vendor.po_contacts ?? null },
         customer: o.customer_name ? { name: o.customer_name } : null,
-        split_loads: (o.split_loads ?? []).map((l: any) => ({
+        order_split_loads: (o.split_loads ?? []).map((l: any) => ({
           description: l.description ?? null,
           part_number: l.part_number ?? null,
           qty: l.qty ?? null,
