@@ -22,6 +22,7 @@ export interface ScheduleOrderRow {
   customerName: string;
   salespersonName: string | null;
   csrName: string | null;
+  csr2Name: string | null;
   shipTo: Record<string, string> | null;
   // line item aggregates (first line item only for schedule display)
   description: string | null;
@@ -39,6 +40,7 @@ export async function fetchScheduleOrders(
 ): Promise<ScheduleOrderRow[]> {
   const salespersonAlias = alias(users, "salesperson");
   const csrAlias = alias(users, "csr");
+  const csr2Alias = alias(users, "csr2");
 
   const conditions = [
     isNotNull(orders.ship_date),
@@ -70,6 +72,7 @@ export async function fetchScheduleOrders(
       customerName: customers.name,
       salespersonName: salespersonAlias.name,
       csrName: csrAlias.name,
+      csr2Name: csr2Alias.name,
       shipTo: orders.ship_to,
     })
     .from(orders)
@@ -77,6 +80,7 @@ export async function fetchScheduleOrders(
     .leftJoin(vendors, eq(orders.vendor_id, vendors.id))
     .leftJoin(salespersonAlias, eq(orders.salesperson_id, salespersonAlias.id))
     .leftJoin(csrAlias, eq(orders.csr_id, csrAlias.id))
+    .leftJoin(csr2Alias, eq(orders.csr2_id, csr2Alias.id))
     .where(and(...conditions))
     .orderBy(orders.ship_date, vendors.name);
 
@@ -109,6 +113,7 @@ export async function fetchScheduleOrders(
       ship_date: r.ship_date as string,
       vendorName: r.vendorName ?? "Unknown Vendor",
       vendorId: r.vendorId ?? "",
+      csr2Name: r.csr2Name ?? null,
       shipTo: r.shipTo as Record<string, string> | null,
       description: split?.description ?? null,
       part_number: split?.part_number ?? null,

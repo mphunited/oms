@@ -212,7 +212,13 @@ export function AdminSchedulePdf({
                 <Text style={[styles.cell, { width: COL.mph_po }]}>{o.order_number}</Text>
                 <Text style={[styles.cell, { width: COL.cust_po }]}>{o.customer_po ?? "—"}</Text>
                 <Text style={[styles.cell, { width: COL.salesperson }]}>
-                  {[o.salespersonName, o.csrName].filter(Boolean).join(" / ") || "—"}
+                  {(() => {
+                    const salesFirst = (o.salespersonName ?? "").split(" ")[0] || "";
+                    const csrFirst = (o.csrName ?? "").split(" ")[0] || "";
+                    const csr2First = (o.csr2Name ?? "").split(" ")[0] || "";
+                    const csrDisplay = csr2First ? `${csrFirst} / ${csr2First}` : csrFirst;
+                    return [salesFirst, csrDisplay].filter(Boolean).join(" / ") || "—";
+                  })()}
                 </Text>
                 <Text style={[styles.cell, { width: COL.description }]}>{o.description ?? "—"}</Text>
                 <Text style={[styles.cell, { width: COL.qty }]}>{o.qty ?? "—"}</Text>

@@ -189,7 +189,13 @@ export function VendorSchedulePdf({
               <View key={o.id} style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]}>
                 <Text style={[styles.cell, { width: FRONTLINE_COL.vendor }]}>{o.vendorName}</Text>
                 <Text style={[styles.cell, { width: FRONTLINE_COL.salesperson }]}>
-                  {[o.salespersonName, o.csrName].filter(Boolean).join(" / ") || "—"}
+                  {(() => {
+                    const salesFirst = (o.salespersonName ?? "").split(" ")[0] || "";
+                    const csrFirst = (o.csrName ?? "").split(" ")[0] || "";
+                    const csr2First = (o.csr2Name ?? "").split(" ")[0] || "";
+                    const csrDisplay = csr2First ? `${csrFirst} / ${csr2First}` : csrFirst;
+                    return [salesFirst, csrDisplay].filter(Boolean).join(" / ") || "—";
+                  })()}
                 </Text>
                 <Text style={[styles.cell, { width: FRONTLINE_COL.mph_po }]}>{o.order_number}</Text>
                 <Text style={[styles.cell, { width: FRONTLINE_COL.cust_po }]}>{o.customer_po ?? "—"}</Text>
@@ -229,7 +235,13 @@ export function VendorSchedulePdf({
               <View key={o.id} style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]}>
                 <Text style={[styles.cell, { width: VENDOR_COL.vendor }]}>{o.vendorName}</Text>
                 <Text style={[styles.cell, { width: VENDOR_COL.salesperson }]}>
-                  {[o.salespersonName, o.csrName].filter(Boolean).join(" / ") || "—"}
+                  {(() => {
+                    const salesFirst = (o.salespersonName ?? "").split(" ")[0] || "";
+                    const csrFirst = (o.csrName ?? "").split(" ")[0] || "";
+                    const csr2First = (o.csr2Name ?? "").split(" ")[0] || "";
+                    const csrDisplay = csr2First ? `${csrFirst} / ${csr2First}` : csrFirst;
+                    return [salesFirst, csrDisplay].filter(Boolean).join(" / ") || "—";
+                  })()}
                 </Text>
                 <Text style={[styles.cell, { width: VENDOR_COL.mph_po }]}>{o.order_number}</Text>
                 <Text style={[styles.cell, { width: VENDOR_COL.cust_po }]}>{o.customer_po ?? "—"}</Text>

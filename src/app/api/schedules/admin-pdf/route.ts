@@ -1,6 +1,6 @@
 // src/app/api/schedules/admin-pdf/route.ts
 // POST /api/schedules/admin-pdf
-// Generates admin schedule PDF. Returns PDF blob + shipment count + email URL headers.
+// Generates admin schedule PDF. Returns PDF blob + shipment count + email headers.
 // Requires nodejs runtime for @react-pdf/renderer.
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ import { db } from "@/lib/db";
 import { company_settings } from "@/lib/db/schema";
 import { fetchScheduleOrders } from "@/lib/schedules/fetch-schedule-data";
 import { AdminSchedulePdf } from "@/lib/schedules/build-admin-schedule-pdf";
-import { buildScheduleEmailUrl } from "@/lib/schedules/email-utils";
+import { formatDate } from "@/lib/utils/format-date";
 
 export async function POST(req: NextRequest) {
   // Auth check
@@ -39,32 +39,8 @@ export async function POST(req: NextRequest) {
   }).from(company_settings).limit(1);
 
   const recipients = (settings?.admin_schedule_recipients ?? []) as Array<{ name: string; email: string }>;
-
-  // Build plain-text schedule body for email
-  const scheduleBodyLines: string[] = [];
-  const grouped = new Map<string, typeof orders>();
-  for (const o of orders) {
-    if (!grouped.has(o.vendorName)) grouped.set(o.vendorName, []);
-    grouped.get(o.vendorName)!.push(o);
-  }
-  for (const [vendor, vendorOrders] of grouped) {
-    scheduleBodyLines.push(`\n${vendor} (${vendorOrders.length})`);
-    for (const o of vendorOrders) {
-      const shipDate = o.ship_date ?? "—";
-      scheduleBodyLines.push(
-        `  ${o.order_number} | ${o.customerName} | ${o.description ?? "—"} | Qty: ${o.qty ?? "—"} | Ship: ${shipDate}`
-      );
-    }
-  }
-
-  const emailUrl = buildScheduleEmailUrl({
-    type: "admin",
-    startDate,
-    endDate,
-    toContacts: recipients,
-    shipmentCount: orders.length,
-    scheduleBodyText: scheduleBodyLines.join("\n"),
-  });
+  const toEmails = recipients.map((r) => r.email).filter(Boolean).join(",");
+  const subject = `MPH United — Mike's Schedule ${formatDate(startDate)} to ${formatDate(endDate)}`;
 
   // Render PDF
   const generatedAt = new Date().toLocaleString("en-US", {
@@ -88,7 +64,9 @@ export async function POST(req: NextRequest) {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="MPH-Admin-Schedule-${startDate}-${endDate}.pdf"`,
       "x-shipment-count": String(orders.length),
-      "x-email-url": emailUrl,
+      "x-email-to": toEmails,
+      "x-email-cc": "",
+      "x-email-subject": subject,
     },
   });
 }

@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { CalendarDays, FileText, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getMonFri } from "@/lib/schedules/date-utils";
-import { parseScheduleEmailUrl, type ScheduleEmailDraft } from "@/lib/schedules/email-utils";
+import type { ScheduleEmailDraft } from "@/lib/schedules/email-utils";
 import { getMailToken } from "@/lib/email/msal-client";
 import { createDraft, attachFileToDraft, openDraft } from "@/lib/email/graph-mail";
 import { getUserSignature } from "@/lib/email/get-user-signature";
@@ -27,11 +27,6 @@ interface VendorOption {
 }
 
 type ScheduleType = "admin" | "vendor" | "frontline";
-
-function fmtDraftDates(d: ScheduleEmailDraft, s: string, e: string): ScheduleEmailDraft {
-  const [fs, fe] = [formatDate(s), formatDate(e)];
-  return { ...d, subject: d.subject.replaceAll(s, fs).replaceAll(e, fe), bodyHtml: d.bodyHtml.replaceAll(s, fs).replaceAll(e, fe) };
-}
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -85,9 +80,21 @@ export function SchedulesClient() {
       });
       if (!res.ok) throw new Error(await res.text());
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
-      const emailUrl = res.headers.get("x-email-url");
+      const emailTo = res.headers.get("x-email-to") ?? "";
+      const emailCc = res.headers.get("x-email-cc") ?? "";
+      const emailSubject = res.headers.get("x-email-subject") ?? "";
       setAdminCount(count);
-      if (emailUrl) setAdminEmailDraft(fmtDraftDates(parseScheduleEmailUrl(emailUrl), startDate, endDate));
+      if (emailTo) {
+        const formattedStart = formatDate(startDate);
+        const formattedEnd = formatDate(endDate);
+        const draft: ScheduleEmailDraft = {
+          to: emailTo.split(",").filter(Boolean),
+          cc: emailCc.split(",").filter(Boolean),
+          subject: emailSubject,
+          bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
+        };
+        setAdminEmailDraft(draft);
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -116,12 +123,20 @@ export function SchedulesClient() {
       });
       if (!res.ok) throw new Error(await res.text());
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
-      const emailUrl = res.headers.get("x-email-url");
-      const emailCc = res.headers.get("x-email-cc");
+      const emailTo = res.headers.get("x-email-to") ?? "";
+      const emailCc = res.headers.get("x-email-cc") ?? "";
+      const emailSubject = res.headers.get("x-email-subject") ?? "";
       setVendorCount(count);
-      if (emailUrl) {
-        const draft = fmtDraftDates(parseScheduleEmailUrl(emailUrl), startDate, endDate);
-        setVendorEmailDraft({ ...draft, cc: emailCc ? emailCc.split(",").filter(Boolean) : [] });
+      if (emailTo) {
+        const formattedStart = formatDate(startDate);
+        const formattedEnd = formatDate(endDate);
+        const draft: ScheduleEmailDraft = {
+          to: emailTo.split(",").filter(Boolean),
+          cc: emailCc.split(",").filter(Boolean),
+          subject: emailSubject,
+          bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
+        };
+        setVendorEmailDraft(draft);
       }
       const vendorName = vendors.find((v) => v.id === selectedVendorId)?.name ?? "Vendor";
       const blob = await res.blob();
@@ -151,9 +166,21 @@ export function SchedulesClient() {
       });
       if (!res.ok) throw new Error(await res.text());
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
-      const emailUrl = res.headers.get("x-email-url");
+      const emailTo = res.headers.get("x-email-to") ?? "";
+      const emailCc = res.headers.get("x-email-cc") ?? "";
+      const emailSubject = res.headers.get("x-email-subject") ?? "";
       setFrontlineCount(count);
-      if (emailUrl) setFrontlineEmailDraft(fmtDraftDates(parseScheduleEmailUrl(emailUrl), startDate, endDate));
+      if (emailTo) {
+        const formattedStart = formatDate(startDate);
+        const formattedEnd = formatDate(endDate);
+        const draft: ScheduleEmailDraft = {
+          to: emailTo.split(",").filter(Boolean),
+          cc: emailCc.split(",").filter(Boolean),
+          subject: emailSubject,
+          bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
+        };
+        setFrontlineEmailDraft(draft);
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -228,7 +255,7 @@ export function SchedulesClient() {
       <div className="rounded-lg border border-border bg-card p-5 space-y-3">
         <div>
           <h2 className="text-base font-semibold text-foreground">Mike's Schedule</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">All active orders grouped by vendor. Includes pricing. Sent to internal team.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">All active orders grouped by vendor. Includes pricing. Sent to Mike and David.</p>
         </div>
         <Separator />
         <div className="flex flex-wrap items-center gap-3">
