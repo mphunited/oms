@@ -25,6 +25,7 @@ let _initialized = false;
 async function ensureInitialized() {
   if (!_initialized) {
     await msalInstance.initialize();
+    await msalInstance.handleRedirectPromise();
     _initialized = true;
   }
 }
