@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
   // Determine vendor name and email contacts
   let vendorName = "Frontline";
   let toContacts: Array<{ name: string; email: string }> = [];
+  let ccEmails = "";
 
   if (isFrontline) {
     const [settings] = await db.select({
@@ -75,7 +76,12 @@ export async function POST(req: NextRequest) {
       return new NextResponse("Vendor not found", { status: 404 });
     }
     vendorName = vendor.name;
-    toContacts = (vendor.schedule_contacts ?? []) as Array<{ name: string; email: string }>;
+    const allContacts = (vendor.schedule_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>;
+    const primary = allContacts.filter((c) => c.is_primary);
+    toContacts = primary.length > 0 ? primary : allContacts;
+    if (primary.length > 0) {
+      ccEmails = allContacts.filter((c) => !c.is_primary).map((c) => c.email).filter(Boolean).join(",");
+    }
   }
 
   // Build plain-text schedule body for email
@@ -127,6 +133,7 @@ export async function POST(req: NextRequest) {
       "Content-Disposition": `attachment; filename="${filename}"`,
       "x-shipment-count": String(scheduleOrders.length),
       "x-email-url": emailUrl,
+      "x-email-cc": ccEmails,
     },
   });
 }
