@@ -82,7 +82,7 @@ export function SchedulesClient() {
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
       const emailTo = res.headers.get("x-email-to") ?? "";
       const emailCc = res.headers.get("x-email-cc") ?? "";
-      const emailSubject = res.headers.get("x-email-subject") ?? "";
+      const emailSubject = (res.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
       setAdminCount(count);
       if (emailTo) {
         const formattedStart = formatDate(startDate);
@@ -125,7 +125,7 @@ export function SchedulesClient() {
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
       const emailTo = res.headers.get("x-email-to") ?? "";
       const emailCc = res.headers.get("x-email-cc") ?? "";
-      const emailSubject = res.headers.get("x-email-subject") ?? "";
+      const emailSubject = (res.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
       setVendorCount(count);
       if (emailTo) {
         const formattedStart = formatDate(startDate);
@@ -168,7 +168,7 @@ export function SchedulesClient() {
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
       const emailTo = res.headers.get("x-email-to") ?? "";
       const emailCc = res.headers.get("x-email-cc") ?? "";
-      const emailSubject = res.headers.get("x-email-subject") ?? "";
+      const emailSubject = (res.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
       setFrontlineCount(count);
       if (emailTo) {
         const formattedStart = formatDate(startDate);

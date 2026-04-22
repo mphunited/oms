@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
   }
 
   const subject = isFrontline
-    ? `MPH United — Frontline Schedule ${formatDate(startDate)} to ${formatDate(endDate)}`
-    : `MPH United — ${vendorName} Schedule ${formatDate(startDate)} to ${formatDate(endDate)}`;
+    ? `MPH United - Frontline Schedule ${formatDate(startDate)} to ${formatDate(endDate)}`
+    : `MPH United - ${vendorName} Schedule ${formatDate(startDate)} to ${formatDate(endDate)}`;
 
   // Render PDF
   const generatedAt = new Date().toLocaleString("en-US", {
