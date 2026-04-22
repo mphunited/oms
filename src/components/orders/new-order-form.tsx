@@ -84,6 +84,7 @@ const orderFormSchema = z.object({
   order_date:     z.string().min(1, 'Required'),
   salesperson_id: z.string().min(1, 'Required'),
   csr_id:         z.string().min(1, 'Required'),
+  csr2_id:        z.string().nullable().optional(),
   status:         z.string().min(1, 'Required'),
   order_type:     z.string().min(1, 'Required'),
 
@@ -649,6 +650,19 @@ export function NewOrderForm() {
               {form.formState.errors.csr_id && (
                 <p className="text-xs text-destructive">{form.formState.errors.csr_id.message}</p>
               )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>CSR 2 (optional)</Label>
+              <Select
+                value={watchedValues.csr2_id ?? 'none'}
+                onValueChange={v => form.setValue('csr2_id', v === 'none' ? null : v)}
+              >
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {csrOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </section>

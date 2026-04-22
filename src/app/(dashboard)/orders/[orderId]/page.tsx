@@ -51,6 +51,7 @@ type OrderDetail = {
   vendor_id: string | null
   salesperson_id: string | null
   csr_id: string | null
+  csr2_id: string | null
   customer_po: string | null
   freight_carrier: string | null
   ship_date: string | null
@@ -80,6 +81,7 @@ type OrderDetail = {
   vendor_name: string | null
   salesperson_name: string | null
   csr_name: string | null
+  csr2_name: string | null
 }
 
 type VendorRow = {
@@ -164,6 +166,9 @@ export default function OrderDetailPage() {
   const [error, setError]     = useState<string | null>(null)
   const [saving, setSaving]   = useState(false)
   const [saved, setSaved]     = useState(false)
+  const [userOptions, setUserOptions] = useState<Array<{ id: string; name: string | null; role: string }>>([])
+  const [csrId, setCsrId]     = useState('')
+  const [csr2Id, setCsr2Id]   = useState('')
   const [emailingPo, setEmailingPo] = useState(false)
   const [emailingBol, setEmailingBol] = useState(false)
 
@@ -197,10 +202,13 @@ export default function OrderDetailPage() {
   const [splitLoads, setSplitLoads]         = useState<SplitLoadValue[]>([])
 
   useEffect(() => {
+    fetch('/api/users').then(r => r.json()).then(setUserOptions).catch(() => {})
     fetch(`/api/orders/${orderId}`)
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() as Promise<OrderDetail> })
       .then(data => {
         setOrder(data)
+        setCsrId(data.csr_id ?? '')
+        setCsr2Id(data.csr2_id ?? '')
         setOrderDate(data.order_date ?? '')
         setOrderType(data.order_type ?? '')
         setStatus(data.status)
@@ -255,6 +263,8 @@ export default function OrderDetailPage() {
           order_date: orderDate || null,
           order_type: orderType || null,
           status,
+          csr_id: csrId || null,
+          csr2_id: csr2Id || null,
           customer_po: customerPo || null,
           freight_carrier: freightCarrier || null,
           ship_date: shipDate || null,
@@ -400,6 +410,8 @@ export default function OrderDetailPage() {
     }
   }
 
+  const csrOptions = userOptions.filter(u => u.role === 'CSR' || u.role === 'ADMIN')
+
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
   if (!order)  return null
@@ -523,6 +535,25 @@ export default function OrderDetailPage() {
           <div className="col-span-3 space-y-1.5">
             <Label>Appointment Notes</Label>
             <Input value={appointmentNotes} onChange={e => setAppointmentNotes(e.target.value)} placeholder="Optional" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>CSR</Label>
+            <Select value={csrId} onValueChange={setCsrId}>
+              <SelectTrigger><SelectValue placeholder="Select CSR" /></SelectTrigger>
+              <SelectContent>
+                {csrOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>CSR 2 (optional)</Label>
+            <Select value={csr2Id || 'none'} onValueChange={v => setCsr2Id(v === 'none' ? '' : v)}>
+              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {csrOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </section>

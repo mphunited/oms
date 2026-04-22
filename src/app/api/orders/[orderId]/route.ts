@@ -40,6 +40,10 @@ export async function GET(
     ? await db.query.users.findFirst({ where: eq(users.id, order.csr_id) })
     : null
 
+  const csr2 = order.csr2_id
+    ? await db.query.users.findFirst({ where: eq(users.id, order.csr2_id) })
+    : null
+
   return NextResponse.json({
     ...order,
     split_loads: loads,
@@ -47,6 +51,7 @@ export async function GET(
     vendor_name: vendor?.name ?? null,
     salesperson_name: salesperson?.name ?? null,
     csr_name: csr?.name ?? null,
+    csr2_name: csr2?.name ?? null,
   })
 }
 
@@ -64,7 +69,7 @@ export async function PATCH(
     const body = await req.json()
     const { split_loads, ...orderFields } = body
 
-    for (const key of ['order_date', 'ship_date', 'wanted_date', 'appointment_time']) {
+    for (const key of ['order_date', 'ship_date', 'wanted_date', 'appointment_time', 'csr_id', 'csr2_id']) {
       if (orderFields[key] === '') orderFields[key] = null
     }
 

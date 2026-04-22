@@ -1,0 +1,2 @@
+ALTER TABLE "orders" ADD COLUMN "csr2_id" uuid;--> statement-breakpoint
+ALTER TABLE "orders" ADD CONSTRAINT "orders_csr2_id_users_id_fk" FOREIGN KEY ("csr2_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

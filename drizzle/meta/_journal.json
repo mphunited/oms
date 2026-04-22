@@ -64,6 +64,13 @@
       "when": 1776888225270,
       "tag": "0008_simple_the_twelve",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776892430399,
+      "tag": "0009_dry_gamora",
+      "breakpoints": true
     }
   ]
 }
