@@ -538,7 +538,7 @@ export default function OrderDetailPage() {
           </div>
           <div className="space-y-1.5">
             <Label>CSR</Label>
-            <Select value={csrId} onValueChange={setCsrId}>
+            <Select value={csrId} onValueChange={(v) => setCsrId(v ?? "")}>
               <SelectTrigger><SelectValue placeholder="Select CSR" /></SelectTrigger>
               <SelectContent>
                 {csrOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}
