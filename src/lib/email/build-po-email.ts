@@ -215,7 +215,6 @@ export function buildPoEmail(
   </table>
   ${below.length ? `<div style="margin-bottom:20px;">${below.join('')}</div>` : ''}
   <p style="margin:0 0 24px;">${closing}</p>
-  <p style="margin:0;">Thank you,<br/>MPH United</p>
 </div>`
 
   return { subject, bodyHtml, to, cc }
