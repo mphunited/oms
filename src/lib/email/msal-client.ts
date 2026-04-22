@@ -14,7 +14,7 @@ const msalConfig = {
     authority:
       "https://login.microsoftonline.com/3abf2937-e518-43e5-b2a4-456eecfa8b00",
     redirectUri:
-      typeof window !== "undefined" ? `${window.location.origin}/msal-callback` : "http://localhost:3000/msal-callback",
+      typeof window !== "undefined" ? window.location.origin + "/msal-callback.html" : "http://localhost:3000/msal-callback.html",
   },
 };
 
