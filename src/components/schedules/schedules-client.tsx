@@ -18,6 +18,7 @@ import { getMonFri } from "@/lib/schedules/date-utils";
 import { parseScheduleEmailUrl, type ScheduleEmailDraft } from "@/lib/schedules/email-utils";
 import { getMailToken } from "@/lib/email/msal-client";
 import { createDraft, attachFileToDraft, openDraft } from "@/lib/email/graph-mail";
+import { getUserSignature } from "@/lib/email/get-user-signature";
 
 interface VendorOption {
   id: string;
@@ -164,7 +165,7 @@ export function SchedulesClient() {
     setEmailingSchedule(type);
     const toastId = toast.loading("Creating draft…");
     try {
-      const token = await getMailToken();
+      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()]);
       let pdfRes: Response;
       if (type === "admin") {
         pdfRes = await fetch("/api/schedules/admin-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ startDate, endDate }) });
@@ -175,7 +176,7 @@ export function SchedulesClient() {
       }
       if (!pdfRes.ok) throw new Error("Failed to fetch schedule PDF");
       const base64 = await blobToBase64(await pdfRes.blob());
-      const { id: messageId, webLink } = await createDraft(token, { to: draft.to, cc: [], subject: draft.subject, bodyHtml: draft.bodyHtml });
+      const { id: messageId, webLink } = await createDraft(token, { to: draft.to, cc: [], subject: draft.subject, bodyHtml: draft.bodyHtml, signature });
       await attachFileToDraft(token, messageId, `MPH Schedule ${startDate}.pdf`, base64);
       toast.success("Draft created — opening Outlook", { id: toastId });
       openDraft(webLink);

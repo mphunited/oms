@@ -10,6 +10,7 @@ import { formatDate } from '@/lib/utils/format-date'
 import { getMailToken } from '@/lib/email/msal-client'
 import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
 import { buildPoEmail, type OrderWithRelations } from '@/lib/email/build-po-email'
+import { getUserSignature } from '@/lib/email/get-user-signature'
 
 type SplitLoad = {
   description: string | null
@@ -172,7 +173,7 @@ export function OrdersTable() {
       const count = ordersForEmail.length
       toast.loading(`Creating draft with ${count} PDF${count > 1 ? 's' : ''}…`, { id: toastId })
       const { subject, bodyHtml, to, cc } = buildPoEmail(ordersForEmail, vendor.name ?? '')
-      const token = await getMailToken()
+      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
       const pdfResults = await Promise.all(
         ordersForEmail.map(o =>
           fetch(`/api/orders/${o.id}/po-pdf`).then(async r => {
@@ -181,7 +182,7 @@ export function OrdersTable() {
           })
         )
       )
-      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml })
+      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
       for (const { filename, base64 } of pdfResults) {
         await attachFileToDraft(token, messageId, filename, base64)
       }
@@ -231,7 +232,7 @@ export function OrdersTable() {
   <p style="margin:16px 0 0;">Thank you,<br/>MPH United</p>
 </div>`
 
-      const token = await getMailToken()
+      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
       const pdfResults = await Promise.all(
         fullOrders.map(o =>
           fetch(`/api/orders/${o.id}/bol-pdf`).then(async r => {
@@ -240,7 +241,7 @@ export function OrdersTable() {
           })
         )
       )
-      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml })
+      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
       for (const { filename, base64 } of pdfResults) {
         await attachFileToDraft(token, messageId, filename, base64)
       }
