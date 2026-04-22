@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Flag, Pencil, Copy, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { OrderStatusBadge } from '@/components/orders/order-status-badge'
-import { GreetingModal } from '@/components/email/GreetingModal'
 import type { OrderStatus } from '@/types/order'
 import { formatDate } from '@/lib/utils/format-date'
 import { getMailToken } from '@/lib/email/msal-client'
@@ -81,11 +80,9 @@ export function OrdersTable() {
   const [orderRows, setOrderRows] = useState<OrderRow[]>([])
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState<string | null>(null)
-  const [selectedIds, setSelectedIds]             = useState<Set<string>>(new Set())
-  const [emailingPos, setEmailingPos]             = useState(false)
-  const [posGreetingOpen, setPosGreetingOpen]     = useState(false)
-  const [defaultPosGreeting, setDefaultPosGreeting] = useState('')
-  const [fullOrdersForEmail, setFullOrdersForEmail] = useState<FullOrderForEmail[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [emailingPos, setEmailingPos] = useState(false)
+  const [emailingBols, setEmailingBols] = useState(false)
 
   useEffect(() => {
     fetch('/api/orders')
@@ -125,32 +122,33 @@ export function OrdersTable() {
     setSelectedIds(allSelected ? new Set() : new Set(orderRows.map(r => r.id)))
   }
 
+  async function fetchOrdersAndVendor(ids: string[]) {
+    const fullOrders = await Promise.all(
+      ids.map(id =>
+        fetch(`/api/orders/${id}`).then(r => {
+          if (!r.ok) throw new Error(`Failed to fetch order ${id}`)
+          return r.json()
+        })
+      )
+    )
+    const vendorIds = [...new Set((fullOrders as any[]).map(o => o.vendor_id).filter(Boolean))]
+    if (vendorIds.length > 1) throw new Error('__SAME_VENDOR__')
+    if (vendorIds.length === 0) throw new Error('__NO_VENDOR__')
+    const vendorRes = await fetch(`/api/vendors/${vendorIds[0]}`)
+    if (!vendorRes.ok) throw new Error('Failed to fetch vendor details')
+    const vendor = await vendorRes.json()
+    return { fullOrders: fullOrders as any[], vendor }
+  }
+
   async function handleEmailPosClick() {
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
+    setEmailingPos(true)
+    const toastId = toast.loading('Creating draft…')
     try {
-      const fullOrders = await Promise.all(
-        ids.map(id =>
-          fetch(`/api/orders/${id}`).then(r => {
-            if (!r.ok) throw new Error(`Failed to fetch order ${id}`)
-            return r.json()
-          })
-        )
-      )
-      const vendorIds = [...new Set((fullOrders as any[]).map(o => o.vendor_id).filter(Boolean))]
-      if (vendorIds.length > 1) {
-        toast.error('All selected orders must be from the same vendor')
-        return
-      }
-      if (vendorIds.length === 0) {
-        toast.error('Selected orders have no vendor assigned')
-        return
-      }
-      const vendorRes = await fetch(`/api/vendors/${vendorIds[0]}`)
-      if (!vendorRes.ok) throw new Error('Failed to fetch vendor details')
-      const vendor = await vendorRes.json()
+      const { fullOrders, vendor } = await fetchOrdersAndVendor(ids)
 
-      const ordersForEmail: FullOrderForEmail[] = (fullOrders as any[]).map(o => ({
+      const ordersForEmail: FullOrderForEmail[] = fullOrders.map(o => ({
         id: o.id,
         order_number: o.order_number,
         is_blind_shipment: o.is_blind_shipment,
@@ -171,26 +169,12 @@ export function OrdersTable() {
         })),
       }))
 
-      setFullOrdersForEmail(ordersForEmail)
-      const contacts = ((vendor.po_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>)
-      const primary = contacts.find(c => c.is_primary) ?? contacts[0] ?? null
-      setDefaultPosGreeting(primary?.name ? (primary.name.split(' ')[0] ?? primary.name) : (vendor.name ?? ''))
-      setPosGreetingOpen(true)
-    } catch (err) {
-      toast.error('Failed to load order data: ' + (err instanceof Error ? err.message : String(err)))
-    }
-  }
-
-  async function handleSendPosEmail(greetingName: string) {
-    setPosGreetingOpen(false)
-    setEmailingPos(true)
-    const count = fullOrdersForEmail.length
-    const toastId = toast.loading(`Creating draft with ${count} PDF${count > 1 ? 's' : ''}…`)
-    try {
-      const { subject, bodyHtml, to, cc } = buildPoEmail(fullOrdersForEmail, greetingName)
+      const count = ordersForEmail.length
+      toast.loading(`Creating draft with ${count} PDF${count > 1 ? 's' : ''}…`, { id: toastId })
+      const { subject, bodyHtml, to, cc } = buildPoEmail(ordersForEmail, vendor.name ?? '')
       const token = await getMailToken()
       const pdfResults = await Promise.all(
-        fullOrdersForEmail.map(o =>
+        ordersForEmail.map(o =>
           fetch(`/api/orders/${o.id}/po-pdf`).then(async r => {
             if (!r.ok) throw new Error(`Failed to fetch PDF for ${o.order_number}`)
             return { filename: `MPH PO ${o.order_number}.pdf`, base64: await blobToBase64(await r.blob()) }
@@ -205,9 +189,71 @@ export function OrdersTable() {
       openDraft(webLink)
       setSelectedIds(new Set())
     } catch (err) {
-      toast.error('Failed: ' + (err instanceof Error ? err.message : String(err)), { id: toastId })
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg === '__SAME_VENDOR__') toast.error('All selected orders must be from the same vendor', { id: toastId })
+      else if (msg === '__NO_VENDOR__') toast.error('Selected orders have no vendor assigned', { id: toastId })
+      else toast.error('Failed: ' + msg, { id: toastId })
     } finally {
       setEmailingPos(false)
+    }
+  }
+
+  async function handleEmailBolsClick() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    setEmailingBols(true)
+    const toastId = toast.loading('Creating draft…')
+    try {
+      const { fullOrders, vendor } = await fetchOrdersAndVendor(ids)
+
+      const bolContacts = (vendor.bol_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
+      const primary = bolContacts.find(c => c.is_primary) ?? bolContacts[0] ?? null
+      if (!primary?.email) throw new Error('No BOL contact email found for this vendor')
+      const to = [primary.email]
+      const cc = bolContacts.filter(c => c !== primary).map(c => c.email).filter((e): e is string => Boolean(e))
+
+      const vendorName = vendor.name ?? ''
+      const count = fullOrders.length
+
+      const subject = count === 1
+        ? `MPH United BOL ${fullOrders[0].order_number} -- ${vendorName} | Ship ${formatDate(fullOrders[0].ship_date)}`
+        : `MPH United BOLs -- ${vendorName} | ${count} Shipments`
+
+      const orderLines = fullOrders
+        .map(o => `<p style="margin:4px 0;">Order ${o.order_number} — Ship ${formatDate(o.ship_date)}</p>`)
+        .join('')
+
+      const bodyHtml = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;max-width:700px;line-height:1.6;">
+  <p style="margin:0 0 16px;">Hello ${vendorName},</p>
+  <p style="margin:0 0 12px;">Please find attached the Bill${count > 1 ? 's' : ''} of Lading for the following MPH United order${count > 1 ? 's' : ''}:</p>
+  ${orderLines}
+  <p style="margin:16px 0 0;">Please confirm receipt at your earliest convenience.</p>
+  <p style="margin:16px 0 0;">Thank you,<br/>MPH United</p>
+</div>`
+
+      const token = await getMailToken()
+      const pdfResults = await Promise.all(
+        fullOrders.map(o =>
+          fetch(`/api/orders/${o.id}/bol-pdf`).then(async r => {
+            if (!r.ok) throw new Error(`Failed to fetch BOL PDF for ${o.order_number}`)
+            return { filename: `MPH BOL ${o.order_number}.pdf`, base64: await blobToBase64(await r.blob()) }
+          })
+        )
+      )
+      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml })
+      for (const { filename, base64 } of pdfResults) {
+        await attachFileToDraft(token, messageId, filename, base64)
+      }
+      toast.success('Draft created — opening Outlook', { id: toastId })
+      openDraft(webLink)
+      setSelectedIds(new Set())
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg === '__SAME_VENDOR__') toast.error('All selected orders must be from the same vendor', { id: toastId })
+      else if (msg === '__NO_VENDOR__') toast.error('Selected orders have no vendor assigned', { id: toastId })
+      else toast.error('Failed to create draft: ' + msg, { id: toastId })
+    } finally {
+      setEmailingBols(false)
     }
   }
 
@@ -222,11 +268,19 @@ export function OrdersTable() {
           <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
           <button
             onClick={handleEmailPosClick}
-            disabled={emailingPos}
+            disabled={emailingPos || emailingBols}
             className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50"
           >
             <Mail className="h-3.5 w-3.5" />
             {emailingPos ? 'Creating…' : 'Email POs'}
+          </button>
+          <button
+            onClick={handleEmailBolsClick}
+            disabled={emailingPos || emailingBols}
+            className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            {emailingBols ? 'Creating…' : 'Email BOLs'}
           </button>
         </div>
       )}
@@ -318,12 +372,6 @@ export function OrdersTable() {
           </tbody>
         </table>
       </div>
-      <GreetingModal
-        isOpen={posGreetingOpen}
-        defaultName={defaultPosGreeting}
-        onConfirm={handleSendPosEmail}
-        onCancel={() => setPosGreetingOpen(false)}
-      />
     </div>
   )
 }
