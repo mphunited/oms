@@ -3,7 +3,7 @@
 // Generates vendor or Frontline schedule PDF.
 // Body: { startDate, endDate, vendorId? } for vendor schedule
 //       { startDate, endDate, frontline: true } for Frontline schedule
-// Returns PDF blob + shipment count + email URL headers.
+// Returns PDF blob + shipment count + email headers.
 
 export const runtime = "nodejs";
 
@@ -16,7 +16,7 @@ import { db } from "@/lib/db";
 import { vendors, company_settings } from "@/lib/db/schema";
 import { fetchScheduleOrders } from "@/lib/schedules/fetch-schedule-data";
 import { VendorSchedulePdf } from "@/lib/schedules/build-vendor-schedule-pdf";
-import { buildScheduleEmailUrl } from "@/lib/schedules/email-utils";
+import { formatDate } from "@/lib/utils/format-date";
 
 export async function POST(req: NextRequest) {
   // Auth check
@@ -58,14 +58,15 @@ export async function POST(req: NextRequest) {
 
   // Determine vendor name and email contacts
   let vendorName = "Frontline";
-  let toContacts: Array<{ name: string; email: string }> = [];
+  let toEmails = "";
   let ccEmails = "";
 
   if (isFrontline) {
     const [settings] = await db.select({
       frontline_schedule_contacts: company_settings.frontline_schedule_contacts,
     }).from(company_settings).limit(1);
-    toContacts = (settings?.frontline_schedule_contacts ?? []) as Array<{ name: string; email: string }>;
+    const contacts = (settings?.frontline_schedule_contacts ?? []) as Array<{ name: string; email: string }>;
+    toEmails = contacts.map((c) => c.email).filter(Boolean).join(",");
   } else if (vendorId) {
     const [vendor] = await db.select({
       name: vendors.name,
@@ -78,31 +79,16 @@ export async function POST(req: NextRequest) {
     vendorName = vendor.name;
     const allContacts = (vendor.schedule_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>;
     const primary = allContacts.filter((c) => c.is_primary);
-    toContacts = primary.length > 0 ? primary : allContacts;
+    const toContacts = primary.length > 0 ? primary : allContacts;
+    toEmails = toContacts.map((c) => c.email).filter(Boolean).join(",");
     if (primary.length > 0) {
       ccEmails = allContacts.filter((c) => !c.is_primary).map((c) => c.email).filter(Boolean).join(",");
     }
   }
 
-  // Build plain-text schedule body for email
-  const scheduleBodyLines: string[] = [];
-  for (const o of scheduleOrders) {
-    const shipDate = o.ship_date ?? "—";
-    const line = isFrontline
-      ? `${o.vendorName} | ${o.order_number} | ${o.customerName} | ${o.description ?? "—"} | Qty: ${o.qty ?? "—"} | Ship: ${shipDate}`
-      : `${o.order_number} | ${o.customerName} | ${o.description ?? "—"} | Qty: ${o.qty ?? "—"} | Ship: ${shipDate}`;
-    scheduleBodyLines.push(line);
-  }
-
-  const emailUrl = buildScheduleEmailUrl({
-    type: isFrontline ? "frontline" : "vendor",
-    vendorName,
-    startDate,
-    endDate,
-    toContacts,
-    shipmentCount: scheduleOrders.length,
-    scheduleBodyText: scheduleBodyLines.join("\n"),
-  });
+  const subject = isFrontline
+    ? `MPH United — Frontline Schedule ${formatDate(startDate)} to ${formatDate(endDate)}`
+    : `MPH United — ${vendorName} Schedule ${formatDate(startDate)} to ${formatDate(endDate)}`;
 
   // Render PDF
   const generatedAt = new Date().toLocaleString("en-US", {
@@ -132,8 +118,9 @@ export async function POST(req: NextRequest) {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${filename}"`,
       "x-shipment-count": String(scheduleOrders.length),
-      "x-email-url": emailUrl,
+      "x-email-to": toEmails,
       "x-email-cc": ccEmails,
+      "x-email-subject": subject,
     },
   });
 }
