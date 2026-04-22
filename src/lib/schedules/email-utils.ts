@@ -1,6 +1,5 @@
 // src/lib/schedules/email-utils.ts
-// Builds Outlook Web deeplink URLs for schedule email distribution.
-// Same deeplink pattern used throughout the app — no mailto:.
+// Builds schedule email data for Graph API draft creation.
 
 interface EmailContact {
   name: string;
@@ -14,7 +13,7 @@ interface ScheduleEmailParams {
   endDate: string;
   toContacts: EmailContact[];
   shipmentCount: number;
-  scheduleBodyText: string; // Plain-text schedule summary for email body
+  scheduleBodyText: string;
 }
 
 export function buildScheduleEmailUrl({
@@ -41,16 +40,32 @@ export function buildScheduleEmailUrl({
     "",
     scheduleBodyText,
     "",
-    "A PDF copy is attached to this email.",
-    "",
     "— MPH United",
   ].join("\n");
 
-  const params = new URLSearchParams({
-    to,
-    subject,
-    body,
-  });
-
+  const params = new URLSearchParams({ to, subject, body });
   return `https://outlook.office.com/mail/deeplink/compose?${params.toString()}`;
+}
+
+export interface ScheduleEmailDraft {
+  to: string[];
+  subject: string;
+  bodyHtml: string;
+}
+
+export function parseScheduleEmailUrl(url: string): ScheduleEmailDraft {
+  const searchParams = new URLSearchParams(new URL(url).search);
+  const to = (searchParams.get("to") ?? "")
+    .split(";")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const subject = searchParams.get("subject") ?? "";
+  const rawBody = searchParams.get("body") ?? "";
+  const escaped = rawBody
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br/>");
+  const bodyHtml = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;">${escaped}</div>`;
+  return { to, subject, bodyHtml };
 }
