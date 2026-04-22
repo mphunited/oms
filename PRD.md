@@ -597,9 +597,8 @@ When Harding National is onboarded as a second tenant:
 | PO logo | mph-logo.png committed to /public. logo_url in company_settings set to 
   https://oms-jade.vercel.app/mph-logo.png. SVG cannot be used — @react-pdf/renderer 
   requires PNG or JPG. |
-| Outlook schedule email attachment | Outlook Web deeplinks cannot attach files 
-  programmatically. The Open in Outlook button pre-populates recipients, subject, 
-  and a text body including the schedule summary. The PDF must be attached manually. |
+| Outlook schedule email attachment | Resolved. Schedule emails now use Graph API draft flow with PDF auto-attached, same as PO and BOL emails. |
+| MSAL popup auth | @azure/msal-browser pinned to 4.28.1. v5 has a confirmed bug where popup flow times out. Do not upgrade. Redirects to /msal-callback (blank page, isolated layout). |
 | commission_paid_date | Set in bulk from /commission page by ADMIN or ACCOUNTING. 
   Not editable on the order form. Represents the Friday payroll date. |
 | invoice_paid_date | Set on the order edit form by Accounting. Date the customer 
@@ -681,6 +680,6 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 
 ---
 
-*Last updated: April 2026 — customer_contacts confirmed jsonb; customers.contacts shape updated to full shape; vendor bottle default fields added to schema; Phase 1 migration list updated.*
+*Last updated: April 22, 2026 — MSAL fixed (pinned to 4.28.1, popup flow working); GreetingModal removed from all email flows (greeting derived automatically from vendor.name); bulk Email POs and Email BOLs added to orders table; schedule emails migrated to Graph API draft flow with auto-attached PDFs.*
 *This document should be updated whenever significant decisions are made or scope changes.*
 *Retire: New_MPH_Order_Management_App.docx and MPH-OMS-HANDOFF.md once this file is committed to the repo.*

@@ -148,13 +148,20 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - Graph helpers: createDraft(), attachFileToDraft(), openDraft() in
       src/lib/email/graph-mail.ts.
 
-27. **PO email body is built by src/lib/email/build-po-email.ts** — pure function,
+27. **MSAL version is @azure/msal-browser 4.28.1 (pinned).** Do NOT upgrade to v5
+    — popup flow is broken in v5. The redirectUri points to /msal-callback (a blank
+    Next.js page with its own layout to prevent root layout interference).
+    Azure SPA redirect URIs registered:
+    http://localhost:3000/msal-callback,
+    https://oms-mphuniteds-projects.vercel.app/msal-callback,
+    https://oms-jade.vercel.app/msal-callback.
+
+28. **PO email body is built by src/lib/email/build-po-email.ts** — pure function,
     takes order data, returns { subject, bodyHtml, to, cc }.
     Never inline PO email construction in a component or route.
 
-28. **All email buttons show a greeting modal before creating the draft.**
-    Greeting pre-filled from primary po_contact first name, user-editable before
-    sending. Do not skip the modal for any email flow.
+29. **Email buttons do NOT show a greeting modal.** The greeting name is derived
+    automatically from vendor.name. Do not add a modal to any email flow.
 ---
 
 ## TECHNOLOGY STACK
@@ -324,7 +331,7 @@ Outlook Web deeplinks are no longer used anywhere in the app.
 
 - Token: call getMailToken() from src/lib/email/msal-client.ts
 - Draft creation: createDraft() → attachFileToDraft() → openDraft() from src/lib/email/graph-mail.ts
-- Every email button shows a greeting modal (pre-filled from primary contact first name) before creating the draft
+- Email buttons do NOT show a greeting modal. Greeting name is derived automatically from vendor.name.
 - PO email body spec: src/lib/email/build-po-email.ts — pure function, returns { subject, bodyHtml, to, cc }
 - PO emails: CC includes orders@mphunited.com
 - BOL emails: orders@mphunited.com is NOT CC'd
