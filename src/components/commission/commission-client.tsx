@@ -8,6 +8,7 @@
 // ADMIN/ACCOUNTING can mark selected orders as Commission Paid with a payroll date.
 
 import { useState, useEffect, useCallback } from "react";
+import { formatDate } from "@/lib/utils/format-date";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -368,7 +369,7 @@ export function CommissionClient() {
                   <td className="px-3 py-2 text-xs max-w-[160px] truncate" title={row.description ?? ""}>
                     {row.description ?? "—"}
                   </td>
-                  <td className="px-3 py-2 text-xs">{row.ship_date ?? "—"}</td>
+                  <td className="px-3 py-2 text-xs">{formatDate(row.ship_date)}</td>
                   <td className="px-3 py-2 text-xs text-right">{row.qty ?? "—"}</td>
                   <td className="px-3 py-2 text-xs font-mono">{row.qb_invoice_number ?? "—"}</td>
                   <td className="px-3 py-2">
@@ -377,8 +378,8 @@ export function CommissionClient() {
                   <td className="px-3 py-2">
                     <InvoiceStatusBadge status={row.invoice_payment_status} />
                   </td>
-                  <td className="px-3 py-2 text-xs">{row.invoice_paid_date ?? "—"}</td>
-                  <td className="px-3 py-2 text-xs">{row.commission_paid_date ?? "—"}</td>
+                  <td className="px-3 py-2 text-xs">{formatDate(row.invoice_paid_date)}</td>
+                  <td className="px-3 py-2 text-xs">{formatDate(row.commission_paid_date)}</td>
                 </tr>
               ))
             )}
