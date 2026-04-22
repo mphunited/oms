@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Flag, Pencil, Copy } from 'lucide-react'
 import { OrderStatusBadge } from '@/components/orders/order-status-badge'
 import type { OrderStatus } from '@/types/order'
+import { formatDate } from '@/lib/utils/format-date'
 
 type SplitLoad = {
   description: string | null
@@ -147,8 +148,8 @@ export function OrdersTable() {
                 {firstDescription(order.split_loads)}
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{firstQty(order.split_loads)}</td>
-              <td className="px-3 py-2 text-muted-foreground">{order.ship_date ?? '—'}</td>
-              <td className="px-3 py-2 text-muted-foreground">{order.wanted_date ?? '—'}</td>
+              <td className="px-3 py-2 text-muted-foreground">{formatDate(order.ship_date)}</td>
+              <td className="px-3 py-2 text-muted-foreground">{formatDate(order.wanted_date)}</td>
               <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ?? '—'}</td>
               <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy)}</td>
               <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell)}</td>
