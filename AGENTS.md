@@ -162,6 +162,17 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 
 29. **Email buttons do NOT show a greeting modal.** The greeting name is derived
     automatically from vendor.name. Do not add a modal to any email flow.
+
+30. **orders table has csr2_id — nullable UUID FK to users.id.** The order form and
+    edit page both have a CSR 2 (optional) dropdown. API routes accept and return
+    csr2_id and csr2_name. Schedule PDFs display CSR as first name only; two CSRs
+    shown as FirstName / FirstName2.
+
+31. **users table has title (text), phone (text), email_signature (text), and
+    can_view_commission (boolean, default false) columns.** Email signatures are
+    appended to all Graph API drafts automatically via getUserSignature() called
+    in parallel with getMailToken(). Manage user records including signature on
+    /team page (ADMIN only).
 ---
 
 ## TECHNOLOGY STACK
@@ -331,7 +342,7 @@ Outlook Web deeplinks are no longer used anywhere in the app.
 
 - Token: call getMailToken() from src/lib/email/msal-client.ts
 - Draft creation: createDraft() → attachFileToDraft() → openDraft() from src/lib/email/graph-mail.ts
-- Email buttons do NOT show a greeting modal. Greeting name is derived automatically from vendor.name.
+- No greeting modal. Greeting name uses vendor.name directly. User email signature fetched from /api/me and appended to every draft automatically.
 - PO email body spec: src/lib/email/build-po-email.ts — pure function, returns { subject, bodyHtml, to, cc }
 - PO emails: CC includes orders@mphunited.com
 - BOL emails: orders@mphunited.com is NOT CC'd
@@ -344,6 +355,7 @@ Outlook Web deeplinks are no longer used anywhere in the app.
 - PO PDF: `GET /api/orders/[orderId]/po-pdf` — server-side, nodejs runtime, no separate DB record
 - BOL PDF: stored in bills_of_lading table
 - Weekly schedules: admin version (with pricing) and vendor/Frontline version (no pricing)
+- PO PDF signature lines removed. All schedule PDFs use first name only for salesperson/CSR display.
 - Full spec in PRD.md Section 12
 
 ---
@@ -370,8 +382,10 @@ Key routes:
 - /vendors — vendor list (built, working)
 - /vendors/[vendorId] — vendor detail + contacts + checklist template (built, working)
 - /recycling — recycling orders (not started)
-- /schedules — weekly schedule generation (built, needs inArray fix and real data test)
+- /schedules — weekly schedule generation (built, working — Graph API email with auto-attached PDF, recipients from DB)
 - /commission — commission report with mark-paid workflow (built, needs real data test)
+- /team — user management (built, working — ADMIN only, manages title, phone, email_signature, role, can_view_commission)
+- Note: filters and search on /orders not yet built — planned for next session
 - /api/schedules/admin-pdf — POST admin schedule PDF
 - /api/schedules/vendor-pdf — POST vendor/Frontline schedule PDF
 - /api/commission — GET commission data, role-filtered

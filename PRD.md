@@ -232,14 +232,12 @@ Outlook Web deeplinks are no longer used. Graph API allows attaching the PDF aut
   - Azure App Registration: clientId `2785bb21-50cc-4e45-a996-c0aec39b13bd`,
     tenantId `3abf2937-e518-43e5-b2a4-456eecfa8b00`
 - Graph helpers: `src/lib/email/graph-mail.ts`
-  - `createDraft(token, { to, cc, subject, bodyHtml })` → `{ id, webLink }`
+  - `createDraft(token, { to, cc, subject, bodyHtml, signature })` → `{ id, webLink }`
   - `attachFileToDraft(token, messageId, filename, base64Content)` → void
   - `openDraft(webLink)` → opens draft in new tab
 
 ### Greeting Modal
-Every email button shows a greeting modal before creating the draft.
-Greeting name pre-filled from primary po_contact first name (first word of name field).
-User can edit the greeting before confirming. Do not skip the modal for any email flow.
+No greeting modal is shown. Greeting name is derived automatically from vendor.name. User email signature is fetched from /api/me (email_signature field) and appended to every draft via createDraft() signature parameter.
 
 ### Recipient Rules
 - **PO emails to vendors:** To = vendor's po_contacts (primary first), CC = remaining po_contacts + orders@mphunited.com
@@ -451,12 +449,10 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | /customers/[customerId] | Customer detail and contacts editor | 1 |
 | /vendors | Vendor list | 1 |
 | /vendors/[vendorId] | Vendor detail, contacts, checklist template | 1 |
-| /schedules | Weekly schedule generation | 1 |
-| /commission | Commission report (Renee) | 1 |
-| /invoicing | Invoice queue | 1 |
-| /financials | Financial reports | 1 (admin only) |
+| /schedules | Weekly schedule generation | 1 — Built, working (Graph API email, auto-attached PDF) |
+| /commission | Commission report (Renee) | 1 — Built, needs real data test |
 | /settings | Admin settings | 1 |
-| /team | User management | 1 |
+| /team | User management — ADMIN only, manages title/phone/email_signature/role/can_view_commission | 1 — Built, working |
 | /api/orders | POST new order | 1 — Built |
 | /api/orders/[orderId]/po-pdf | GET PO PDF | 1 |
 | /api/orders/[orderId]/bol-pdf | GET BOL PDF | 1 |
@@ -485,7 +481,9 @@ This is the primary mechanism for repeat customer orders where most info stays t
 8.  ✅ COMPLETE — PO PDF route — /api/orders/[orderId]/po-pdf
 9.  ✅ COMPLETE — BOL PDF route — /api/orders/[orderId]/bol-pdf
 10. ✅ COMPLETE — Duplicate order button — /api/orders/duplicate/[orderId]
-11. Schedules page — admin schedule PDF + vendor/Frontline schedule PDF
+11. ✅ COMPLETE — Schedules page — admin/vendor/Frontline schedule PDFs + Graph API email with auto-attached PDF, recipients from DB
+    ✅ COMPLETE — Email POs via Graph API (order detail page + bulk from orders table)
+    ✅ COMPLETE — Email BOLs via Graph API (order detail page + bulk from orders table)
 
 ### Recycling
 12. Recycling orders table + new recycling order form + detail page
@@ -499,7 +497,8 @@ This is the primary mechanism for repeat customer orders where most info stays t
 
 ### Data migration
 18. Import last 12 months from Excel
-19. Team/user management page
+19. ✅ COMPLETE — Team/user management page (ADMIN only — title, phone, email_signature, role, can_view_commission)
+    ⏳ NOT YET BUILT — Orders table filters and search — planned for next session
 
 ---
 
@@ -611,6 +610,9 @@ When Harding National is onboarded as a second tenant:
   seeded per vendor in Supabase Studio before schedule emails pre-populate correctly. |
 | frontline_schedule_contacts and admin_schedule_recipients | jsonb arrays on 
   company_settings. Must be seeded in Supabase Studio before use. |
+| Outlook draft signatures | Graph API cannot read Outlook signatures. Signatures stored in users.email_signature, managed on /team page, appended automatically to all drafts via createDraft() signature parameter. |
+| PO PDF signature lines | Removed from PO PDF. |
+| Two CSRs per order | csr2_id added to orders table. Order form and edit page have optional CSR 2 dropdown. Schedule PDFs show both first names as First1 / First2. |
 ---
 
 ## 22. What the Current Prototype Is NOT
@@ -680,6 +682,6 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 
 ---
 
-*Last updated: April 22, 2026 — MSAL fixed (pinned to 4.28.1, popup flow working); GreetingModal removed from all email flows (greeting derived automatically from vendor.name); bulk Email POs and Email BOLs added to orders table; schedule emails migrated to Graph API draft flow with auto-attached PDFs.*
+*Last updated: April 22, 2026 — MSAL fixed (pinned to v4.28.1), GreetingModal removed, bulk Email POs and BOLs added to orders table, schedule emails migrated to Graph API, csr2_id added to orders, users table extended with title/phone/email_signature/can_view_commission, team page built, nav rebuilt with role-based visibility, PO PDF signature lines removed, orders table filters not yet built.*
 *This document should be updated whenever significant decisions are made or scope changes.*
 *Retire: New_MPH_Order_Management_App.docx and MPH-OMS-HANDOFF.md once this file is committed to the repo.*
