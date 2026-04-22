@@ -204,6 +204,7 @@ export const orders = pgTable(
     vendor_id: uuid("vendor_id").references(() => vendors.id),
     salesperson_id: uuid("salesperson_id").references(() => users.id),
     csr_id: uuid("csr_id").references(() => users.id),
+    csr2_id: uuid("csr2_id").references(() => users.id),
 
     status: text("status").notNull().default("Pending"),
     // See ORDER_STATUSES constant above.
