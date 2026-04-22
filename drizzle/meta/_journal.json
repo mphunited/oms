@@ -57,6 +57,13 @@
       "when": 1776881652178,
       "tag": "0007_daily_hammerhead",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776888225270,
+      "tag": "0008_simple_the_twelve",
+      "breakpoints": true
     }
   ]
 }

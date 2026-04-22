@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
@@ -33,17 +33,32 @@ interface AppSidebarProps {
   currentUser: CurrentUser;
 }
 
+type MeData = {
+  role: string;
+  can_view_commission: boolean;
+} | null;
+
 export function AppSidebar({ currentUser }: AppSidebarProps) {
   const pathname = usePathname();
   const { setOpen } = useSidebar();
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [me, setMe] = useState<MeData>(null);
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data) setMe({ role: data.role, can_view_commission: data.can_view_commission });
+      })
+      .catch(() => {});
+  }, []);
 
   const [openItems, setOpenItems] = useState<Set<string>>(() => {
     const open = new Set<string>();
     for (const item of NAV_ITEMS) {
       if (!item.children) continue;
-      const childActive = item.children.some((c) => pathname.startsWith(c.href));
-      if (childActive || pathname.startsWith(item.href)) open.add(item.title);
+      const childActive = item.children.some((c) => c.href && pathname.startsWith(c.href));
+      if (childActive || (item.href && pathname.startsWith(item.href))) open.add(item.title);
     }
     return open;
   });
@@ -65,11 +80,27 @@ export function AppSidebar({ currentUser }: AppSidebarProps) {
     closeTimer.current = setTimeout(() => setOpen(false), 300);
   }
 
+  function isVisible(item: NavItem): boolean {
+    if (!me) return true; // fail open while loading
+    if (item.requiresCommission) {
+      return me.role === "ADMIN" || me.role === "ACCOUNTING" || me.can_view_commission;
+    }
+    if (item.roles) {
+      return item.roles.includes(me.role);
+    }
+    return true;
+  }
+
   function renderItem(item: NavItem) {
+    if (!isVisible(item)) return null;
+
     if (item.children?.length) {
+      const visibleChildren = item.children.filter(isVisible);
+      if (visibleChildren.length === 0) return null;
+
       const isActive =
-        pathname.startsWith(item.href) ||
-        item.children.some((c) => pathname.startsWith(c.href));
+        (item.href ? pathname.startsWith(item.href) : false) ||
+        visibleChildren.some((c) => c.href && pathname.startsWith(c.href));
       const isOpen = openItems.has(item.title);
 
       return (
@@ -98,12 +129,12 @@ export function AppSidebar({ currentUser }: AppSidebarProps) {
 
           {isOpen && (
             <SidebarMenuSub>
-              {item.children.map((child) => {
-                const childActive = pathname.startsWith(child.href);
+              {visibleChildren.map((child) => {
+                const childActive = child.href ? pathname.startsWith(child.href) : false;
                 return (
                   <SidebarMenuSubItem key={child.title}>
                     <SidebarMenuSubButton
-                      render={<Link href={child.href} />}
+                      render={child.href ? <Link href={child.href} /> : <button />}
                       isActive={childActive}
                       className={cn(
                         "text-[14px] font-medium",
@@ -129,11 +160,11 @@ export function AppSidebar({ currentUser }: AppSidebarProps) {
       );
     }
 
-    const isActive = pathname.startsWith(item.href);
+    const isActive = item.href ? pathname.startsWith(item.href) : false;
     return (
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton
-          render={<Link href={item.href} />}
+          render={item.href ? <Link href={item.href} /> : <button />}
           isActive={isActive}
           className={cn(
             "text-[15px] font-medium rounded-none",

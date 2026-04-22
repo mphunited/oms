@@ -1,18 +1,21 @@
 import type { LucideIcon } from "lucide-react";
 import {
   ShoppingCart,
+  RefreshCw,
   Users,
   Truck,
-  TrendingUp,
-  Receipt,
+  CalendarDays,
+  DollarSign,
   UsersRound,
   Settings,
 } from "lucide-react";
 
 export type NavItem = {
   title: string;
-  href: string;
+  href?: string;
   icon: LucideIcon;
+  roles?: string[];
+  requiresCommission?: boolean;
   children?: NavItem[];
 };
 
@@ -21,6 +24,12 @@ export const NAV_ITEMS: NavItem[] = [
     title: "Orders",
     href: "/orders",
     icon: ShoppingCart,
+  },
+  {
+    title: "Recycling",
+    href: "/recycling",
+    icon: RefreshCw,
+    roles: ["ADMIN", "CSR", "ACCOUNTING"],
   },
   {
     title: "Customers",
@@ -33,24 +42,26 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Truck,
   },
   {
-    title: "Financials",
-    href: "/financials",
-    icon: TrendingUp,
+    title: "Schedules",
+    href: "/schedules",
+    icon: CalendarDays,
+    roles: ["ADMIN", "CSR", "ACCOUNTING"],
   },
   {
-    title: "Invoicing",
-    href: "/invoicing",
-    icon: Receipt,
+    title: "Commission",
+    href: "/commission",
+    icon: DollarSign,
+    requiresCommission: true,
   },
   {
     title: "Settings",
-    href: "/settings",
     icon: Settings,
     children: [
       {
         title: "Team",
         href: "/team",
         icon: UsersRound,
+        roles: ["ADMIN"],
       },
     ],
   },
