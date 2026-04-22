@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
   const recipients = (settings?.admin_schedule_recipients ?? []) as Array<{ name: string; email: string }>;
   const toEmails = recipients.map((r) => r.email).filter(Boolean).join(",");
-  const subject = `MPH United — Mike's Schedule ${formatDate(startDate)} to ${formatDate(endDate)}`;
+  const subject = `MPH United - Mike's Schedule ${formatDate(startDate)} to ${formatDate(endDate)}`;
 
   // Render PDF
   const generatedAt = new Date().toLocaleString("en-US", {
