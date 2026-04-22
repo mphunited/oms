@@ -24,29 +24,45 @@ let _initialized = false;
 
 async function ensureInitialized() {
   if (!_initialized) {
+    console.log('[MSAL] initializing...')
     await msalInstance.initialize();
+    console.log('[MSAL] calling handleRedirectPromise...')
     await msalInstance.handleRedirectPromise();
+    console.log('[MSAL] handleRedirectPromise done')
     _initialized = true;
   }
 }
 
 export async function getMailToken(): Promise<string> {
+  console.log('[MSAL] getMailToken called')
   await ensureInitialized();
+  console.log('[MSAL] initialized')
 
   const accounts: AccountInfo[] = msalInstance.getAllAccounts();
+  console.log('[MSAL] accounts found:', accounts.length)
   const account = accounts[0] ?? null;
 
   const request = { scopes: MAIL_SCOPES, account: account ?? undefined };
 
   if (account) {
     try {
+      console.log('[MSAL] trying silent token...')
       const result = await msalInstance.acquireTokenSilent(request);
+      console.log('[MSAL] silent token success')
       return result.accessToken;
     } catch (err) {
+      console.log('[MSAL] silent failed:', err)
       if (!(err instanceof InteractionRequiredAuthError)) throw err;
     }
   }
 
-  const result = await msalInstance.acquireTokenPopup(request);
-  return result.accessToken;
+  console.log('[MSAL] opening popup...')
+  try {
+    const result = await msalInstance.acquireTokenPopup(request);
+    console.log('[MSAL] popup success')
+    return result.accessToken;
+  } catch (err) {
+    console.log('[MSAL] popup failed:', err)
+    throw err;
+  }
 }
