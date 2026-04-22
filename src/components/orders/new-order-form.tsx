@@ -8,6 +8,9 @@ import { useRouter } from 'next/navigation'
 import { Check, ChevronDown, ChevronUp, Mail, Plus, Trash2 } from 'lucide-react'
 import type { Control, Resolver, SubmitHandler } from 'react-hook-form'
 
+import { toast } from 'sonner'
+import { getMailToken } from '@/lib/email/msal-client'
+import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -446,6 +449,7 @@ export function NewOrderForm() {
   const [submitError,           setSubmitError]           = useState<string | null>(null)
   const [notesOpen,             setNotesOpen]             = useState(true)
   const [orderTypeManuallySet,  setOrderTypeManuallySet]  = useState(false)
+  const [emailingPO,            setEmailingPO]            = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -528,15 +532,43 @@ export function NewOrderForm() {
     }
   }
 
-  // Extract emails from structured contacts array for Outlook deeplink
+  // Extract emails from structured contacts array for email draft
   const contactEmails = (watchedValues.customer_contacts ?? [])
     .map(c => c.email?.trim())
     .filter((e): e is string => !!e && e.length > 0)
 
   const orderSubject = savedOrder ? `Order #${savedOrder.order_number}` : ''
-  const outlookHref  = contactEmails.length > 0 && savedOrder
-    ? `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(contactEmails.join(';'))}&cc=${encodeURIComponent('orders@mphunited.com')}&subject=${encodeURIComponent(orderSubject)}`
-    : null
+  const hasContactEmails = contactEmails.length > 0 && !!savedOrder
+
+  async function handleEmailPO() {
+    if (!savedOrder) return
+    setEmailingPO(true)
+    try {
+      const token = await getMailToken()
+      const pdfRes = await fetch(`/api/orders/${savedOrder.id}/po-pdf`)
+      if (!pdfRes.ok) throw new Error(`PDF fetch failed (${pdfRes.status})`)
+      const pdfBlob = await pdfRes.blob()
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(pdfBlob)
+      })
+      const draft = await createDraft(token, {
+        to: contactEmails,
+        cc: ['orders@mphunited.com'],
+        subject: orderSubject,
+        bodyHtml: '',
+      })
+      await attachFileToDraft(token, draft.id, `MPH PO ${savedOrder.order_number}.pdf`, base64)
+      openDraft(draft.webLink)
+      toast.success('Draft created with PDF attached — opening Outlook...')
+    } catch (err) {
+      toast.error(`Failed to create draft: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setEmailingPO(false)
+    }
+  }
 
   // â”€â”€ Post-save banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (savedOrder) {
@@ -547,13 +579,11 @@ export function NewOrderForm() {
             Order {savedOrder.order_number} saved successfully.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {outlookHref && (
-              <a href={outlookHref} target="_blank" rel="noreferrer">
-                <Button variant="outline" size="sm">
-                  <Mail className="mr-2 h-4 w-4" />
-                  Email Contacts Via Outlook
-                </Button>
-              </a>
+            {hasContactEmails && (
+              <Button variant="outline" size="sm" onClick={handleEmailPO} disabled={emailingPO}>
+                <Mail className="mr-2 h-4 w-4" />
+                {emailingPO ? 'Creating draft…' : 'Email Contacts Via Outlook'}
+              </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => router.push('/orders')}>
               View Orders
