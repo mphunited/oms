@@ -160,7 +160,7 @@ export function AdminSchedulePdf({
       <Page size="LETTER" orientation="landscape" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>MPH United — Admin Shipping Schedule</Text>
+          <Text style={styles.headerTitle}>MPH United — Mike's Schedule</Text>
           <Text style={styles.headerSub}>
             {formatScheduleDate(startDate)} — {formatScheduleDate(endDate)}
             {"   "}|{"   "}
