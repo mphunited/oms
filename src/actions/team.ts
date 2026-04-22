@@ -39,3 +39,23 @@ export async function removeMember(userId: string) {
 
   revalidatePath("/team", "page");
 }
+
+export async function updateMember(
+  userId: string,
+  data: {
+    name: string;
+    title: string | null;
+    phone: string | null;
+    role: UserRole;
+    is_active: boolean;
+    email_signature: string | null;
+  }
+) {
+  const [user] = await db.update(users)
+    .set(data)
+    .where(eq(users.id, userId))
+    .returning();
+
+  revalidatePath("/team", "page");
+  return user;
+}
