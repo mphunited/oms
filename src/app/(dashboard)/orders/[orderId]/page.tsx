@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/select'
 import { OrderChecklist, type ChecklistItem } from '@/components/orders/order-checklist'
 import { OrderSplitLoadsEditor, type SplitLoadValue } from '@/components/orders/order-split-loads-editor'
-import { GreetingModal } from '@/components/orders/greeting-modal'
 import { ORDER_STATUSES, ORDER_TYPES, INVOICE_PAYMENT_STATUSES, COMMISSION_STATUSES, TERMS_VALUES } from '@/lib/db/schema'
 import { toast } from 'sonner'
 import { getMailToken } from '@/lib/email/msal-client'
@@ -165,13 +164,7 @@ export default function OrderDetailPage() {
   const [saving, setSaving]   = useState(false)
   const [saved, setSaved]     = useState(false)
   const [emailingPo, setEmailingPo] = useState(false)
-  const [greetingModalOpen, setGreetingModalOpen] = useState(false)
-  const [defaultGreetingName, setDefaultGreetingName] = useState('')
-  const [vendorForEmail, setVendorForEmail] = useState<VendorRow | null>(null)
   const [emailingBol, setEmailingBol] = useState(false)
-  const [bolGreetingOpen, setBolGreetingOpen] = useState(false)
-  const [defaultBolGreeting, setDefaultBolGreeting] = useState('')
-  const [bolVendor, setBolVendor] = useState<VendorRow | null>(null)
 
   // Form state
   const [orderDate, setOrderDate]           = useState('')
@@ -312,43 +305,29 @@ export default function OrderDetailPage() {
 
   async function handleEmailPoClick() {
     if (!order) return
-    let vendor: VendorRow | null = null
-    if (order.vendor_id) {
-      const res = await fetch(`/api/vendors/${order.vendor_id}`)
-      if (res.ok) vendor = await res.json() as VendorRow
-    }
-    setVendorForEmail(vendor)
-    const contacts = (vendor?.po_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
-    const primary = contacts.find(c => c.is_primary) ?? contacts[0] ?? null
-    const firstName = primary ? (primary.name.split(' ')[0] ?? primary.name) : (vendor?.name ?? '')
-    setDefaultGreetingName(firstName)
-    setGreetingModalOpen(true)
-  }
-
-  async function handleSendPoEmail(greetingName: string) {
-    setGreetingModalOpen(false)
     setEmailingPo(true)
     const toastId = toast.loading('Creating draft…')
     try {
-      const poContacts = (vendorForEmail?.po_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
-      const vendorAddress = vendorForEmail?.address as { city?: string; state?: string } | null
+      let vendor: VendorRow | null = null
+      if (order.vendor_id) {
+        const res = await fetch(`/api/vendors/${order.vendor_id}`)
+        if (res.ok) vendor = await res.json() as VendorRow
+      }
+      const poContacts = (vendor?.po_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
+      const primary = poContacts.find(c => c.is_primary) ?? poContacts[0] ?? null
+      const greetingName = primary ? (primary.name.split(' ')[0] ?? primary.name) : (vendor?.name ?? '')
+      const vendorAddress = vendor?.address as { city?: string; state?: string } | null
       const orderData: OrderWithRelations = {
-        order_number: order!.order_number,
-        is_blind_shipment: order!.is_blind_shipment,
-        customer_po: order!.customer_po,
-        sales_order_number: order!.sales_order_number,
-        freight_carrier: order!.freight_carrier,
-        ship_date: shipDate || order!.ship_date,
+        order_number: order.order_number,
+        is_blind_shipment: order.is_blind_shipment,
+        customer_po: order.customer_po,
+        sales_order_number: order.sales_order_number,
+        freight_carrier: order.freight_carrier,
+        ship_date: shipDate || order.ship_date,
         ship_to: shipTo,
         po_notes: poNotes || null,
-        vendor: {
-          name: order!.vendor_name ?? '',
-          address: vendorAddress,
-          po_contacts: poContacts,
-        },
-        customer: {
-          name: order!.customer_name ?? '',
-        },
+        vendor: { name: order.vendor_name ?? '', address: vendorAddress, po_contacts: poContacts },
+        customer: { name: order.customer_name ?? '' },
         order_split_loads: splitLoads.map(l => ({
           description: l.description || null,
           part_number: l.part_number || null,
@@ -361,10 +340,9 @@ export default function OrderDetailPage() {
       const token = await getMailToken()
       const pdfRes = await fetch(`/api/orders/${orderId}/po-pdf`)
       if (!pdfRes.ok) throw new Error('Failed to fetch PO PDF')
-      const pdfBlob = await pdfRes.blob()
-      const base64 = await blobToBase64(pdfBlob)
+      const base64 = await blobToBase64(await pdfRes.blob())
       const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml })
-      await attachFileToDraft(token, messageId, `MPH PO ${order!.order_number}.pdf`, base64)
+      await attachFileToDraft(token, messageId, `MPH PO ${order.order_number}.pdf`, base64)
       toast.success('Draft created — opening Outlook', { id: toastId })
       openDraft(webLink)
     } catch (err) {
@@ -376,42 +354,32 @@ export default function OrderDetailPage() {
 
   async function handleEmailBolClick() {
     if (!order) return
-    let vendor: VendorRow | null = null
-    if (order.vendor_id) {
-      const res = await fetch(`/api/vendors/${order.vendor_id}`)
-      if (res.ok) vendor = await res.json() as VendorRow
-    }
-    setBolVendor(vendor)
-    const contacts = (vendor?.bol_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
-    const primary = contacts.find(c => c.is_primary) ?? contacts[0] ?? null
-    const firstName = primary ? (primary.name.split(' ')[0] ?? primary.name) : (vendor?.name ?? '')
-    setDefaultBolGreeting(firstName)
-    setBolGreetingOpen(true)
-  }
-
-  async function handleSendBolEmail(greetingName: string) {
-    setBolGreetingOpen(false)
     setEmailingBol(true)
     const toastId = toast.loading('Creating draft…')
     try {
-      const contacts = (bolVendor?.bol_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
+      let vendor: VendorRow | null = null
+      if (order.vendor_id) {
+        const res = await fetch(`/api/vendors/${order.vendor_id}`)
+        if (res.ok) vendor = await res.json() as VendorRow
+      }
+      const contacts = (vendor?.bol_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
       const primary = contacts.find(c => c.is_primary) ?? contacts[0] ?? null
       const others = contacts.filter(c => c !== primary)
       const to = primary?.email ? [primary.email] : []
       const cc = others.map(c => c.email).filter((e): e is string => Boolean(e))
 
-      const vendorName = bolVendor?.name ?? order!.vendor_name ?? ''
-      const shipToAddr = shipTo
-      const shipToLine = shipToAddr
-        ? [shipToAddr.name, [shipToAddr.city, shipToAddr.state].filter(Boolean).join(', ')].filter(Boolean).join(', ')
+      const vendorName = vendor?.name ?? order.vendor_name ?? ''
+      const greetingName = vendorName
+      const shipToLine = shipTo
+        ? [shipTo.name, [shipTo.city, shipTo.state].filter(Boolean).join(', ')].filter(Boolean).join(', ')
         : '—'
-      const shipDateFmt = formatDate(shipDate || order!.ship_date)
+      const shipDateFmt = formatDate(shipDate || order.ship_date)
 
-      const subject = `MPH United BOL ${order!.order_number} -- ${vendorName} | Ship ${shipDateFmt}`
+      const subject = `MPH United BOL ${order.order_number} -- ${vendorName} | Ship ${shipDateFmt}`
 
       const bodyHtml = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;max-width:700px;line-height:1.6;">
   <p style="margin:0 0 16px;">Hello ${greetingName},</p>
-  <p style="margin:0 0 16px;">Please find attached the Bill of Lading for MPH United order ${order!.order_number}, shipping to ${shipToLine} on ${shipDateFmt}.</p>
+  <p style="margin:0 0 16px;">Please find attached the Bill of Lading for MPH United order ${order.order_number}, shipping to ${shipToLine} on ${shipDateFmt}.</p>
   <p style="margin:0 0 24px;">Please confirm receipt at your earliest convenience.</p>
   <p style="margin:0;">Thank you,<br/>MPH United</p>
 </div>`
@@ -419,10 +387,9 @@ export default function OrderDetailPage() {
       const token = await getMailToken()
       const pdfRes = await fetch(`/api/orders/${orderId}/bol-pdf`)
       if (!pdfRes.ok) throw new Error('Failed to fetch BOL PDF')
-      const pdfBlob = await pdfRes.blob()
-      const base64 = await blobToBase64(pdfBlob)
+      const base64 = await blobToBase64(await pdfRes.blob())
       const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml })
-      await attachFileToDraft(token, messageId, `MPH BOL ${order!.order_number}.pdf`, base64)
+      await attachFileToDraft(token, messageId, `MPH BOL ${order.order_number}.pdf`, base64)
       toast.success('Draft created — opening Outlook', { id: toastId })
       openDraft(webLink)
     } catch (err) {
@@ -733,19 +700,6 @@ export default function OrderDetailPage() {
         </button>
         {saved && <span className="text-sm text-green-600 dark:text-green-400">Saved.</span>}
       </div>
-
-      <GreetingModal
-        open={greetingModalOpen}
-        defaultName={defaultGreetingName}
-        onConfirm={handleSendPoEmail}
-        onCancel={() => setGreetingModalOpen(false)}
-      />
-      <GreetingModal
-        open={bolGreetingOpen}
-        defaultName={defaultBolGreeting}
-        onConfirm={handleSendBolEmail}
-        onCancel={() => setBolGreetingOpen(false)}
-      />
 
     </div>
   )
