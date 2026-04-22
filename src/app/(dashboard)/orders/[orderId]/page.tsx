@@ -23,7 +23,7 @@ import { ORDER_STATUSES, ORDER_TYPES, INVOICE_PAYMENT_STATUSES, COMMISSION_STATU
 import { toast } from 'sonner'
 import { getMailToken } from '@/lib/email/msal-client'
 import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
-import { buildPoEmail, type OrderForPoEmail } from '@/lib/email/build-po-email'
+import { buildPoEmail, type OrderWithRelations } from '@/lib/email/build-po-email'
 import { formatDate } from '@/lib/utils/format-date'
 
 type AddressValue = {
@@ -332,20 +332,24 @@ export default function OrderDetailPage() {
     try {
       const poContacts = (vendorForEmail?.po_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
       const vendorAddress = vendorForEmail?.address as { city?: string; state?: string } | null
-      const orderData: OrderForPoEmail = {
+      const orderData: OrderWithRelations = {
         order_number: order!.order_number,
         is_blind_shipment: order!.is_blind_shipment,
-        customer_name: order!.customer_name,
         customer_po: order!.customer_po,
         sales_order_number: order!.sales_order_number,
         freight_carrier: order!.freight_carrier,
         ship_date: shipDate || order!.ship_date,
         ship_to: shipTo,
         po_notes: poNotes || null,
-        vendor_name: order!.vendor_name,
-        vendor_address: vendorAddress,
-        vendor_po_contacts: poContacts,
-        split_loads: splitLoads.map(l => ({
+        vendor: {
+          name: order!.vendor_name ?? '',
+          address: vendorAddress,
+          po_contacts: poContacts,
+        },
+        customer: {
+          name: order!.customer_name ?? '',
+        },
+        order_split_loads: splitLoads.map(l => ({
           description: l.description || null,
           part_number: l.part_number || null,
           qty: l.qty || null,
