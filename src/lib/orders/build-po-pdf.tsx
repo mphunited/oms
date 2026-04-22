@@ -85,9 +85,6 @@ const S = StyleSheet.create({
   notesBox:     { borderWidth: 1, borderColor: '#CCCCCC', borderStyle: 'solid', padding: 10, marginTop: 10 },
   notesLbl:     { fontSize: 8, color: GOLD, fontFamily: 'Helvetica-Bold', letterSpacing: 0.8 },
   notesText:    { fontSize: 9, color: NAVY, marginTop: 4 },
-  sigWrap:      { marginTop: 20 },
-  sig1:         { fontSize: 9, color: NAVY },
-  sig2:         { fontSize: 9, color: NAVY, marginTop: 10 },
 })
 
 export function PurchaseOrderPDF({ order, splitLoads, vendor, companySetting }: Props) {
@@ -225,12 +222,6 @@ export function PurchaseOrderPDF({ order, splitLoads, vendor, companySetting }: 
             <Text style={S.notesText}>{order.po_notes}</Text>
           </View>
         )}
-
-        {/* Signatures */}
-        <View style={S.sigWrap}>
-          <Text style={S.sig1}>{'Authorized Signature: _______________________    Date: ___________'}</Text>
-          <Text style={S.sig2}>{'Vendor Signature: ___________________________    Date: ___________'}</Text>
-        </View>
 
       </Page>
     </Document>
