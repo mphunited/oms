@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 import { getMailToken } from '@/lib/email/msal-client'
 import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
 import { buildPoEmail, type OrderWithRelations } from '@/lib/email/build-po-email'
+import { getUserSignature } from '@/lib/email/get-user-signature'
 import { formatDate } from '@/lib/utils/format-date'
 
 type AddressValue = {
@@ -337,11 +338,11 @@ export default function OrderDetailPage() {
         })),
       }
       const { subject, bodyHtml, to, cc } = buildPoEmail([orderData], greetingName)
-      const token = await getMailToken()
+      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
       const pdfRes = await fetch(`/api/orders/${orderId}/po-pdf`)
       if (!pdfRes.ok) throw new Error('Failed to fetch PO PDF')
       const base64 = await blobToBase64(await pdfRes.blob())
-      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml })
+      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
       await attachFileToDraft(token, messageId, `MPH PO ${order.order_number}.pdf`, base64)
       toast.success('Draft created — opening Outlook', { id: toastId })
       openDraft(webLink)
@@ -384,11 +385,11 @@ export default function OrderDetailPage() {
   <p style="margin:0;">Thank you,<br/>MPH United</p>
 </div>`
 
-      const token = await getMailToken()
+      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
       const pdfRes = await fetch(`/api/orders/${orderId}/bol-pdf`)
       if (!pdfRes.ok) throw new Error('Failed to fetch BOL PDF')
       const base64 = await blobToBase64(await pdfRes.blob())
-      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml })
+      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
       await attachFileToDraft(token, messageId, `MPH BOL ${order.order_number}.pdf`, base64)
       toast.success('Draft created — opening Outlook', { id: toastId })
       openDraft(webLink)

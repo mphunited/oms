@@ -18,14 +18,15 @@ async function assertOk(res: Response, context: string): Promise<void> {
 
 export async function createDraft(
   token: string,
-  draft: { to: string[]; cc?: string[]; subject: string; bodyHtml: string }
+  draft: { to: string[]; cc?: string[]; subject: string; bodyHtml: string; signature?: string | null }
 ): Promise<{ id: string; webLink: string }> {
+  const body = draft.signature ? `${draft.bodyHtml}<br><br>${draft.signature}` : draft.bodyHtml
   const res = await fetch(`${GRAPH_BASE}/messages`, {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify({
       subject: draft.subject,
-      body: { contentType: "HTML", content: draft.bodyHtml },
+      body: { contentType: "HTML", content: body },
       toRecipients: draft.to.map((e) => ({ emailAddress: { address: e } })),
       ccRecipients: (draft.cc ?? []).map((e) => ({ emailAddress: { address: e } })),
     }),
