@@ -12,7 +12,7 @@
 //   endDate         — YYYY-MM-DD ship date range end
 
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq, gte, lte, isNotNull } from "drizzle-orm";
+import { and, eq, gte, lte, isNotNull, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
@@ -108,8 +108,7 @@ export async function GET(req: NextRequest) {
       qty: order_split_loads.qty,
     })
     .from(order_split_loads)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .where((order_split_loads as any).order_id.in(orderIds));
+    .where(inArray(order_split_loads.order_id, orderIds));
 
   const splitMap = new Map<string, { description: string | null; qty: string | null }>();
   for (const s of splits) {
