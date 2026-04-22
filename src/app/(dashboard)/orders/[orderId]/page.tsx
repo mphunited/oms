@@ -168,7 +168,7 @@ export default function OrderDetailPage() {
   const [saved, setSaved]     = useState(false)
   const [userOptions, setUserOptions] = useState<Array<{ id: string; name: string | null; role: string }>>([])
   const [csrId, setCsrId]     = useState('')
-  const [csr2Id, setCsr2Id]   = useState('')
+  const [csr2Id, setCsr2Id]   = useState<string | null>(null)
   const [emailingPo, setEmailingPo] = useState(false)
   const [emailingBol, setEmailingBol] = useState(false)
 
@@ -208,7 +208,7 @@ export default function OrderDetailPage() {
       .then(data => {
         setOrder(data)
         setCsrId(data.csr_id ?? '')
-        setCsr2Id(data.csr2_id ?? '')
+        setCsr2Id(data.csr2_id)
         setOrderDate(data.order_date ?? '')
         setOrderType(data.order_type ?? '')
         setStatus(data.status)
@@ -547,7 +547,7 @@ export default function OrderDetailPage() {
           </div>
           <div className="space-y-1.5">
             <Label>CSR 2 (optional)</Label>
-            <Select value={csr2Id || 'none'} onValueChange={v => setCsr2Id(v === 'none' ? '' : v)}>
+            <Select value={csr2Id ?? 'none'} onValueChange={(v) => setCsr2Id(v === 'none' ? null : (v ?? null))}>
               <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
