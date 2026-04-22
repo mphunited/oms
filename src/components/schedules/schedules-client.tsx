@@ -19,6 +19,7 @@ import { parseScheduleEmailUrl, type ScheduleEmailDraft } from "@/lib/schedules/
 import { getMailToken } from "@/lib/email/msal-client";
 import { createDraft, attachFileToDraft, openDraft } from "@/lib/email/graph-mail";
 import { getUserSignature } from "@/lib/email/get-user-signature";
+import { formatDate } from "@/lib/utils/format-date";
 
 interface VendorOption {
   id: string;
@@ -26,6 +27,11 @@ interface VendorOption {
 }
 
 type ScheduleType = "admin" | "vendor" | "frontline";
+
+function fmtDraftDates(d: ScheduleEmailDraft, s: string, e: string): ScheduleEmailDraft {
+  const [fs, fe] = [formatDate(s), formatDate(e)];
+  return { ...d, subject: d.subject.replaceAll(s, fs).replaceAll(e, fe), bodyHtml: d.bodyHtml.replaceAll(s, fs).replaceAll(e, fe) };
+}
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -81,7 +87,7 @@ export function SchedulesClient() {
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
       const emailUrl = res.headers.get("x-email-url");
       setAdminCount(count);
-      if (emailUrl) setAdminEmailDraft(parseScheduleEmailUrl(emailUrl));
+      if (emailUrl) setAdminEmailDraft(fmtDraftDates(parseScheduleEmailUrl(emailUrl), startDate, endDate));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -112,7 +118,7 @@ export function SchedulesClient() {
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
       const emailUrl = res.headers.get("x-email-url");
       setVendorCount(count);
-      if (emailUrl) setVendorEmailDraft(parseScheduleEmailUrl(emailUrl));
+      if (emailUrl) setVendorEmailDraft(fmtDraftDates(parseScheduleEmailUrl(emailUrl), startDate, endDate));
       const vendorName = vendors.find((v) => v.id === selectedVendorId)?.name ?? "Vendor";
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -143,7 +149,7 @@ export function SchedulesClient() {
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
       const emailUrl = res.headers.get("x-email-url");
       setFrontlineCount(count);
-      if (emailUrl) setFrontlineEmailDraft(parseScheduleEmailUrl(emailUrl));
+      if (emailUrl) setFrontlineEmailDraft(fmtDraftDates(parseScheduleEmailUrl(emailUrl), startDate, endDate));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -217,7 +223,7 @@ export function SchedulesClient() {
       {/* Admin Schedule */}
       <div className="rounded-lg border border-border bg-card p-5 space-y-3">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Admin / Owner Schedule</h2>
+          <h2 className="text-base font-semibold text-foreground">Mike's Schedule</h2>
           <p className="text-xs text-muted-foreground mt-0.5">All active orders grouped by vendor. Includes pricing. Sent to internal team.</p>
         </div>
         <Separator />
@@ -249,7 +255,11 @@ export function SchedulesClient() {
             <div className="text-sm text-muted-foreground">Loading vendors…</div>
           ) : (
             <Select value={selectedVendorId} onValueChange={(v) => setSelectedVendorId(v ?? "")}>
-              <SelectTrigger id="vendor-select" className="h-8 w-64 text-sm"><SelectValue placeholder="Choose a vendor" /></SelectTrigger>
+              <SelectTrigger id="vendor-select" className="h-8 w-64 text-sm">
+                <SelectValue placeholder="Choose a vendor">
+                  {vendors.find((v) => v.id === selectedVendorId)?.name ?? "Choose a vendor"}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 {vendors.map((v) => <SelectItem key={v.id} value={v.id} className="text-sm">{v.name}</SelectItem>)}
               </SelectContent>
