@@ -117,8 +117,12 @@ export function SchedulesClient() {
       if (!res.ok) throw new Error(await res.text());
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
       const emailUrl = res.headers.get("x-email-url");
+      const emailCc = res.headers.get("x-email-cc");
       setVendorCount(count);
-      if (emailUrl) setVendorEmailDraft(fmtDraftDates(parseScheduleEmailUrl(emailUrl), startDate, endDate));
+      if (emailUrl) {
+        const draft = fmtDraftDates(parseScheduleEmailUrl(emailUrl), startDate, endDate);
+        setVendorEmailDraft({ ...draft, cc: emailCc ? emailCc.split(",").filter(Boolean) : [] });
+      }
       const vendorName = vendors.find((v) => v.id === selectedVendorId)?.name ?? "Vendor";
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -182,7 +186,7 @@ export function SchedulesClient() {
       }
       if (!pdfRes.ok) throw new Error("Failed to fetch schedule PDF");
       const base64 = await blobToBase64(await pdfRes.blob());
-      const { id: messageId, webLink } = await createDraft(token, { to: draft.to, cc: [], subject: draft.subject, bodyHtml: draft.bodyHtml, signature });
+      const { id: messageId, webLink } = await createDraft(token, { to: draft.to, cc: draft.cc, subject: draft.subject, bodyHtml: draft.bodyHtml, signature });
       await attachFileToDraft(token, messageId, `MPH Schedule ${startDate}.pdf`, base64);
       toast.success("Draft created — opening Outlook", { id: toastId });
       openDraft(webLink);

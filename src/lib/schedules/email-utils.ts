@@ -49,6 +49,7 @@ export function buildScheduleEmailUrl({
 
 export interface ScheduleEmailDraft {
   to: string[];
+  cc: string[];
   subject: string;
   bodyHtml: string;
 }
@@ -67,5 +68,5 @@ export function parseScheduleEmailUrl(url: string): ScheduleEmailDraft {
     .replace(/>/g, "&gt;")
     .replace(/\n/g, "<br/>");
   const bodyHtml = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;">${escaped}</div>`;
-  return { to, subject, bodyHtml };
+  return { to, cc: [], subject, bodyHtml };
 }
