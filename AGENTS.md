@@ -153,6 +153,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 | PDFs             | @react-pdf/renderer                                               |
 | Auth             | Supabase Auth + Microsoft Entra SSO via @supabase/ssr             |
 | Theme            | next-themes (light/dark toggle)                                   |
+| MSAL             | @azure/msal-browser — client-side token acquisition for MS Graph Mail API |
 | Forms            | react-hook-form + @hookform/resolvers                             |
 | Validation       | zod v4 — import from 'zod'. Use zodResolver directly in useForm(). Do NOT create a custom useZodForm wrapper. |
 | Notifications    | sonner (toast notifications)                                      |
