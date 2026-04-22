@@ -229,7 +229,6 @@ export function OrdersTable() {
   <p style="margin:0 0 12px;">Please find attached the Bill${count > 1 ? 's' : ''} of Lading for the following MPH United order${count > 1 ? 's' : ''}:</p>
   ${orderLines}
   <p style="margin:16px 0 0;">Please confirm receipt at your earliest convenience.</p>
-  <p style="margin:16px 0 0;">Thank you,<br/>MPH United</p>
 </div>`
 
       const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
