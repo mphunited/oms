@@ -84,17 +84,14 @@ export function SchedulesClient() {
       const emailCc = res.headers.get("x-email-cc") ?? "";
       const emailSubject = (res.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
       setAdminCount(count);
-      if (emailTo) {
-        const formattedStart = formatDate(startDate);
-        const formattedEnd = formatDate(endDate);
-        const draft: ScheduleEmailDraft = {
-          to: emailTo.split(",").filter(Boolean),
-          cc: emailCc.split(",").filter(Boolean),
-          subject: emailSubject,
-          bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
-        };
-        setAdminEmailDraft(draft);
-      }
+      const formattedStart = formatDate(startDate);
+      const formattedEnd = formatDate(endDate);
+      setAdminEmailDraft({
+        to: emailTo.split(",").filter(Boolean),
+        cc: emailCc.split(",").filter(Boolean),
+        subject: emailSubject,
+        bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
+      });
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -127,17 +124,14 @@ export function SchedulesClient() {
       const emailCc = res.headers.get("x-email-cc") ?? "";
       const emailSubject = (res.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
       setVendorCount(count);
-      if (emailTo) {
-        const formattedStart = formatDate(startDate);
-        const formattedEnd = formatDate(endDate);
-        const draft: ScheduleEmailDraft = {
-          to: emailTo.split(",").filter(Boolean),
-          cc: emailCc.split(",").filter(Boolean),
-          subject: emailSubject,
-          bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
-        };
-        setVendorEmailDraft(draft);
-      }
+      const formattedStart = formatDate(startDate);
+      const formattedEnd = formatDate(endDate);
+      setVendorEmailDraft({
+        to: emailTo.split(",").filter(Boolean),
+        cc: emailCc.split(",").filter(Boolean),
+        subject: emailSubject,
+        bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
+      });
       const vendorName = vendors.find((v) => v.id === selectedVendorId)?.name ?? "Vendor";
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -170,17 +164,14 @@ export function SchedulesClient() {
       const emailCc = res.headers.get("x-email-cc") ?? "";
       const emailSubject = (res.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
       setFrontlineCount(count);
-      if (emailTo) {
-        const formattedStart = formatDate(startDate);
-        const formattedEnd = formatDate(endDate);
-        const draft: ScheduleEmailDraft = {
-          to: emailTo.split(",").filter(Boolean),
-          cc: emailCc.split(",").filter(Boolean),
-          subject: emailSubject,
-          bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
-        };
-        setFrontlineEmailDraft(draft);
-      }
+      const formattedStart = formatDate(startDate);
+      const formattedEnd = formatDate(endDate);
+      setFrontlineEmailDraft({
+        to: emailTo.split(",").filter(Boolean),
+        cc: emailCc.split(",").filter(Boolean),
+        subject: emailSubject,
+        bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
+      });
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -229,7 +220,7 @@ export function SchedulesClient() {
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Weekly Schedules</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Generate and email shipping schedules for owners, vendors, and Frontline.
+          Click Generate PDF to download the schedule, then click Email Schedule to send it.
         </p>
       </div>
 

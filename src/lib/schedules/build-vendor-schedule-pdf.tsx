@@ -147,8 +147,8 @@ export function VendorSchedulePdf({
   generatedAt,
 }: VendorSchedulePdfProps) {
   const title = isFrontline
-    ? "MPH United — Frontline Shipping Schedule"
-    : `MPH United — ${vendorName} Shipping Schedule`;
+    ? "Frontline Schedule"
+    : `${vendorName} Schedule`;
 
   return (
     <Document>
