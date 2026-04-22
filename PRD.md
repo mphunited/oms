@@ -222,18 +222,67 @@ Role-based access rules:
 
 ## 11. Email Pattern
 
-**All email in Phase 1 uses Outlook Web deeplinks — NOT mailto: links.**
-Reason: mailto: breaks on Mac. Deeplinks work on both Mac and PC.
+**All email uses Microsoft Graph API to create Outlook drafts with PDF attachments.**
+Outlook Web deeplinks are no longer used. Graph API allows attaching the PDF automatically.
 
-```
-https://outlook.office.com/mail/deeplink/compose?to=...&cc=...&subject=...&body=...
-```
+### Infrastructure
+- MSAL client: `src/lib/email/msal-client.ts` — singleton `PublicClientApplication`
+  - `getMailToken()` acquires token with scopes `Mail.ReadWrite`, `Mail.Send`
+  - Silent acquisition first, popup fallback on `InteractionRequiredAuthError`
+  - Azure App Registration: clientId `2785bb21-50cc-4e45-a996-c0aec39b13bd`,
+    tenantId `3abf2937-e518-43e5-b2a4-456eecfa8b00`
+- Graph helpers: `src/lib/email/graph-mail.ts`
+  - `createDraft(token, { to, cc, subject, bodyHtml })` → `{ id, webLink }`
+  - `attachFileToDraft(token, messageId, filename, base64Content)` → void
+  - `openDraft(webLink)` → opens draft in new tab
 
+### Greeting Modal
+Every email button shows a greeting modal before creating the draft.
+Greeting name pre-filled from primary po_contact first name (first word of name field).
+User can edit the greeting before confirming. Do not skip the modal for any email flow.
+
+### Recipient Rules
 - **PO emails to vendors:** To = vendor's po_contacts (primary first), CC = remaining po_contacts + orders@mphunited.com
 - **BOL emails to vendors:** To = vendor's bol_contacts (primary first), CC = remaining bol_contacts. orders@mphunited.com is NOT CC'd on BOLs.
 - **Customer confirmations:** To = order's customer_contacts field (jsonb [{name, email}], extract emails directly from array)
 - **Invoice emails:** To = customer invoice contacts. orders@mphunited.com CC'd on invoices (Phase 2).
-- **Weekly schedules:** Open in Outlook Web button on the schedule generation screen.
+- **Weekly schedules:** Open in Outlook Web button on the schedule generation screen (deeplink acceptable here — no PDF attachment needed).
+- **Bulk PO email:** All selected orders must be from the same vendor — show error toast if not.
+
+### PO Email Body Spec
+PO email body is built by `src/lib/email/build-po-email.ts` — pure function, returns `{ subject, bodyHtml, to, cc }`.
+
+**Subject line:**
+| Scenario | Format |
+|----------|--------|
+| Single order, non-blind | `MPH United PO [order_number] -- [customer_name] \| Ship [MM/DD/YYYY]` |
+| Single order, blind | `MPH United PO [order_number] \| Ship [MM/DD/YYYY]` |
+| Multiple orders, non-blind | `[count] MPH United POs [order_numbers] \| Multiple Orders` |
+| Multiple orders, blind | `[count] MPH United POs [order_numbers] \| Multiple Orders` |
+
+**Intro paragraph:**
+- Non-blind: `Please find [order/X orders] below for MPH United / [vendor_name] -- [vendor_city, vendor_state] -- [customer_ship_to_city, customer_ship_to_state] to [customer_name].`
+- Blind: `Please find [order/X orders] below for MPH United / [vendor_name] -- [vendor_city, vendor_state].`
+
+**Order table:**
+- Non-blind columns: MPH PO | Customer PO | Product/Description | Ship Date | Qty | Unit Price | Total
+- Blind columns: MPH PO | Product/Description | Ship Date | Qty | Unit Price | Total
+- One row per `order_split_loads` row
+- MPH PO = `order_number_override` if set, else `order_number`
+- Part number rendered in gold (#B88A44), omitted if null
+- Null qty or sell renders as `--`
+- Total = qty × sell, formatted as currency
+
+**Below-table fields:**
+- Non-blind: Sales Order # (only if not null; always present for Alliance-Hillsboro), Ship Via (freight_carrier), Ship To (ship_to JSONB from first order), PO Notes (only if not null)
+- Blind: PO Notes only (if not null)
+
+**Closing paragraph:**
+- Single order: `Please confirm receipt of this PO and provide expected ship date at your earliest convenience. Please reference MPH PO # on all correspondence and shipping documents.`
+- Multiple orders: `Please confirm receipt of these POs and provide expected ship dates at your earliest convenience. Please reference MPH PO # on all correspondence and shipping documents.`
+
+**Blind shipment rules:**
+Hide customer name, Customer PO column, Ship To, and Sales Order # from both subject and body when `is_blind_shipment = true`.
 
 ---
 

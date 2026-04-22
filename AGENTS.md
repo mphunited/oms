@@ -64,7 +64,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
    invoices table. Values: 'Not Invoiced' | 'Invoiced' | 'Paid'
 
 8. **customer_contacts on orders is JSONB** — stored as [{name, email}] array.
-   Extract emails directly from the array for Outlook deeplinks.
+   Extract emails directly from the array for Graph API draft creation.
 
 9. **Supabase anon key is used only for Supabase Auth** (sign-in and session checks).
    All business data queries go through Drizzle via DATABASE_URL (server-only env var).
@@ -133,9 +133,25 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 24. **Date display format is MM/DD/YYYY throughout the UI.** Stored format in
     the database remains YYYY-MM-DD. Format on display only, never on storage.
 
-25. **Outlook Web deeplinks cannot attach files.** The email button opens a
-    compose window with pre-filled recipients, subject, and body. The PDF must
-    be attached manually by the user. Never claim otherwise in email body text.
+25. **Outlook Web deeplinks are no longer used.** All email actions now use
+    Microsoft Graph API to create drafts with PDF attachments already attached.
+
+26. **Never use Outlook Web deeplinks for email.** Use Microsoft Graph API via
+    src/lib/email/msal-client.ts and src/lib/email/graph-mail.ts.
+    - MSAL client: singleton PublicClientApplication, getMailToken() acquires token
+      with scopes Mail.ReadWrite and Mail.Send (silent, popup fallback).
+    - Azure App Registration: clientId 2785bb21-50cc-4e45-a996-c0aec39b13bd,
+      tenantId 3abf2937-e518-43e5-b2a4-456eecfa8b00.
+    - Graph helpers: createDraft(), attachFileToDraft(), openDraft() in
+      src/lib/email/graph-mail.ts.
+
+27. **PO email body is built by src/lib/email/build-po-email.ts** — pure function,
+    takes order data, returns { subject, bodyHtml, to, cc }.
+    Never inline PO email construction in a component or route.
+
+28. **All email buttons show a greeting modal before creating the draft.**
+    Greeting pre-filled from primary po_contact first name, user-editable before
+    sending. Do not skip the modal for any email flow.
 ---
 
 ## TECHNOLOGY STACK
@@ -300,13 +316,16 @@ Default role for new users: CSR
 
 ## EMAIL PATTERN
 
-All email actions use Outlook Web deeplinks — NOT mailto: links (fixes Mac compatibility).
-https://outlook.office.com/mail/deeplink/compose?to=...&cc=...&subject=...&body=...
+All email actions use **Microsoft Graph API** to create Outlook drafts with PDF attachments.
+Outlook Web deeplinks are no longer used anywhere in the app.
 
+- Token: call getMailToken() from src/lib/email/msal-client.ts
+- Draft creation: createDraft() → attachFileToDraft() → openDraft() from src/lib/email/graph-mail.ts
+- Every email button shows a greeting modal (pre-filled from primary contact first name) before creating the draft
+- PO email body spec: src/lib/email/build-po-email.ts — pure function, returns { subject, bodyHtml, to, cc }
 - PO emails: CC includes orders@mphunited.com
 - BOL emails: orders@mphunited.com is NOT CC'd
-- Customer confirmations: extract emails from free-text customer_contacts field via regex
-- Full email rules in PRD.md Section 11
+- Full email rules and PO body spec in PRD.md Section 11
 
 ---
 
@@ -375,6 +394,10 @@ Do not trust Claude Code's success confirmations — verify with git log yoursel
 ## FILE STRUCTURE REFERENCE
 src/lib/db/schema.ts          — Drizzle schema, always read before writing queries
 src/lib/db/index.ts           — Drizzle client
+src/lib/email/msal-client.ts  — MSAL singleton + getMailToken()
+src/lib/email/graph-mail.ts   — createDraft(), attachFileToDraft(), openDraft()
+src/lib/email/build-po-email.ts — PO email subject/body builder (pure function)
+src/lib/utils/format-date.ts  — formatDate() MM/DD/YYYY display helper
 src/app/(dashboard)/          — all authenticated pages
 src/app/(auth)/login/         — login page
 src/proxy.ts                  — session handler (Next.js 16 middleware equivalent)
