@@ -26,9 +26,7 @@ async function ensureInitialized() {
   if (!_initialized) {
     console.log('[MSAL] initializing...')
     await msalInstance.initialize();
-    console.log('[MSAL] calling handleRedirectPromise...')
-    await msalInstance.handleRedirectPromise();
-    console.log('[MSAL] handleRedirectPromise done')
+    console.log('[MSAL] done')
     _initialized = true;
   }
 }
