@@ -5,7 +5,7 @@
 
 import { db } from "@/lib/db";
 import { orders, order_split_loads, customers, vendors, users } from "@/lib/db/schema";
-import { and, gte, lte, eq, isNotNull } from "drizzle-orm";
+import { and, gte, lte, eq, isNotNull, inArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 export interface ScheduleOrderRow {
@@ -94,12 +94,7 @@ export async function fetchScheduleOrders(
       sell: order_split_loads.sell,
     })
     .from(order_split_loads)
-    .where(
-      // Use inArray when available; fall back to manual filter
-      // Drizzle inArray requires the ids array to be non-empty (checked above)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (order_split_loads as any).order_id.in(orderIds)
-    );
+    .where(inArray(order_split_loads.order_id, orderIds));
 
   // Map split loads by order_id (first row wins)
   const splitMap = new Map<string, typeof splitRows[0]>();
