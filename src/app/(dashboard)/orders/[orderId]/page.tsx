@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, FileText, Truck, Copy } from 'lucide-react'
+import { ChevronLeft, FileText, Truck, Copy, Mail } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -18,8 +18,12 @@ import {
 } from '@/components/ui/select'
 import { OrderChecklist, type ChecklistItem } from '@/components/orders/order-checklist'
 import { OrderSplitLoadsEditor, type SplitLoadValue } from '@/components/orders/order-split-loads-editor'
+import { GreetingModal } from '@/components/orders/greeting-modal'
 import { ORDER_STATUSES, ORDER_TYPES, INVOICE_PAYMENT_STATUSES, COMMISSION_STATUSES, TERMS_VALUES } from '@/lib/db/schema'
 import { toast } from 'sonner'
+import { getMailToken } from '@/lib/email/msal-client'
+import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
+import { buildPoEmail, type OrderForPoEmail } from '@/lib/email/build-po-email'
 
 type AddressValue = {
   name: string
@@ -70,10 +74,29 @@ type OrderDetail = {
   customer_contacts: CustomerContact[] | null
   checklist: ChecklistItem[] | null
   split_loads: SplitLoadValue[]
+  sales_order_number: string | null
   customer_name: string | null
   vendor_name: string | null
   salesperson_name: string | null
   csr_name: string | null
+}
+
+type VendorRow = {
+  name: string
+  po_contacts: unknown
+  address: unknown
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      resolve(result.split(',')[1])
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
 }
 
 function emptyAddress(): AddressValue {
@@ -139,6 +162,10 @@ export default function OrderDetailPage() {
   const [error, setError]     = useState<string | null>(null)
   const [saving, setSaving]   = useState(false)
   const [saved, setSaved]     = useState(false)
+  const [emailingPo, setEmailingPo] = useState(false)
+  const [greetingModalOpen, setGreetingModalOpen] = useState(false)
+  const [defaultGreetingName, setDefaultGreetingName] = useState('')
+  const [vendorForEmail, setVendorForEmail] = useState<VendorRow | null>(null)
 
   // Form state
   const [orderDate, setOrderDate]           = useState('')
@@ -277,6 +304,66 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function handleEmailPoClick() {
+    if (!order) return
+    let vendor: VendorRow | null = null
+    if (order.vendor_id) {
+      const res = await fetch(`/api/vendors/${order.vendor_id}`)
+      if (res.ok) vendor = await res.json() as VendorRow
+    }
+    setVendorForEmail(vendor)
+    const contacts = (vendor?.po_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
+    const primary = contacts.find(c => c.is_primary) ?? contacts[0] ?? null
+    const firstName = primary ? (primary.name.split(' ')[0] ?? primary.name) : (vendor?.name ?? '')
+    setDefaultGreetingName(firstName)
+    setGreetingModalOpen(true)
+  }
+
+  async function handleSendPoEmail(greetingName: string) {
+    setGreetingModalOpen(false)
+    setEmailingPo(true)
+    const toastId = toast.loading('Creating draft…')
+    try {
+      const poContacts = (vendorForEmail?.po_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
+      const vendorAddress = vendorForEmail?.address as { city?: string; state?: string } | null
+      const orderData: OrderForPoEmail = {
+        order_number: order!.order_number,
+        is_blind_shipment: order!.is_blind_shipment,
+        customer_name: order!.customer_name,
+        customer_po: order!.customer_po,
+        sales_order_number: order!.sales_order_number,
+        freight_carrier: order!.freight_carrier,
+        ship_date: shipDate || order!.ship_date,
+        ship_to: shipTo,
+        po_notes: poNotes || null,
+        vendor_name: order!.vendor_name,
+        vendor_address: vendorAddress,
+        vendor_po_contacts: poContacts,
+        split_loads: splitLoads.map(l => ({
+          description: l.description || null,
+          part_number: l.part_number || null,
+          qty: l.qty || null,
+          sell: l.sell || null,
+          order_number_override: l.order_number_override || null,
+        })),
+      }
+      const { subject, bodyHtml, to, cc } = buildPoEmail([orderData], greetingName)
+      const token = await getMailToken()
+      const pdfRes = await fetch(`/api/orders/${orderId}/po-pdf`)
+      if (!pdfRes.ok) throw new Error('Failed to fetch PO PDF')
+      const pdfBlob = await pdfRes.blob()
+      const base64 = await blobToBase64(pdfBlob)
+      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml })
+      await attachFileToDraft(token, messageId, `MPH PO ${order!.order_number}.pdf`, base64)
+      toast.success('Draft created — opening Outlook', { id: toastId })
+      openDraft(webLink)
+    } catch (err) {
+      toast.error('Failed to create draft: ' + (err instanceof Error ? err.message : String(err)), { id: toastId })
+    } finally {
+      setEmailingPo(false)
+    }
+  }
+
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
   if (!order)  return null
@@ -312,8 +399,16 @@ export default function OrderDetailPage() {
             className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
           >
             <FileText className="h-3.5 w-3.5" />
-            PO PDF
+            Download PO
           </a>
+          <button
+            onClick={handleEmailPoClick}
+            disabled={emailingPo}
+            className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            {emailingPo ? 'Creating…' : 'Email PO'}
+          </button>
           <a
             href={`/api/orders/${orderId}/bol-pdf`}
             target="_blank"
@@ -562,6 +657,13 @@ export default function OrderDetailPage() {
         </button>
         {saved && <span className="text-sm text-green-600 dark:text-green-400">Saved.</span>}
       </div>
+
+      <GreetingModal
+        open={greetingModalOpen}
+        defaultName={defaultGreetingName}
+        onConfirm={handleSendPoEmail}
+        onCancel={() => setGreetingModalOpen(false)}
+      />
 
     </div>
   )
