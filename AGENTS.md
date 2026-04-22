@@ -48,7 +48,10 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 1. **NO company_id columns anywhere.** No companies table. No company_members table.
    If you are about to add company_id to anything, stop and re-read PRD.md.
 
-2. **NO RLS policies.** Single company, trusted internal employees.
+2. **RLS is enabled on all 11 public tables** with service_role-only policies (April 22, 2026).
+   Direct public/anon access is blocked at the database level. All business data queries
+   run server-side through Drizzle via DATABASE_URL (postgres superuser — bypasses RLS).
+   Do not add anon or authenticated-role policies. See the ## Security section.
 
 3. **salesperson_id and csr_id are UUID FKs to the users table.** NOT text dropdowns.
 
@@ -431,6 +434,35 @@ Do not attempt to fix the following — the fix breaks the toolchain:
   - Risk: only exploitable if running `drizzle-kit studio` locally while browsing a malicious site simultaneously
   - Fix would downgrade drizzle-kit to 0.18.1 — a breaking change from current 0.31.x
   - Decision: accept the risk. Never run `npm audit fix --force` to resolve this.
+
+---
+
+## SECURITY
+
+**Status as of April 22, 2026:**
+
+- **RLS is enabled on all 11 public tables:** users, orders, customers, vendors,
+  bills_of_lading, recycling_orders, order_split_loads, audit_logs, company_settings,
+  dropdown_configs, product_weights.
+- All tables have a **"Service role full access" policy scoped to service_role only.**
+  Direct public/anon access to all tables is blocked at the database level.
+- All database queries run **server-side** through Next.js API routes. No client-side
+  Supabase data queries exist — the only client-side Supabase usage is auth flows in
+  `src/app/(auth)/login/page.tsx` and `src/app/auth/callback/route.ts`.
+- Supabase security advisor shows **zero critical errors** as of April 22, 2026.
+- The one remaining warning (leaked password protection) is **irrelevant** — the app uses
+  Microsoft SSO exclusively. Email/password auth is not used.
+
+**Operational rules:**
+- When new tables are created via migration, **RLS must be manually enabled** — it is NOT
+  automatic for migration-created tables. Run `ALTER TABLE public.[table] ENABLE ROW LEVEL SECURITY;`
+  and add a service_role policy immediately after any DDL migration that creates a new table.
+- Run the Supabase security advisor after every DDL migration to confirm zero critical errors.
+- **When Harding National is added as a second tenant**, the service_role-only policies
+  must be replaced with tenant-aware RLS policies enforcing row-level tenant isolation
+  **before** any Harding National data is added to the database.
+
+---
 
   ## BRAND & THEME CONVENTIONS
 

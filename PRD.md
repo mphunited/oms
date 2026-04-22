@@ -62,7 +62,7 @@ invoicing. They do not manufacture or warehouse product.
 ## 4. Architecture Rules (Non-Negotiable)
 
 1. **No company_id columns anywhere.** Single tenant. No companies table. No company_members table.
-2. **No RLS policies.** All DB access through server-side API routes using service role key.
+2. **RLS is enabled on all tables with service_role-only policies** (as of April 22, 2026). All DB access runs server-side through API routes. Direct public/anon access is blocked at the database level. See Section 19 for full security posture.
 3. **Supabase anon key is used only for auth** (sign-in and session validation). All business data queries use Drizzle via DATABASE_URL (server-only). Never expose DATABASE_URL to the browser.
 4. **salesperson_id and csr_id are UUID FKs to the users table.** They are NOT text dropdowns.
 5. **order_split_loads is the universal line items table.** Every order has at least one row. Pricing lives here, not on orders.
@@ -503,6 +503,35 @@ This is the primary mechanism for repeat customer orders where most info stays t
 
 ---
 
+## 19. Security Posture
+
+### Current State (as of April 22, 2026)
+
+**Architecture:** Server-side only. All database queries run through Next.js API routes
+using the Supabase service role key via Drizzle ORM. No direct client-side database access.
+The only client-side Supabase usage is authentication (`login/page.tsx` and `auth/callback/route.ts`).
+
+**Row Level Security:** Enabled on all 11 public tables:
+`users`, `orders`, `customers`, `vendors`, `bills_of_lading`, `recycling_orders`,
+`order_split_loads`, `audit_logs`, `company_settings`, `dropdown_configs`, `product_weights`.
+
+All tables have a "Service role full access" policy scoped to `service_role` only.
+Direct public/anon access to all tables is blocked at the database level.
+
+Supabase security advisor: zero critical errors. One warning (leaked password protection)
+is not applicable — the app uses Microsoft SSO only, no email/password auth.
+
+### Future Requirement: Multi-Tenant (MPH + Harding National)
+
+When Harding National is onboarded as a second tenant:
+- The current service_role-only policies must be **replaced** with tenant-aware RLS policies
+  that enforce row-level isolation between MPH United and Harding National data.
+- This must happen **before** any Harding National data is added to the database.
+- A `company_id` column and RLS predicates will be required on all shared tables.
+- Architecture rules in Section 4 prohibiting `company_id` will need to be revised at that time.
+
+---
+
 ## 20. Phase 2 Features (Do NOT Build in Phase 1)
 
 - QuickBooks Online integration (OAuth, push invoices/bills, payment sync, commission auto-trigger)
@@ -539,7 +568,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | Multiple ship-to locations | Not stored separately. Ship-to is per-order. Duplicate order is the repeat-order workflow. |
 | Vendor products catalog | Not in Phase 1. CSRs type descriptions manually. |
 | Stock sheets | Stay in Excel for Phase 1. Phase 2 or permanent Excel. |
-| RLS | No RLS policies anywhere. Single tenant, trusted users. |
+| RLS | Enabled on all 11 public tables as of April 22, 2026. "Service role full access" policies scoped to service_role only. Direct public/anon access blocked at DB level. When Harding National is added as a second tenant, replace with tenant-aware RLS policies before adding their data. |
 | Supabase client | Anon key only used for Supabase Auth (sign-in, session check). All DB queries use Drizzle via server-only DATABASE_URL. |
 | Prototype in /reference/ | HTML prototype is UI reference only. It predates the current schema. This PRD and AGENTS.md are authoritative. |
 | Recycling orders | Separate section of app, separate DB table, separate routes. Shares customers/vendors/users. |
