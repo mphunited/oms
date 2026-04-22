@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head><title>Auth</title></head>
+  <body>
+    <script src="https://alcdn.msauth.net/browser/3.27.0/js/msal-browser.min.js"></script>
+    <script>
+      const msalConfig = {
+        auth: {
+          clientId: "2785bb21-50cc-4e45-a996-c0aec39b13bd",
+          authority: "https://login.microsoftonline.com/3abf2937-e518-43e5-b2a4-456eecfa8b00",
+          redirectUri: window.location.origin + "/msal-callback.html"
+        }
+      };
+      const pca = new msal.PublicClientApplication(msalConfig);
+      pca.initialize().then(() => pca.handleRedirectPromise()).catch(console.error);
+    </script>
+  </body>
+</html>
