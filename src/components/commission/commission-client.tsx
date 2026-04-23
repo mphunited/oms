@@ -362,7 +362,7 @@ export function CommissionClient() {
                   <td className="px-3 py-2 text-xs">{row.vendorName}</td>
                   <td className="px-3 py-2 text-xs">{row.customerName}</td>
                   <td className="px-3 py-2 text-xs">
-                    {[row.salespersonName, row.csrName].filter(Boolean).join(" / ") || "—"}
+                    {[row.salespersonName, row.csrName].filter(Boolean).map(n => n!.split(' ')[0]).join(" / ") || "—"}
                   </td>
                   <td className="px-3 py-2 text-xs font-mono">{row.order_number}</td>
                   <td className="px-3 py-2 text-xs">{row.customer_po ?? "—"}</td>
