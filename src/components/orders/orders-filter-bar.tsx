@@ -45,11 +45,6 @@ const LIFECYCLE_OPTIONS = [
   { value: 'all',       label: 'All' },
 ] as const
 
-const STATUS_OPTIONS = [
-  'Pending', 'Waiting On Vendor To Confirm', 'Waiting To Confirm To Customer',
-  'Confirmed To Customer', 'Rinse And Return Stage', 'Sent Order To Carrier',
-  'Ready To Ship', 'Ready To Invoice', 'Complete', 'Cancelled',
-].map(s => ({ value: s, label: s }))
 
 const INVOICE_OPTIONS = ['Not Invoiced', 'Invoiced', 'Paid'].map(s => ({ value: s, label: s }))
 const COMMISSION_OPTIONS = ['Eligible', 'Not Eligible', 'Commission Paid'].map(s => ({ value: s, label: s }))
@@ -58,6 +53,7 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
   const [moreOpen, setMoreOpen] = useState(false)
   const [vendors, setVendors] = useState<NamedItem[]>([])
   const [customers, setCustomers] = useState<NamedItem[]>([])
+  const [statusOptions, setStatusOptions] = useState<{ value: string; label: string }[]>([])
 
   useEffect(() => {
     fetch('/api/vendors')
@@ -67,6 +63,10 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
     fetch('/api/customers')
       .then(r => r.json())
       .then((d: NamedItem[]) => setCustomers(d.map(c => ({ id: c.id, name: c.name }))))
+      .catch(() => {})
+    fetch('/api/dropdown-configs?type=ORDER_STATUS')
+      .then(r => r.json())
+      .then((d: string[]) => setStatusOptions(d.map(s => ({ value: s, label: s }))))
       .catch(() => {})
   }, [])
 
@@ -121,7 +121,7 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
 
         <FilterMultiSelect
           label="Status"
-          options={STATUS_OPTIONS}
+          options={statusOptions}
           selected={filters.statuses}
           onChange={v => onChange({ statuses: v })}
         />
