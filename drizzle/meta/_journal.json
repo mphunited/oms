@@ -85,6 +85,13 @@
       "when": 1776920642556,
       "tag": "0011_daffy_power_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1776953511243,
+      "tag": "0012_sleepy_squirrel_girl",
+      "breakpoints": true
     }
   ]
 }

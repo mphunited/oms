@@ -113,6 +113,7 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("CSR"),
   permissions: jsonb("permissions").notNull().default([]), // ["SALES"] | ["CSR"] | [] — controls order form dropdown appearance, independent of app access role
   can_view_commission: boolean("can_view_commission").notNull().default(false),
+  is_commission_eligible: boolean("is_commission_eligible").notNull().default(false), // true = appears in commission report dropdown; Renee only currently
   is_active: boolean("is_active").notNull().default(true),
   created_at: timestamp("created_at", { withTimezone: true })
     .notNull()

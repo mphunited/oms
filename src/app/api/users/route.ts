@@ -7,11 +7,16 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const permission = searchParams.get('permission')
 
+  const commissionEligible = searchParams.get('commission_eligible')
+
   const conditions = [eq(users.is_active, true)]
   if (permission) {
     conditions.push(
       sql`${users.permissions} @> ${JSON.stringify([permission])}::jsonb`
     )
+  }
+  if (commissionEligible === 'true') {
+    conditions.push(eq(users.is_commission_eligible, true))
   }
 
   const rows = await db

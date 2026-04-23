@@ -29,6 +29,8 @@ export async function GET() {
       role: users.role,
       is_active: users.is_active,
       email_signature: users.email_signature,
+      can_view_commission: users.can_view_commission,
+      is_commission_eligible: users.is_commission_eligible,
     })
     .from(users)
     .orderBy(users.name)
