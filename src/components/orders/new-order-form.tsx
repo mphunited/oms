@@ -442,9 +442,11 @@ type UserOption = { id: string; name: string | null; role: string }
 export function NewOrderForm() {
   const router = useRouter()
 
-  const [customers,    setCustomers]    = useState<Option[]>([])
-  const [vendors,      setVendors]      = useState<Option[]>([])
-  const [users,        setUsers]        = useState<UserOption[]>([])
+  const [customers,        setCustomers]        = useState<Option[]>([])
+  const [vendors,          setVendors]          = useState<Option[]>([])
+  const [salespersonUsers, setSalespersonUsers] = useState<UserOption[]>([])
+  const [csrUsers,         setCsrUsers]         = useState<UserOption[]>([])
+  const [carriers,         setCarriers]         = useState<string[]>([])
   const [isSubmitting,          setIsSubmitting]          = useState(false)
   const [savedOrder,            setSavedOrder]            = useState<{ id: string; order_number: string } | null>(null)
   const [submitError,           setSubmitError]           = useState<string | null>(null)
@@ -456,11 +458,15 @@ export function NewOrderForm() {
     Promise.all([
       fetch('/api/customers').then(r => r.json()),
       fetch('/api/vendors').then(r => r.json()),
-      fetch('/api/users').then(r => r.json()),
-    ]).then(([c, v, u]) => {
+      fetch('/api/users?permission=SALES').then(r => r.json()),
+      fetch('/api/users?permission=CSR').then(r => r.json()),
+      fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()),
+    ]).then(([c, v, sp, csr, car]) => {
       setCustomers(c)
       setVendors(v)
-      setUsers(u)
+      setSalespersonUsers(sp)
+      setCsrUsers(csr)
+      setCarriers(Array.isArray(car) ? car : [])
     })
   }, [])
 
@@ -503,13 +509,8 @@ export function NewOrderForm() {
     if (matched) form.setValue('order_type', matched as string, { shouldValidate: true })
   }, [firstDescription, orderTypeManuallySet, form])
 
-  const salespersonOptions: Option[] = users
-    .filter(u => u.role === 'SALES' || u.role === 'ADMIN')
-    .map(u => ({ id: u.id, name: u.name ?? u.id }))
-
-  const csrOptions: Option[] = users
-    .filter(u => u.role === 'CSR' || u.role === 'ADMIN')
-    .map(u => ({ id: u.id, name: u.name ?? u.id }))
+  const salespersonOptions: Option[] = salespersonUsers.map(u => ({ id: u.id, name: u.name ?? u.id }))
+  const csrOptions: Option[] = csrUsers.map(u => ({ id: u.id, name: u.name ?? u.id }))
 
   const onSubmit: SubmitHandler<OrderFormValues> = async (data) => {
     setSubmitError(null)
@@ -705,7 +706,19 @@ export function NewOrderForm() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="freight_carrier">Freight Carrier</Label>
-              <Input id="freight_carrier" placeholder="Carrier name" {...form.register('freight_carrier')} />
+              <Select
+                value={form.watch('freight_carrier') ?? ''}
+                onValueChange={v => form.setValue('freight_carrier', v || undefined, { shouldValidate: true })}
+              >
+                <SelectTrigger id="freight_carrier" className="h-9">
+                  <SelectValue placeholder="Select carrier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {carriers.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </section>

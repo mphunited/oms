@@ -78,6 +78,13 @@
       "when": 1745366400000,
       "tag": "0010_auth_user_sync_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1776920642556,
+      "tag": "0011_daffy_power_pack",
+      "breakpoints": true
     }
   ]
 }
