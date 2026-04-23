@@ -1,8 +1,32 @@
-export default function SettingsPage() {
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { CarriersSection } from "@/components/settings/carriers-section";
+
+export default async function SettingsPage() {
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect("/login");
+
+  const [me] = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
+  if (!me || me.role !== "ADMIN") redirect("/");
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Settings</h1>
-      <p className="text-muted-foreground">Settings page — coming soon.</p>
+    <div className="p-6 max-w-2xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-[#00205B]">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Admin configuration for MPH United OMS.
+        </p>
+      </div>
+      <CarriersSection />
     </div>
   );
 }
