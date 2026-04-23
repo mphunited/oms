@@ -179,23 +179,38 @@ export async function POST(req: Request) {
     const initials = deriveInitials(user?.name)
 
     const body = await req.json()
-    const { split_loads, ...orderFields } = body
+    const { split_loads, manual_order_number, ...orderFields } = body
+
     for (const key of ['order_date', 'ship_date', 'wanted_date', 'appointment_time']) {
       if (orderFields[key] === '') orderFields[key] = null
     }
 
-    const seqResult = await db.execute(sql`SELECT nextval('order_number_seq') AS num`)
-    const num = (seqResult as unknown as Array<{ num: string | number }>)[0].num
-    const order_number = `${initials}-MPH${num}`
-
     const commission_status = deriveCommissionStatus(orderFields.order_type ?? '')
 
+    let order_number: string
     let checklist: unknown = null
-    if (orderFields.vendor_id) {
-      const vendor = await db.query.vendors.findFirst({
-        where: eq(vendors.id, orderFields.vendor_id),
-      })
-      checklist = vendor?.checklist_template ?? null
+
+    if (manual_order_number) {
+      if (user?.role !== 'ADMIN') {
+        return new NextResponse('Forbidden', { status: 403 })
+      }
+      const trimmed = String(manual_order_number).trim()
+      if (!trimmed || /\s/.test(trimmed)) {
+        return NextResponse.json({ error: 'Invalid order number' }, { status: 400 })
+      }
+      order_number = trimmed
+      // Historical import: skip checklist population
+    } else {
+      const seqResult = await db.execute(sql`SELECT nextval('order_number_seq') AS num`)
+      const num = (seqResult as unknown as Array<{ num: string | number }>)[0].num
+      order_number = `${initials}-MPH${num}`
+
+      if (orderFields.vendor_id) {
+        const vendor = await db.query.vendors.findFirst({
+          where: eq(vendors.id, orderFields.vendor_id),
+        })
+        checklist = vendor?.checklist_template ?? null
+      }
     }
 
     const result = await db.transaction(async (tx) => {
@@ -217,6 +232,9 @@ export async function POST(req: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('[POST /api/orders]', message)
+    if (message.includes('23505') || (message.includes('unique') && message.includes('order_number'))) {
+      return NextResponse.json({ error: 'PO number already exists' }, { status: 409 })
+    }
     return NextResponse.json({ error: 'Failed to create order', detail: message }, { status: 500 })
   }
 }
