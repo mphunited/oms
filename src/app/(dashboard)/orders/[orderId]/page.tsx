@@ -166,7 +166,8 @@ export default function OrderDetailPage() {
   const [error, setError]     = useState<string | null>(null)
   const [saving, setSaving]   = useState(false)
   const [saved, setSaved]     = useState(false)
-  const [userOptions, setUserOptions] = useState<Array<{ id: string; name: string | null; role: string }>>([])
+  const [csrUserOptions, setCsrUserOptions] = useState<Array<{ id: string; name: string | null; role: string }>>([])
+  const [carriers, setCarriers] = useState<string[]>([])
   const [csrId, setCsrId]     = useState('')
   const [csr2Id, setCsr2Id]   = useState<string | null>(null)
   const [emailingPo, setEmailingPo] = useState(false)
@@ -202,7 +203,8 @@ export default function OrderDetailPage() {
   const [splitLoads, setSplitLoads]         = useState<SplitLoadValue[]>([])
 
   useEffect(() => {
-    fetch('/api/users').then(r => r.json()).then(setUserOptions).catch(() => {})
+    fetch('/api/users?permission=CSR').then(r => r.json()).then(setCsrUserOptions).catch(() => {})
+    fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()).then(v => setCarriers(Array.isArray(v) ? v : [])).catch(() => {})
     fetch(`/api/orders/${orderId}`)
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() as Promise<OrderDetail> })
       .then(data => {
@@ -410,7 +412,7 @@ export default function OrderDetailPage() {
     }
   }
 
-  const csrOptions = userOptions.filter(u => u.role === 'CSR' || u.role === 'ADMIN')
+  const csrOptions = csrUserOptions
 
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
@@ -509,7 +511,12 @@ export default function OrderDetailPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Freight Carrier</Label>
-            <Input value={freightCarrier} onChange={e => setFreightCarrier(e.target.value)} placeholder="Carrier name" />
+            <Select value={freightCarrier} onValueChange={v => { if (v !== null) setFreightCarrier(v) }}>
+              <SelectTrigger><SelectValue placeholder="Select carrier" /></SelectTrigger>
+              <SelectContent>
+                {carriers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <Label>Terms</Label>
