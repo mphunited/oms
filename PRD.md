@@ -27,15 +27,14 @@ invoicing. They do not manufacture or warehouse product.
 | Christina Bayne | CSR / General Manager | CSR | Primary CSR user. Early tester target. |
 | Jordan Mannering | CSR | CSR | CSR user. |
 | Gracie Medley | Accounting & CSR | CSR | Accounting & CSR user. |
-| Renee Sauvageau | Salesperson | SALES | Commission report user. Sees only her own orders. |
-| Jennifer Wilkes | Salesperson | SALES | Sees only her own orders. |
-| Larry Mitchum | Salesperson | SALES | Sees only his own orders. |
+| Renee Sauvageau | Salesperson | SALES | Only salesperson that receives commission. Sees only her own orders and can't edit orders. |
+| Jennifer Wilkes | Salesperson | SALES | Sees only her own orders and can't edit orders. |
+| Larry Mitchum | Salesperson | SALES | Sees only his own orders and can't edit orders. |
 | Mike Harding | Salesperson / Owner | SALES | Sees everything. |
 | David Harding | CFO / Owner | (none) | Sees everything. |
 | Peter Mannering | Accounting / Controller | (none) | Accounting user. |
 | Matt Cozik | CSR | CSR | CSR for Recycling Orders. |
 | Suzanne Ridenour | CSR | CSR | CSR for Empties. |
-| Gracie Medley | Accounting & CSR | CSR | Accounting & CSR user. |
 | Jack2 (test) | Admin | (none) | Test/dev account (jack2@mphunited.com). |
 | Service Account | — | (none) | System service account, no UI access. |
 
@@ -227,7 +226,7 @@ Ready To Ship | Ready To Invoice | Complete | Cancelled
 330 Gal Washout IBC | 55 Gal Drums | Other — Parts & Supplies
 
 Commission eligibility is keyword-based: any type containing `New IBC`, `Bottle`,
-`Rebottle`, `Washout`, or `Wash & Return` is eligible.
+`Rebottle`, `Washout`, or `Wash & Return` is eligible. Commission eligibility is only for one salesperson and that is Renee (not Mike, Larry, or Jennifer)
 
 ---
 
@@ -373,6 +372,7 @@ Each order can have a checklist of action items the CSR must complete.
 
 Recycling orders are a **separate section** of the app (`/recycling`). They share
 customers, vendors, and users tables but have their own schema, routes, and status workflow.
+It may be better to have two separate tables for Recycling Drums and Recycling IBCs since these are also different.
 
 ### Why separate
 Different financial structure (credits from vendors, not just costs), different date fields
