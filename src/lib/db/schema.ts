@@ -339,6 +339,17 @@ export const order_split_loads = pgTable(
     }),
     order_number_override: text("order_number_override"),
 
+    customer_po: text("customer_po"),
+    // Per-load Customer PO — overrides order-level customer_po when set
+    order_type: text("order_type"),
+    // Per-load Order Type — drives commission eligibility per load (see ORDER_TYPES)
+    ship_date: date("ship_date"),
+    wanted_date: date("wanted_date"),
+    commission_status: text("commission_status").default("Not Eligible"),
+    // Per-load commission status — see COMMISSION_STATUSES
+    commission_paid_date: date("commission_paid_date"),
+    // Stamped per load when commission is marked paid
+
     created_at: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
