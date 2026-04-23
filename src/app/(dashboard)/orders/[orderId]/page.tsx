@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select'
 import { OrderChecklist, type ChecklistItem } from '@/components/orders/order-checklist'
 import { OrderSplitLoadsEditor, type SplitLoadValue } from '@/components/orders/order-split-loads-editor'
-import { ORDER_STATUSES, ORDER_TYPES, INVOICE_PAYMENT_STATUSES, COMMISSION_STATUSES, TERMS_VALUES } from '@/lib/db/schema'
+import { ORDER_TYPES, INVOICE_PAYMENT_STATUSES, COMMISSION_STATUSES, TERMS_VALUES } from '@/lib/db/schema'
 import { toast } from 'sonner'
 import { getMailToken } from '@/lib/email/msal-client'
 import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
@@ -155,6 +155,35 @@ function AddressBlock({
   )
 }
 
+function computeMargin(
+  loads: SplitLoadValue[],
+  freightCost: string,
+  freightToCustomer: string,
+  additionalCosts: string,
+  commissionStatus: string,
+) {
+  let revenue = 0, grossProfit = 0, totalQty = 0
+  for (const l of loads) {
+    const qty = parseFloat(l.qty) || 0
+    const sell = parseFloat(l.sell) || 0
+    const buy = parseFloat(l.buy) || 0
+    const bc = parseFloat(l.bottle_cost) || 0
+    const bq = parseFloat(l.bottle_qty) || 0
+    const mf = parseFloat(l.mph_freight_bottles) || 0
+    revenue += sell * qty
+    grossProfit += (sell - buy) * qty - bc * bq - (mf / 90) * bq
+    totalQty += qty
+  }
+  const ftc = parseFloat(freightToCustomer) || 0
+  const fc = parseFloat(freightCost) || 0
+  const ac = parseFloat(additionalCosts) || 0
+  const commDeduction = commissionStatus === 'Eligible' ? totalQty * 3 : 0
+  const totalRevenue = revenue + ftc
+  const profit = grossProfit + ftc - fc - ac - commDeduction
+  const pct = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0
+  return { profit, totalRevenue, pct }
+}
+
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
@@ -168,6 +197,7 @@ export default function OrderDetailPage() {
   const [saved, setSaved]     = useState(false)
   const [csrUserOptions, setCsrUserOptions] = useState<Array<{ id: string; name: string | null; role: string }>>([])
   const [carriers, setCarriers] = useState<string[]>([])
+  const [statusOptions, setStatusOptions] = useState<string[]>([])
   const [csrId, setCsrId]     = useState('')
   const [csr2Id, setCsr2Id]   = useState<string | null>(null)
   const [emailingPo, setEmailingPo] = useState(false)
@@ -205,6 +235,7 @@ export default function OrderDetailPage() {
   useEffect(() => {
     fetch('/api/users?permission=CSR').then(r => r.json()).then(setCsrUserOptions).catch(() => {})
     fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()).then(v => setCarriers(Array.isArray(v) ? v : [])).catch(() => {})
+    fetch('/api/dropdown-configs?type=ORDER_STATUS').then(r => r.json()).then(v => setStatusOptions(Array.isArray(v) ? v : [])).catch(() => {})
     fetch(`/api/orders/${orderId}`)
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() as Promise<OrderDetail> })
       .then(data => {
@@ -418,8 +449,12 @@ export default function OrderDetailPage() {
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
   if (!order)  return null
 
+  const margin = computeMargin(splitLoads, freightCost, freightToCustomer, additionalCosts, commissionStatus)
+
   return (
-    <div className="p-6 max-w-4xl space-y-6">
+    <div className="p-6">
+      <div className="flex gap-6 items-start">
+      <div className="flex-1 min-w-0 space-y-6">
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -492,7 +527,7 @@ export default function OrderDetailPage() {
             <Select value={status} onValueChange={(value) => { if (value !== null) setStatus(value); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {ORDER_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -546,7 +581,11 @@ export default function OrderDetailPage() {
           <div className="space-y-1.5">
             <Label>CSR</Label>
             <Select value={csrId} onValueChange={(v) => setCsrId(v ?? "")}>
-              <SelectTrigger><SelectValue placeholder="Select CSR" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select CSR">
+                  {csrId ? (csrOptions.find(u => u.id === csrId)?.name ?? csrId) : 'Select CSR'}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 {csrOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}
               </SelectContent>
@@ -555,7 +594,13 @@ export default function OrderDetailPage() {
           <div className="space-y-1.5">
             <Label>CSR 2 (optional)</Label>
             <Select value={csr2Id ?? 'none'} onValueChange={(v) => setCsr2Id(v === 'none' ? null : (v ?? null))}>
-              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="None">
+                  {csr2Id && csr2Id !== 'none'
+                    ? (csrOptions.find(u => u.id === csr2Id)?.name ?? csr2Id)
+                    : 'None'}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
                 {csrOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}
@@ -681,65 +726,90 @@ export default function OrderDetailPage() {
         <OrderChecklist items={checklist} onChange={setChecklist} />
       </section>
 
-      <Separator />
+      <div className="pb-8" />
+      </div>{/* end main column */}
 
-      {/* Status flags & invoice */}
-      <section className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Status & Invoicing</h2>
-        <div className="grid grid-cols-2 gap-4">
+      {/* Right sidebar */}
+      <aside className="w-64 shrink-0 sticky top-6 space-y-4">
+
+        {/* Save */}
+        <div className="space-y-2">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+          {saved && <p className="text-center text-sm text-green-600 dark:text-green-400">Saved.</p>}
+        </div>
+
+        {/* Status & Invoicing */}
+        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Status & Invoicing</h3>
           <div className="space-y-1.5">
-            <Label>Invoice Payment Status</Label>
+            <Label className="text-xs">Invoice Payment Status</Label>
             <Select value={invoicePaymentStatus} onValueChange={(value) => { if (value !== null) setInvoicePaymentStatus(value); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {INVOICE_PAYMENT_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Commission Status</Label>
+            <Label className="text-xs">Commission Status</Label>
             <Select value={commissionStatus} onValueChange={(value) => { if (value !== null) setCommissionStatus(value); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {COMMISSION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>QB Invoice Number</Label>
-            <Input value={qbInvoiceNumber} onChange={e => setQbInvoiceNumber(e.target.value)} placeholder="QuickBooks invoice #" />
+            <Label className="text-xs">QB Invoice Number</Label>
+            <Input className="h-8 text-xs" value={qbInvoiceNumber} onChange={e => setQbInvoiceNumber(e.target.value)} placeholder="QuickBooks invoice #" />
+          </div>
+          <Separator />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Switch id="flag" checked={flag} onCheckedChange={setFlag} />
+              <Label htmlFor="flag" className="cursor-pointer text-sm">Flagged</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="is_blind" checked={isBlind} onCheckedChange={setIsBlind} />
+              <Label htmlFor="is_blind" className="cursor-pointer text-sm">Blind Shipment</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="is_revised" checked={isRevised} onCheckedChange={setIsRevised} />
+              <Label htmlFor="is_revised" className="cursor-pointer text-sm">Revised PO</Label>
+            </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-6">
-          <div className="flex items-center gap-2">
-            <Switch id="flag" checked={flag} onCheckedChange={setFlag} />
-            <Label htmlFor="flag" className="cursor-pointer">Flagged</Label>
+
+        {/* Live Margin */}
+        <div className={`rounded-lg border p-4 space-y-2 ${margin.pct < 8 && margin.totalRevenue > 0 ? 'border-destructive bg-destructive/5' : 'border-border bg-card'}`}>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Live Margin</h3>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Revenue</span>
+            <span className="font-medium">${margin.totalRevenue.toFixed(2)}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Switch id="is_blind" checked={isBlind} onCheckedChange={setIsBlind} />
-            <Label htmlFor="is_blind" className="cursor-pointer">Blind Shipment</Label>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Profit</span>
+            <span className={`font-medium ${margin.profit < 0 ? 'text-destructive' : ''}`}>${margin.profit.toFixed(2)}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Switch id="is_revised" checked={isRevised} onCheckedChange={setIsRevised} />
-            <Label htmlFor="is_revised" className="cursor-pointer">Revised PO</Label>
+          <div className="flex justify-between text-sm font-semibold">
+            <span>Margin</span>
+            <span className={margin.pct < 8 && margin.totalRevenue > 0 ? 'text-destructive' : 'text-green-600 dark:text-green-400'}>
+              {margin.totalRevenue > 0 ? `${margin.pct.toFixed(1)}%` : '—'}
+            </span>
           </div>
+          {margin.pct < 8 && margin.totalRevenue > 0 && (
+            <p className="text-xs text-destructive">Below 8% threshold</p>
+          )}
         </div>
-      </section>
 
-      <Separator />
-
-      {/* Save */}
-      <div className="flex items-center gap-3 pb-8">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 transition-colors"
-        >
-          {saving ? 'Saving…' : 'Save Changes'}
-        </button>
-        {saved && <span className="text-sm text-green-600 dark:text-green-400">Saved.</span>}
-      </div>
-
+      </aside>
+      </div>{/* end flex row */}
     </div>
   )
 }

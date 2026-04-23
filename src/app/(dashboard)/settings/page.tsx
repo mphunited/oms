@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { CarriersSection } from "@/components/settings/carriers-section";
+import { OrderStatusesSection } from "@/components/settings/order-statuses-section";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -27,6 +28,7 @@ export default async function SettingsPage() {
         </p>
       </div>
       <CarriersSection />
+      <OrderStatusesSection />
     </div>
   );
 }

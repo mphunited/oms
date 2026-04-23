@@ -27,15 +27,22 @@ export const userRoleEnum = pgEnum("user_role", [
 
 export const ORDER_STATUSES = [
   "Pending",
+  "Acknowledged Order",
+  "PO Request To Accounting",
+  "PO Revision To Accounting",
+  "PO Moving",
   "Waiting On Vendor To Confirm",
   "Waiting To Confirm To Customer",
+  "Waiting For Customer To Confirm",
   "Confirmed To Customer",
   "Rinse And Return Stage",
+  "Rinse & Return Stage",
   "Sent Order To Carrier",
   "Ready To Ship",
   "Ready To Invoice",
   "Complete",
   "Cancelled",
+  "Canceled",
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 

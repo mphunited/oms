@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Copy, Flag, Mail, Pencil } from 'lucide-react'
+import { toast } from 'sonner'
 import { OrderStatusBadge } from '@/components/orders/order-status-badge'
 import type { OrderStatus } from '@/types/order'
 import { formatDate } from '@/lib/utils/format-date'
 import { OrdersFilterBar, DEFAULT_FILTERS, type FilterState } from './orders-filter-bar'
 import { OrdersPagination } from './orders-pagination'
 import { useOrderEmailActions } from './use-order-email-actions'
+import { formatCurrency, firstDescription, firstQty, formatShipTo } from '@/lib/utils/order-table-utils'
 
 const LIMIT = 50
 
@@ -42,30 +44,6 @@ type OrderRow = {
   split_loads: SplitLoad[]
 }
 
-function formatCurrency(val: string | null | undefined): string {
-  const n = parseFloat(val ?? '')
-  return isNaN(n) ? '—' : `$${n.toFixed(2)}`
-}
-
-function firstDescription(loads: SplitLoad[]): string {
-  const desc = loads[0]?.description ?? '—'
-  return desc.length > 40 ? desc.slice(0, 40) + '…' : desc
-}
-
-function firstQty(loads: SplitLoad[]): string {
-  const val = loads[0]?.qty
-  if (!val) return '—'
-  const n = parseFloat(val)
-  return isNaN(n) ? '—' : String(n)
-}
-
-function formatShipTo(shipTo: unknown): string {
-  if (!shipTo || typeof shipTo !== 'object') return '—'
-  const s = shipTo as { city?: string; state?: string }
-  if (!s.city && !s.state) return '—'
-  return [s.city, s.state].filter(Boolean).join(', ')
-}
-
 export function OrdersTable() {
   const [orderRows, setOrderRows] = useState<OrderRow[]>([])
   const [loading, setLoading]     = useState(true)
@@ -76,10 +54,22 @@ export function OrdersTable() {
   const [total, setTotal]         = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [role, setRole]           = useState<string | null>(null)
+  const [statusOptions, setStatusOptions] = useState<string[]>([])
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { emailingPos, emailingBols, handleEmailPosClick, handleEmailBolsClick } =
     useOrderEmailActions(selectedIds, () => setSelectedIds(new Set()))
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/me').then(r => r.json()),
+      fetch('/api/dropdown-configs?type=ORDER_STATUS').then(r => r.json()),
+    ]).then(([me, statuses]: [{ role: string }, string[]]) => {
+      setRole(me?.role ?? null)
+      setStatusOptions(Array.isArray(statuses) ? statuses : [])
+    }).catch(() => {})
+  }, [])
 
   // Debounce search input; also reset page when the debounced value settles
   useEffect(() => {
@@ -149,6 +139,20 @@ export function OrdersTable() {
     } catch {
       setOrderRows(rows => rows.map(r => r.id === id ? { ...r, flag: current } : r))
     }
+  }
+
+  async function patchStatus(id: string, newStatus: string) {
+    const prev = orderRows.find(r => r.id === id)?.status
+    setOrderRows(rows => rows.map(r => r.id === id ? { ...r, status: newStatus } : r))
+    const res = await fetch(`/api/orders/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    }).catch(() => null)
+    if (!res?.ok) {
+      if (prev !== undefined) setOrderRows(rows => rows.map(r => r.id === id ? { ...r, status: prev } : r))
+      toast.error('Failed to update status')
+    } else { toast.success('Status updated') }
   }
 
   function toggleSelect(id: string) {
@@ -245,7 +249,19 @@ export function OrdersTable() {
                         {order.order_number}
                       </Link>
                     </td>
-                    <td className="px-3 py-2"><OrderStatusBadge status={order.status as OrderStatus} /></td>
+                    <td className="px-3 py-2">
+                      {role === 'SALES' ? (
+                        <OrderStatusBadge status={order.status as OrderStatus} />
+                      ) : (
+                        <select
+                          value={order.status}
+                          onChange={e => patchStatus(order.id, e.target.value)}
+                          className="text-xs rounded border border-border bg-background px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#00205B] max-w-[180px]"
+                        >
+                          {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      )}
+                    </td>
                     <td className="px-3 py-2">{order.customer_name ?? '—'}</td>
                     <td className="px-3 py-2 text-muted-foreground">{order.customer_po ?? ''}</td>
                     <td className="px-3 py-2 text-muted-foreground" title={order.split_loads[0]?.description ?? ''}>
