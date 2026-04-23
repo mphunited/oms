@@ -453,6 +453,10 @@ export function NewOrderForm() {
   const [notesOpen,             setNotesOpen]             = useState(true)
   const [orderTypeManuallySet,  setOrderTypeManuallySet]  = useState(false)
   const [emailingPO,            setEmailingPO]            = useState(false)
+  const [isAdmin,               setIsAdmin]               = useState(false)
+  const [isManualMode,          setIsManualMode]          = useState(false)
+  const [manualPONumber,        setManualPONumber]        = useState('')
+  const [manualPOError,         setManualPOError]         = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -461,12 +465,14 @@ export function NewOrderForm() {
       fetch('/api/users?permission=SALES').then(r => r.json()),
       fetch('/api/users?permission=CSR').then(r => r.json()),
       fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()),
-    ]).then(([c, v, sp, csr, car]) => {
+      fetch('/api/me').then(r => r.json()),
+    ]).then(([c, v, sp, csr, car, me]) => {
       setCustomers(c)
       setVendors(v)
       setSalespersonUsers(sp)
       setCsrUsers(csr)
       setCarriers(Array.isArray(car) ? car : [])
+      setIsAdmin(me?.role === 'ADMIN')
     })
   }, [])
 
@@ -514,19 +520,42 @@ export function NewOrderForm() {
 
   const onSubmit: SubmitHandler<OrderFormValues> = async (data) => {
     setSubmitError(null)
+
+    if (isManualMode) {
+      const trimmed = manualPONumber.trim()
+      if (!trimmed || /\s/.test(trimmed)) {
+        setManualPOError('PO number cannot be empty or contain spaces')
+        return
+      }
+      const checkRes = await fetch(`/api/orders/check-po?number=${encodeURIComponent(trimmed)}`)
+      const { exists } = await checkRes.json()
+      if (exists) {
+        toast.error('PO number already exists')
+        return
+      }
+    }
+
     setIsSubmitting(true)
     try {
+      const body = isManualMode
+        ? { ...data, manual_order_number: manualPONumber.trim() }
+        : data
       const res = await fetch('/api/orders', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(data),
+        body:    JSON.stringify(body),
       })
+      if (res.status === 409) {
+        toast.error('PO number already exists')
+        return
+      }
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({ error: res.statusText }))
         throw new Error(errBody.detail ?? errBody.error ?? 'Failed to save order')
       }
       const order = await res.json() as { id: string; order_number: string }
       setSavedOrder(order)
+      if (isManualMode) toast.success(`Order ${order.order_number} saved`)
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to save order. Please try again.')
     } finally {
@@ -611,6 +640,34 @@ export function NewOrderForm() {
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Order Identity
           </h2>
+          {isAdmin && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
+                <Switch
+                  id="manual_po_toggle"
+                  checked={isManualMode}
+                  onCheckedChange={(v) => {
+                    setIsManualMode(v)
+                    if (!v) { setManualPONumber(''); setManualPOError(null) }
+                  }}
+                />
+                <Label htmlFor="manual_po_toggle" className="cursor-pointer font-medium">Manual PO Number</Label>
+                <span className="text-xs text-muted-foreground">For importing historical orders</span>
+              </div>
+              {isManualMode && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="manual_po_number">MPH PO Number *</Label>
+                  <Input
+                    id="manual_po_number"
+                    placeholder="e.g. 12345 or PM-MPH12345"
+                    value={manualPONumber}
+                    onChange={(e) => { setManualPONumber(e.target.value); setManualPOError(null) }}
+                  />
+                  {manualPOError && <p className="text-xs text-destructive">{manualPOError}</p>}
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="order_date">Order Date *</Label>
