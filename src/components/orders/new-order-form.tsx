@@ -46,7 +46,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { InvoicePanel } from '@/components/orders/invoice-panel'
 
-// â”€â”€â”€ Schemas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Schemas â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 const addressSchema = z.object({
   name:           z.string().optional(),
@@ -138,7 +138,7 @@ const EMPTY_LOAD: z.infer<typeof splitLoadSchema> = {
   mph_freight_bottles: undefined,
 }
 
-// â”€â”€â”€ Margin calculation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Margin calculation â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 const COMMISSION_KEYWORDS = ['New IBC', 'Bottle', 'Rebottle', 'Washout', 'Wash & Return']
 
@@ -189,7 +189,7 @@ function computeMargin(values: Partial<OrderFormValues>) {
   }
 }
 
-// â”€â”€â”€ Combobox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Combobox â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 type Option = { id: string; name: string }
 
@@ -254,7 +254,7 @@ function Combobox({
   )
 }
 
-// â”€â”€â”€ Address fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Address fields â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function AddressFields({
   prefix,
@@ -299,7 +299,7 @@ function AddressFields({
   )
 }
 
-// â”€â”€â”€ Margin card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Margin card â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function MarginCard({ control }: { control: Control<OrderFormValues> }) {
   const values = useWatch({ control })
@@ -376,7 +376,7 @@ function MarginCard({ control }: { control: Control<OrderFormValues> }) {
   )
 }
 
-// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Constants â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 const STATUSES = [
   'Pending',
@@ -404,7 +404,7 @@ const ORDER_TYPES = [
   '330 Gal Wash & Return Program',
   '330 Gal Washout IBC',
   '55 Gal Drums',
-  'Other â€” Parts & Supplies',
+  'Other â€" Parts & Supplies',
 ]
 
 const TERMS = ['PPD', 'PPA', 'FOB']
@@ -435,7 +435,7 @@ function matchOrderType(description: string): string | null {
   return null
 }
 
-// â”€â”€â”€ Main form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Main form â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 type UserOption = { id: string; name: string | null; role: string }
 
@@ -572,7 +572,7 @@ export function NewOrderForm() {
     }
   }
 
-  // â”€â”€ Post-save banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€ Post-save banner â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   if (savedOrder) {
     return (
       <div className="p-6 max-w-xl space-y-4">
@@ -599,14 +599,14 @@ export function NewOrderForm() {
     )
   }
 
-  // â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€ Form â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex gap-6 p-6">
 
-      {/* â”€â”€ Main column â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â"€â"€ Main column â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
       <div className="flex-1 min-w-0 space-y-6">
 
-        {/* Section 1 â€” Order Identity */}
+        {/* Section 1 â€" Order Identity */}
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Order Identity
@@ -658,7 +658,13 @@ export function NewOrderForm() {
                 value={watchedValues.csr2_id ?? 'none'}
                 onValueChange={v => form.setValue('csr2_id', v === 'none' ? null : v)}
               >
-                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="None">
+                    {watchedValues.csr2_id && watchedValues.csr2_id !== 'none'
+                      ? (csrOptions.find(u => u.id === watchedValues.csr2_id)?.name ?? watchedValues.csr2_id)
+                      : 'None'}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
                   {csrOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
@@ -670,7 +676,7 @@ export function NewOrderForm() {
 
         <Separator />
 
-        {/* Section 2 â€” Customer & Vendor */}
+        {/* Section 2 â€" Customer & Vendor */}
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Customer & Vendor
@@ -725,7 +731,7 @@ export function NewOrderForm() {
 
         <Separator />
 
-        {/* Section 3 â€” Line Items */}
+        {/* Section 3 â€" Line Items */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -822,6 +828,17 @@ export function NewOrderForm() {
                     {...form.register(`split_loads.${index}.sell`, { valueAsNumber: true })}
                   />
                 </div>
+                {index === 0 && (
+                  <div className="col-span-2 space-y-1.5">
+                    <Label>Terms</Label>
+                    <Select onValueChange={v => form.setValue('terms', v as string)}>
+                      <SelectTrigger><SelectValue placeholder="PPD / PPA / FOB" /></SelectTrigger>
+                      <SelectContent>
+                        {TERMS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               {showBottleFields && (
@@ -864,7 +881,7 @@ export function NewOrderForm() {
 
         <Separator />
 
-        {/* Section 4 â€” Freight & Logistics */}
+        {/* Section 4 â€" Freight & Logistics */}
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Freight & Logistics
@@ -893,15 +910,6 @@ export function NewOrderForm() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Terms</Label>
-              <Select onValueChange={v => form.setValue('terms', v as string)}>
-                <SelectTrigger><SelectValue placeholder="PPD / PPA / FOB" /></SelectTrigger>
-                <SelectContent>
-                  {TERMS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="additional_costs">Additional Costs</Label>
               <Input
                 id="additional_costs"
@@ -913,18 +921,10 @@ export function NewOrderForm() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ship_date">Ship Date</Label>
-              <Input id="ship_date" type="date" {...form.register('ship_date')} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="wanted_date">Wanted Date</Label>
-              <Input id="wanted_date" type="date" {...form.register('wanted_date')} />
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="appointment_time">Appointment Time</Label>
               <Input
                 id="appointment_time"
-                placeholder="e.g. 9:00 AM â€“ 10:00 AM"
+                placeholder="e.g. 9:00 AM — 10:00 AM"
                 {...form.register('appointment_time')}
               />
             </div>
@@ -941,7 +941,7 @@ export function NewOrderForm() {
 
         <Separator />
 
-        {/* Section 5 â€” Addresses & Contacts */}
+        {/* Section 5 â€" Addresses & Contacts */}
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Addresses & Contacts
@@ -1011,7 +1011,7 @@ export function NewOrderForm() {
 
         <Separator />
 
-        {/* Section 6 â€” Notes (collapsible) */}
+        {/* Section 6 â€" Notes (collapsible) */}
         <Collapsible open={notesOpen} onOpenChange={setNotesOpen}>
           <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between py-1 transition-opacity hover:opacity-70">
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -1052,53 +1052,54 @@ export function NewOrderForm() {
           </CollapsibleContent>
         </Collapsible>
 
-        <Separator />
-
-        {/* Flag, toggles & submit */}
-        <div className="space-y-4 pb-8">
-          <div className="flex flex-wrap gap-6">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="flag"
-                checked={watchedValues.flag ?? false}
-                onCheckedChange={v => form.setValue('flag', v)}
-              />
-              <Label htmlFor="flag" className="cursor-pointer">Flag This Order</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="is_blind_shipment"
-                checked={watchedValues.is_blind_shipment ?? false}
-                onCheckedChange={v => form.setValue('is_blind_shipment', v)}
-              />
-              <Label htmlFor="is_blind_shipment" className="cursor-pointer">Blind Shipment</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="is_revised"
-                checked={watchedValues.is_revised ?? false}
-                onCheckedChange={v => form.setValue('is_revised', v)}
-              />
-              <Label htmlFor="is_revised" className="cursor-pointer">Revised PO</Label>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              {submitError && (
-                <p className="text-sm text-destructive">{submitError}</p>
-              )}
-            </div>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Savingâ€¦' : 'Save Order'}
-            </Button>
-          </div>
-        </div>
       </div>
 
-      {/* â”€â”€ Sticky sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â"€â"€ Sticky sidebar â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
       <aside className="w-64 shrink-0 space-y-4">
         <MarginCard control={form.control} />
         <InvoicePanel control={form.control} />
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="ship_date">Ship Date</Label>
+            <Input id="ship_date" type="date" {...form.register('ship_date')} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="wanted_date">Wanted Date</Label>
+            <Input id="wanted_date" type="date" {...form.register('wanted_date')} />
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="flag"
+              checked={watchedValues.flag ?? false}
+              onCheckedChange={v => form.setValue('flag', v)}
+            />
+            <Label htmlFor="flag" className="cursor-pointer">Flag This Order</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="is_blind_shipment"
+              checked={watchedValues.is_blind_shipment ?? false}
+              onCheckedChange={v => form.setValue('is_blind_shipment', v)}
+            />
+            <Label htmlFor="is_blind_shipment" className="cursor-pointer">Blind Shipment</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="is_revised"
+              checked={watchedValues.is_revised ?? false}
+              onCheckedChange={v => form.setValue('is_revised', v)}
+            />
+            <Label htmlFor="is_revised" className="cursor-pointer">Revised PO</Label>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving\u2026' : 'Save Order'}
+          </Button>
+        </div>
       </aside>
     </form>
   )
