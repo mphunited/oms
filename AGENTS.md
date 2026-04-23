@@ -14,7 +14,8 @@ MAKE ALL FIXES AND CODE CHANGES AS SIMPLE AS HUMANLY POSSIBLE. THEY SHOULD ONLY 
 2. Read PRD.md — product requirements, feature scope, business rules, build order
 3. Read src/lib/db/schema.ts — current schema before writing any queries or API routes
 4. Review the TECHNOLOGY STACK section in this file before writing any code
-5. Then proceed with the task
+5. If working on auth or user sync: read drizzle/0010_auth_user_sync_trigger.sql to understand the SSO→public.users sync mechanism
+6. Then proceed with the task
 
 **Do not skip any of these steps. Do not rely on memory from a previous session.**
 
@@ -173,6 +174,28 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     appended to all Graph API drafts automatically via getUserSignature() called
     in parallel with getMailToken(). Manage user records including signature on
     /team page (ADMIN only).
+
+32. **users table has a permissions column (jsonb, default []).** Valid values in the
+    array: "SALES" | "CSR". This controls which order-form role dropdowns a user
+    appears in, independent of their app access role. Salesperson dropdown filters
+    GET /api/users?permission=SALES. CSR dropdown filters GET /api/users?permission=CSR.
+    A user with role=ADMIN can have either or both permissions to appear in order form
+    dropdowns. Managed on the /team page.
+
+33. **freight_carrier on orders is a Select dropdown** populated from dropdown_configs
+    where type = 'CARRIER'. Fetch via GET /api/dropdown-configs?type=CARRIER, which
+    returns a string[] from the row's values jsonb array. Seeded with 34 carriers in
+    Supabase Studio. The Input field was replaced with a Select on both the new order
+    form and the order edit page.
+
+34. **on_auth_user_created trigger syncs auth.users → public.users on first SSO login.**
+    Fires AFTER INSERT on auth.users. Name extraction priority:
+      1. raw_user_meta_data->>'full_name'
+      2. CONCAT(custom_claims->>'given_name', ' ', custom_claims->>'family_name')
+      3. email (last resort)
+    Tracked in drizzle/0010_auth_user_sync_trigger.sql for version control.
+    Applied via Supabase MCP (not drizzle-kit — pooler lacks auth schema DDL permission).
+    Do NOT attempt to re-apply via npm run db:migrate — use Supabase MCP apply_migration.
 ---
 
 ## TECHNOLOGY STACK
@@ -381,16 +404,18 @@ Key routes:
 - /customers/[customerId] — customer detail + contacts editor (built, working)
 - /vendors — vendor list (built, working)
 - /vendors/[vendorId] — vendor detail + contacts + checklist template (built, working)
-- /recycling — recycling orders (not started)
+- /recycling — placeholder page (coming soon — not yet built)
 - /schedules — weekly schedule generation (built, working — Graph API email with auto-attached PDF, recipients from DB)
 - /commission — commission report with mark-paid workflow (built, needs real data test)
-- /team — user management (built, working — ADMIN only, manages title, phone, email_signature, role, can_view_commission)
-- Note: filters and search on /orders not yet built — planned for next session
+- /team — user management (built, working — ADMIN only, manages title, phone, email_signature, role, can_view_commission, permissions)
+- /api/orders — GET with full server-side filtering + pagination (search, lifecycle, status, customer/vendor/salesperson/csr, date range, invoice/commission status, flag, page/limit)
 - /api/schedules/admin-pdf — POST admin schedule PDF
 - /api/schedules/vendor-pdf — POST vendor/Frontline schedule PDF
 - /api/commission — GET commission data, role-filtered
 - /api/commission/mark-paid — POST bulk mark commission paid
 - /api/me — GET current user id/name/email/role
+- /api/users — GET users list; accepts ?permission=SALES|CSR to filter by permissions jsonb
+- /api/dropdown-configs — GET dropdown values by type; accepts ?type=CARRIER (returns string[])
 
 ---
 

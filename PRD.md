@@ -20,21 +20,34 @@ invoicing. They do not manufacture or warehouse product.
 
 ## 2. The Team
 
-| Person | Role in App | Notes |
-|--------|-------------|-------|
-| Jack Schlaack | Admin / IT Lead | Builds the app using Claude Code. Not a professional developer. |
-| Keith Ferrell | CSR & Admin | Will use the app. Will eventually contribute to building it. Currently unavailable. |
-| Christina Bayne | CSR / General Manager | Primary CSR user. Early tester target. |
-| Jordan Mannering | CSR | CSR user. |
-| Gracie Medley | Accounting & CSR | Accounting & CSR user. |
-| Renee Sauvageau | Salesperson | Commission report user. Sees only her own orders. |
-| Jennifer Wilkes | Salesperson | Sees only her own orders. |
-| Larry Mitchum | Salesperson | Sees only his own orders. |
-| Mike Harding | Salesperson / Owner | Sees everything. |
-| David Harding | CFO / Owner | Sees everything |
-| Peter Mannering | Accounting / Controller | Accounting user.| 
-| Matt Cozik | CSR | CSR for Recycling Orders | 
-| Suzanne Ridenour | CSR | CSR for Empties | 
+| Person | Role in App | Permissions (order dropdowns) | Notes |
+|--------|-------------|-------------------------------|-------|
+| Jack Schlaack | Admin / IT Lead | (none) | Builds the app using Claude Code. Not a professional developer. |
+| Keith Ferrell | CSR & Admin | CSR | Will use the app. Will eventually contribute to building it. Currently unavailable. |
+| Christina Bayne | CSR / General Manager | CSR | Primary CSR user. Early tester target. |
+| Jordan Mannering | CSR | CSR | CSR user. |
+| Gracie Medley | Accounting & CSR | CSR | Accounting & CSR user. |
+| Renee Sauvageau | Salesperson | SALES | Commission report user. Sees only her own orders. |
+| Jennifer Wilkes | Salesperson | SALES | Sees only her own orders. |
+| Larry Mitchum | Salesperson | SALES | Sees only his own orders. |
+| Mike Harding | Salesperson / Owner | SALES | Sees everything. |
+| David Harding | CFO / Owner | (none) | Sees everything. |
+| Peter Mannering | Accounting / Controller | (none) | Accounting user. |
+| Matt Cozik | CSR | CSR | CSR for Recycling Orders. |
+| Suzanne Ridenour | CSR | CSR | CSR for Empties. |
+| Gracie Medley | Accounting & CSR | CSR | Accounting & CSR user. |
+| Jack2 (test) | Admin | (none) | Test/dev account (jack2@mphunited.com). |
+| Service Account | — | (none) | System service account, no UI access. |
+
+**Permissions field note:** The `permissions` jsonb column on users (default `[]`) controls
+which order-form role dropdowns a user appears in, independently of their app access `role`.
+Valid values: `"SALES"` | `"CSR"`. A user with `role=ADMIN` may have either or both permissions
+to appear in salesperson or CSR dropdowns on the order form.
+
+Current assignments (as of April 23, 2026):
+- **SALES permissions:** Mike Harding, Renee Sauvageau, Jennifer Wilkes, Larry Mitchum
+- **CSR permissions:** Christina Bayne, Keith Ferrell, Jordan Mannering, Matt Cozik, Suzanne Ridenour, Gracie Medley
+- **No permissions:** Jack Schlaack, David Harding, Peter Mannering, Jack2, Service Account
 
 ---
 
@@ -91,17 +104,25 @@ All tables are in Supabase. Migrations managed via Drizzle in `drizzle/`.
 | recycling_orders | Separate table for recycling orders (different schema) |
 | bills_of_lading | BOL records linked to orders |
 | company_settings | MPH United singleton row |
-| dropdown_configs | Configurable dropdown lists |
+| dropdown_configs | Configurable dropdown lists (one row per type; values is a jsonb string[]) |
 | audit_logs | Immutable change log |
+
+### users table — key fields
+id (UUID, mirrors auth.users), email, name, avatar_url, entra_id, title, phone,
+email_signature, role (user_role enum: ADMIN|CSR|ACCOUNTING|SALES), permissions (jsonb,
+default [] — array of "SALES"|"CSR" controlling order form dropdown appearance independently
+of app role), can_view_commission (boolean), is_active (boolean), created_at
 
 ### orders table — key fields
 id, order_number (text, unique), order_date, order_type, customer_id, vendor_id,
-salesperson_id, csr_id, status, customer_po, freight_cost, freight_to_customer,
-additional_costs, freight_carrier, ship_date, wanted_date, ship_to (jsonb), bill_to (jsonb),
-customer_contacts (jsonb — [{name, email}], extract emails directly for Outlook deeplinks), terms, appointment_time, appointment_notes,
-po_notes, freight_invoice_notes, shipper_notes, misc_notes, flag, is_blind_shipment,
-is_revised, invoice_payment_status, commission_status, qb_invoice_number,
-checklist (jsonb), created_at, updated_at
+salesperson_id, csr_id, csr2_id, status, customer_po, freight_cost, freight_to_customer,
+additional_costs, freight_carrier (text — populated from dropdown_configs CARRIER type),
+ship_date, wanted_date, ship_to (jsonb), bill_to (jsonb),
+customer_contacts (jsonb — [{name, email}], extract emails directly for Graph API drafts),
+terms, appointment_time, appointment_notes, po_notes, freight_invoice_notes, shipper_notes,
+misc_notes, flag, is_blind_shipment, is_revised, invoice_payment_status, commission_status,
+qb_invoice_number, invoice_paid_date (date), commission_paid_date (date),
+checklist (jsonb), sales_order_number, created_at, updated_at
 
 ### order_split_loads — key fields
 id, order_id (FK→orders), description, part_number, qty, buy, sell,
@@ -123,6 +144,11 @@ ship_to (jsonb: {street, city, state, zip} — default, overridden per order),
 bill_to (jsonb),
 contacts (jsonb array — {name, email, phone_office, phone_cell, role, is_primary, notes}),
 created_at
+
+### dropdown_configs — active types
+| type | purpose |
+|------|---------|
+| CARRIER | Freight carrier names for the freight_carrier field on orders. Seeded with 34 carriers. Fetched via GET /api/dropdown-configs?type=CARRIER (returns string[]). Managed in Supabase Studio. |
 
 ### Contact object shape
 
@@ -439,28 +465,34 @@ This is the primary mechanism for repeat customer orders where most info stays t
 |-------|------|-------|
 | /auth/callback | OAuth callback handler | Microsoft Entra SSO sign in | 1 — Done |
 | /dashboard | Hero stats, status distribution, weekly chart | 1 |
-| /orders | Ongoing orders table | 1 — Done |
-| /orders/new | New order form | 1 — Built, needs testing |
-| /orders/[orderId] | Order detail, edit, PO, BOL, checklist | 1 |
-| /recycling | Recycling orders table | 1 |
+| /orders | Ongoing orders table with full server-side filtering + pagination | 1 — Done |
+| /orders/new | New order form | 1 — Done |
+| /orders/[orderId] | Order detail, edit, PO, BOL, checklist, duplicate | 1 — Done |
+| /recycling | Coming Soon placeholder | 1 — Placeholder only; full feature not yet built |
 | /recycling/new | New recycling order form | 1 |
 | /recycling/[id] | Recycling order detail and edit | 1 |
-| /customers | Customer list | 1 |
-| /customers/[customerId] | Customer detail and contacts editor | 1 |
-| /vendors | Vendor list | 1 |
-| /vendors/[vendorId] | Vendor detail, contacts, checklist template | 1 |
-| /schedules | Weekly schedule generation | 1 — Built, working (Graph API email, auto-attached PDF) |
+| /customers | Customer list | 1 — Done |
+| /customers/[customerId] | Customer detail and contacts editor | 1 — Done |
+| /vendors | Vendor list | 1 — Done |
+| /vendors/[vendorId] | Vendor detail, contacts, checklist template | 1 — Done |
+| /schedules | Weekly schedule generation | 1 — Done (Graph API email, auto-attached PDF) |
 | /commission | Commission report (Renee) | 1 — Built, needs real data test |
 | /settings | Admin settings | 1 |
-| /team | User management — ADMIN only, manages title/phone/email_signature/role/can_view_commission | 1 — Built, working |
-| /api/orders | POST new order | 1 — Built |
-| /api/orders/[orderId]/po-pdf | GET PO PDF | 1 |
-| /api/orders/[orderId]/bol-pdf | GET BOL PDF | 1 |
-| /api/customers | GET customer list | 1 |
-| /api/vendors | GET vendor list | 1 |
-| /api/users | GET users list | 1 |
-| /api/schedules/admin-pdf | POST admin schedule PDF | 1 |
-| /api/schedules/vendor-pdf | POST vendor/Frontline schedule PDF | 1 |
+| /team | User management — ADMIN only, manages title/phone/email_signature/role/can_view_commission/permissions | 1 — Done |
+| /api/orders | GET orders with server-side filtering + pagination; POST new order | 1 — Done |
+| /api/orders/[orderId] | GET order detail | 1 — Done |
+| /api/orders/[orderId]/po-pdf | GET PO PDF | 1 — Done |
+| /api/orders/[orderId]/bol-pdf | GET BOL PDF | 1 — Done |
+| /api/orders/duplicate/[orderId] | POST duplicate order | 1 — Done |
+| /api/customers | GET customer list | 1 — Done |
+| /api/vendors | GET vendor list | 1 — Done |
+| /api/users | GET users list; ?permission=SALES\|CSR filters by permissions jsonb | 1 — Done |
+| /api/me | GET current user id/name/email/role/email_signature | 1 — Done |
+| /api/dropdown-configs | GET dropdown values by type; ?type=CARRIER returns string[] | 1 — Done |
+| /api/schedules/admin-pdf | POST admin schedule PDF | 1 — Done |
+| /api/schedules/vendor-pdf | POST vendor/Frontline schedule PDF | 1 — Done |
+| /api/commission | GET commission data, role-filtered | 1 — Done |
+| /api/commission/mark-paid | POST bulk mark commission paid | 1 — Done |
 
 ---
 
@@ -497,8 +529,15 @@ This is the primary mechanism for repeat customer orders where most info stays t
 
 ### Data migration
 18. Import last 12 months from Excel
-19. ✅ COMPLETE — Team/user management page (ADMIN only — title, phone, email_signature, role, can_view_commission)
-    ⏳ NOT YET BUILT — Orders table filters and search — planned for next session
+19. ✅ COMPLETE — Team/user management page (ADMIN only — title, phone, email_signature, role, can_view_commission, permissions)
+20. ✅ COMPLETE — Orders table filters and search (server-side filtering + pagination on GET /api/orders; filter bar UI with lifecycle pills, multi-select dropdowns, flag toggle, More Filters collapsible, date range, search)
+21. ✅ COMPLETE — Auth trigger (on_auth_user_created) syncing auth.users → public.users on first SSO login. Applied via Supabase MCP. Tracked in drizzle/0010_auth_user_sync_trigger.sql.
+22. ✅ COMPLETE — Freight carrier dropdown from dropdown_configs (type=CARRIER, seeded with 34 carriers). Both new-order-form and order edit page use Select.
+23. ✅ COMPLETE — Salesperson/CSR order form dropdowns filtered by permissions field (?permission=SALES and ?permission=CSR via GET /api/users).
+24. ✅ COMPLETE — Users seeded: 15 users with correct UUIDs, roles, and permissions. Roles and permissions set in Supabase Studio.
+25. ✅ COMPLETE — Customers seeded: 192 customers imported.
+26. ✅ COMPLETE — Vendors seeded: 32 vendors. Naming convention: "MPH United / [Vendor Name] -- [City, State]".
+27. ✅ COMPLETE — Recycling placeholder page at /recycling ("Coming Soon").
 
 ---
 
@@ -613,6 +652,13 @@ When Harding National is onboarded as a second tenant:
 | Outlook draft signatures | Graph API cannot read Outlook signatures. Signatures stored in users.email_signature, managed on /team page, appended automatically to all drafts via createDraft() signature parameter. |
 | PO PDF signature lines | Removed from PO PDF. |
 | Two CSRs per order | csr2_id added to orders table. Order form and edit page have optional CSR 2 dropdown. Schedule PDFs show both first names as First1 / First2. |
+| permissions field on users | jsonb array (default []) controlling which order-form role dropdowns a user appears in, independent of their app role. Values: "SALES" \| "CSR". Salesperson dropdown → ?permission=SALES; CSR dropdown → ?permission=CSR. Managed on /team page by ADMIN. |
+| Vendor naming convention | All vendor names use format: "MPH United / [Vendor Name] -- [City, State]". 32 vendors seeded. |
+| dropdown_configs CARRIER type | freight_carrier field on orders is a Select populated from dropdown_configs where type='CARRIER'. Values are a jsonb string[] on the single CARRIER row. Seeded with 34 freight carriers in Supabase Studio. API: GET /api/dropdown-configs?type=CARRIER. |
+| Auth trigger on_auth_user_created | Fires AFTER INSERT on auth.users. Inserts into public.users with correct UUID, email, name (priority: full_name → given_name+family_name from custom_claims → email), role=CSR, is_active=true. Applied via Supabase MCP (pooler lacks auth schema DDL permission). Tracked in drizzle/0010_auth_user_sync_trigger.sql. Do NOT re-apply via drizzle-kit. |
+| Entra SSO token name fields | Require profile scope in signInWithOAuth call. full_name at top level of raw_user_meta_data. given_name and family_name nested under raw_user_meta_data->'custom_claims'. |
+| inviteMember function | src/actions/team.ts uses supabase.auth.admin.inviteUserByEmail() (requires SUPABASE_SERVICE_ROLE_KEY). Direct insert into public.users removed — the on_auth_user_created trigger handles sync on first login. |
+| Sign-out bug in development | Sign-out does not work reliably on localhost. Use incognito window as workaround. Not yet fixed. |
 ---
 
 ## 22. What the Current Prototype Is NOT
@@ -682,6 +728,6 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 
 ---
 
-*Last updated: April 22, 2026 — MSAL fixed (pinned to v4.28.1), GreetingModal removed, bulk Email POs and BOLs added to orders table, schedule emails migrated to Graph API, csr2_id added to orders, users table extended with title/phone/email_signature/can_view_commission, team page built, nav rebuilt with role-based visibility, PO PDF signature lines removed, orders table filters not yet built.*
+*Last updated: April 23, 2026 — permissions jsonb column added to users (controls order-form salesperson/CSR dropdowns independently of app role; seeded for 15 users); freight_carrier changed from text Input to Select populated from dropdown_configs CARRIER type (34 carriers seeded); GET /api/users now accepts ?permission= filter; GET /api/dropdown-configs route created; on_auth_user_created auth trigger applied via Supabase MCP (tracks full_name → custom_claims → email priority); inviteMember fixed to use supabase.auth.admin.inviteUserByEmail; orders table server-side filters and search fully built; recycling placeholder page added; 192 customers and 32 vendors seeded.*
 *This document should be updated whenever significant decisions are made or scope changes.*
 *Retire: New_MPH_Order_Management_App.docx and MPH-OMS-HANDOFF.md once this file is committed to the repo.*

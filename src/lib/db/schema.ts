@@ -111,7 +111,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   email_signature: text("email_signature"),
   role: userRoleEnum("role").notNull().default("CSR"),
-  permissions: jsonb("permissions").notNull().default([]),
+  permissions: jsonb("permissions").notNull().default([]), // ["SALES"] | ["CSR"] | [] — controls order form dropdown appearance, independent of app access role
   can_view_commission: boolean("can_view_commission").notNull().default(false),
   is_active: boolean("is_active").notNull().default(true),
   created_at: timestamp("created_at", { withTimezone: true })
