@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "is_commission_eligible" boolean DEFAULT false NOT NULL;

@@ -58,6 +58,8 @@ export async function updateMember(
     role: UserRole;
     is_active: boolean;
     email_signature: string | null;
+    can_view_commission: boolean;
+    is_commission_eligible: boolean;
   }
 ) {
   const [user] = await db.update(users)

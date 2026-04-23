@@ -50,6 +50,9 @@ export async function GET(req: NextRequest) {
 
   const conditions = [];
 
+  // Only show orders whose salesperson is commission-eligible
+  conditions.push(eq(salespersonAlias.is_commission_eligible, true));
+
   // Role enforcement
   if (dbUser.role === "SALES") {
     // SALES users see only their own orders

@@ -57,7 +57,7 @@ export function CommissionClient() {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<UserOption[]>([]);
 
-  // Filters
+  // Filters — default "all"; set to Renee after eligible users load
   const [salespersonId, setSalespersonId] = useState<string>("all");
   const [commissionStatus, setCommissionStatus] = useState<string>("all");
   const [invoiceStatus, setInvoiceStatus] = useState<string>("all");
@@ -72,27 +72,31 @@ export function CommissionClient() {
   // Current user role (from session)
   const [myRole, setMyRole] = useState<string | null>(null);
 
+  // On mount: load commission-eligible users + my role, then auto-fetch pre-filtered to Renee
   useEffect(() => {
-    // Load current user role + salesperson list
-    fetch("/api/users")
-      .then((r) => r.json())
-      .then((data: UserOption[]) => {
-        setUsers(data.filter((u) => u.role === "SALES" || u.role === "ADMIN"));
+    Promise.all([
+      fetch("/api/users?commission_eligible=true").then((r) => r.json()),
+      fetch("/api/me").then((r) => r.json()),
+    ])
+      .then(([eligible, me]: [UserOption[], { role: string }]) => {
+        setUsers(eligible);
+        setMyRole(me.role);
+        const defaultId = eligible.length > 0 ? eligible[0].id : "all";
+        setSalespersonId(defaultId);
+        fetchData(defaultId);
       })
       .catch(() => toast.error("Failed to load users"));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    fetch("/api/me")
-      .then((r) => r.json())
-      .then((me: { role: string }) => setMyRole(me.role))
-      .catch(() => {});
-  }, []);
-
-  const fetchData = useCallback(async () => {
+  // fetchData accepts an optional salespersonId override so the initial load
+  // can pass the just-set default before the state update is committed.
+  const fetchData = useCallback(async (spIdOverride?: string) => {
+    const effectiveSpId = spIdOverride !== undefined ? spIdOverride : salespersonId;
     setLoading(true);
     setSelected(new Set());
     try {
       const params = new URLSearchParams();
-      if (salespersonId !== "all") params.set("salespersonId", salespersonId);
+      if (effectiveSpId !== "all") params.set("salespersonId", effectiveSpId);
       if (commissionStatus !== "all") params.set("commissionStatus", commissionStatus);
       if (invoiceStatus !== "all") params.set("invoiceStatus", invoiceStatus);
       if (startDate) params.set("startDate", startDate);
@@ -108,10 +112,6 @@ export function CommissionClient() {
       setLoading(false);
     }
   }, [salespersonId, commissionStatus, invoiceStatus, startDate, endDate]);
-
-  useEffect(() => {
-    fetchData();
-  }, []); // Initial load — user clicks "Search" for filtered runs
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -185,7 +185,11 @@ export function CommissionClient() {
               <Label className="text-xs text-muted-foreground">Salesperson</Label>
               <Select value={salespersonId} onValueChange={(v) => setSalespersonId(v ?? '')}>
                 <SelectTrigger className="h-8 w-44 text-sm">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder="All">
+                    {salespersonId === "all"
+                      ? "All"
+                      : (users.find((u) => u.id === salespersonId)?.name ?? salespersonId)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all" className="text-sm">All</SelectItem>
@@ -252,7 +256,7 @@ export function CommissionClient() {
           </div>
 
           <Button
-            onClick={fetchData}
+            onClick={() => fetchData()}
             disabled={loading}
             className="h-8 text-sm bg-[#00205B] hover:bg-[#00205B]/90 self-end"
           >
