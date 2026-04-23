@@ -58,6 +58,12 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Settings,
     children: [
       {
+        title: "General",
+        href: "/settings",
+        icon: Settings,
+        roles: ["ADMIN"],
+      },
+      {
         title: "Team",
         href: "/team",
         icon: UsersRound,
