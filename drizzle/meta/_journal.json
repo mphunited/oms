@@ -71,6 +71,13 @@
       "when": 1776892430399,
       "tag": "0009_dry_gamora",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1745366400000,
+      "tag": "0010_auth_user_sync_trigger",
+      "breakpoints": true
     }
   ]
 }

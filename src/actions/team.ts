@@ -1,25 +1,34 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { db } from "@/lib/db";
 import { users, userRoleEnum } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 type UserRole = (typeof userRoleEnum.enumValues)[number]
 
+function getAdminClient() {
+  return createSupabaseAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
+
 export async function inviteMember(email: string, name: string, role: UserRole = "CSR") {
   const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
-  if (existing) return existing;
+  if (existing) return { user: existing, invited: false };
 
-  const [created] = await db.insert(users).values({
-    id: crypto.randomUUID(),
-    email,
-    name,
-    role,
-  }).returning();
+  const admin = getAdminClient();
+  const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: { full_name: name },
+  });
+
+  if (error) throw new Error(error.message);
 
   revalidatePath("/team", "page");
-  return created;
+  return { user: data.user, invited: true };
 }
 
 export async function updateMemberRole(userId: string, role: UserRole) {
