@@ -116,6 +116,8 @@ export async function PATCH(
             }))
           )
           orderFields.commission_status = orderCommissionStatus
+        } else {
+          orderFields.commission_status = 'Not Eligible'
         }
       }
 
