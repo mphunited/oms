@@ -1,8 +1,5 @@
 'use client'
 
-// src/components/commission/commission-client.tsx
-// Commission report orchestrator — fetches data, manages state, renders filters + table.
-
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { CommissionFiltersBar, type CommissionFilters } from './commission-filters'
@@ -19,28 +16,30 @@ export function CommissionClient() {
   const [role, setRole] = useState<string | null>(null)
   const [salespersons, setSalespersons] = useState<{ id: string; name: string | null }[]>([])
   const [paidDate, setPaidDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/me').then(r => r.json()),
-      fetch('/api/users?permission=SALES').then(r => r.json()),
+      fetch('/api/me').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
+      fetch('/api/users?permission=SALES').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
     ]).then(([me, sps]: [{ role: string }, { id: string; name: string | null }[]]) => {
       setRole(me?.role ?? null)
       setSalespersons(Array.isArray(sps) ? sps : [])
-    }).catch(() => {})
+    }).catch(() => { setRole(null); setSalespersons([]) })
   }, [])
 
   useEffect(() => {
+    setSelectedIds(new Set())
+    setLoading(true)
     const params = new URLSearchParams()
     if (filters.salespersonId) params.set('salespersonId', filters.salespersonId)
     if (filters.startDate) params.set('startDate', filters.startDate)
     if (filters.endDate) params.set('endDate', filters.endDate)
-    setLoading(true)
     fetch(`/api/commission?${params}`)
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
       .then(data => { setRows(Array.isArray(data) ? data : []); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [filters])
+      .catch(() => { toast.error('Failed to load commission data'); setLoading(false) })
+  }, [filters, refreshKey])
 
   function toggleSelect(id: string) {
     setSelectedIds(prev => {
@@ -70,7 +69,7 @@ export function CommissionClient() {
       if (!res.ok) throw new Error('Failed')
       toast.success(`Marked ${selectedIds.size} load(s) as Commission Paid`)
       setSelectedIds(new Set())
-      setFilters(f => ({ ...f })) // trigger refetch
+      setRefreshKey(k => k + 1)
     } catch {
       toast.error('Failed to mark commission paid')
     } finally {
@@ -84,8 +83,9 @@ export function CommissionClient() {
         <h1 className="text-lg font-semibold">Commission Report</h1>
         {(role === 'ADMIN' || role === 'ACCOUNTING') && selectedIds.size > 0 && (
           <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground">Payroll date:</label>
+            <label htmlFor="payroll-date" className="text-xs text-muted-foreground">Payroll date:</label>
             <input
+              id="payroll-date"
               type="date"
               value={paidDate}
               onChange={e => setPaidDate(e.target.value)}

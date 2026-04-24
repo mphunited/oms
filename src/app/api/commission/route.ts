@@ -1,14 +1,3 @@
-// src/app/api/commission/route.ts
-// GET /api/commission
-// Returns split loads where commission_status = 'Eligible' AND commission_paid_date IS NULL.
-// SALES role: automatically filtered to their own orders only.
-// ADMIN / ACCOUNTING: can see all, filter by salesperson.
-//
-// Query params:
-//   salespersonId — filter by salesperson UUID (ADMIN/ACCOUNTING only)
-//   startDate     — YYYY-MM-DD ship date range start (on split load)
-//   endDate       — YYYY-MM-DD ship date range end (on split load)
-
 import { NextRequest, NextResponse } from 'next/server'
 import { and, eq, gte, isNull, lte } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
@@ -67,8 +56,6 @@ export async function GET(req: NextRequest) {
       order_type:            order_split_loads.order_type,
       commission_status:     order_split_loads.commission_status,
       commission_paid_date:  order_split_loads.commission_paid_date,
-      invoice_payment_status: orders.invoice_payment_status,
-      invoice_paid_date:     orders.invoice_paid_date,
       customerName:          customers.name,
       vendorName:            vendors.name,
       salespersonName:       salespersonAlias.name,
