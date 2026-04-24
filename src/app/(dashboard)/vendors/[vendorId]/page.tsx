@@ -27,6 +27,7 @@ type Vendor = {
   id: string
   name: string
   is_active: boolean
+  is_blind_shipment_default: boolean
   lead_contact: string | null
   dock_info: string | null
   notes: string | null
@@ -93,6 +94,7 @@ export default function VendorDetailPage() {
 
   const [name, setName]               = useState('')
   const [isActive, setIsActive]       = useState(true)
+  const [isBlindShipmentDefault, setIsBlindShipmentDefault] = useState(false)
   const [leadContact, setLeadContact] = useState('')
   const [dockInfo, setDockInfo]       = useState('')
   const [notes, setNotes]             = useState('')
@@ -112,6 +114,7 @@ export default function VendorDetailPage() {
         setVendor(data)
         setName(data.name)
         setIsActive(data.is_active)
+        setIsBlindShipmentDefault(data.is_blind_shipment_default)
         setLeadContact(data.lead_contact ?? '')
         setDockInfo(data.dock_info ?? '')
         setNotes(data.notes ?? '')
@@ -138,6 +141,7 @@ export default function VendorDetailPage() {
         body: JSON.stringify({
           name,
           is_active: isActive,
+          is_blind_shipment_default: isBlindShipmentDefault,
           lead_contact: leadContact || null,
           dock_info: dockInfo || null,
           notes: notes || null,
@@ -209,6 +213,10 @@ export default function VendorDetailPage() {
         <div className="flex items-center gap-2">
           <Switch id="is_active" checked={isActive} onCheckedChange={setIsActive} />
           <Label htmlFor="is_active" className="cursor-pointer">Active</Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch id="is_blind_shipment_default" checked={isBlindShipmentDefault} onCheckedChange={setIsBlindShipmentDefault} />
+          <Label htmlFor="is_blind_shipment_default" className="cursor-pointer">Blind Shipment by Default</Label>
         </div>
       </section>
 
