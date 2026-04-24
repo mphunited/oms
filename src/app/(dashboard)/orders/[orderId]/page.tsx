@@ -27,6 +27,9 @@ export default function OrderDetailPage() {
     csrUserOptions, salespersonOptions, carriers, statusOptions,
     csrId, setCsrId, csr2Id, setCsr2Id,
     salespersonId, setSalespersonId,
+    customerId, setCustomerId,
+    vendorId, setVendorId,
+    customerOptions, vendorOptions,
     emailingPo, emailingBol,
     orderDate, setOrderDate,
     status, setStatus,
@@ -159,12 +162,27 @@ export default function OrderDetailPage() {
 
       <Separator />
 
-      {/* Customer & Vendor — read-only display, not editable on edit page */}
-      <section className="space-y-2">
+      <section className="space-y-4">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Customer & Vendor</h2>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><span className="text-muted-foreground">Customer: </span>{order.customer_name ?? '—'}</div>
-          <div><span className="text-muted-foreground">Vendor: </span>{order.vendor_name ?? '—'}</div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label>Customer</Label>
+            <OrderCombobox
+              options={customerOptions}
+              value={customerId}
+              onChange={v => setCustomerId(v)}
+              placeholder="Choose customer"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Vendor</Label>
+            <OrderCombobox
+              options={vendorOptions}
+              value={vendorId}
+              onChange={v => setVendorId(v)}
+              placeholder="Choose vendor"
+            />
+          </div>
         </div>
       </section>
 

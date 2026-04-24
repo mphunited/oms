@@ -73,7 +73,7 @@ export async function PATCH(
     const body = await req.json()
     const { split_loads, ...orderFields } = body
 
-    for (const key of ['order_date', 'ship_date', 'wanted_date', 'appointment_time', 'csr_id', 'csr2_id']) {
+    for (const key of ['order_date', 'ship_date', 'wanted_date', 'appointment_time', 'csr_id', 'csr2_id', 'salesperson_id', 'vendor_id', 'customer_id']) {
       if (orderFields[key] === '') orderFields[key] = null
     }
 
@@ -88,7 +88,16 @@ export async function PATCH(
 
         if (split_loads.length > 0) {
           const loadValues: Record<string, unknown>[] = split_loads.map((load: Record<string, unknown>) => {
-            const clean: Record<string, unknown> = { ...load, order_id: orderId }
+            const clean: Record<string, unknown> = { order_id: orderId }
+            const ALLOWED_LOAD_FIELDS = [
+              'id', 'description', 'part_number', 'qty', 'buy', 'sell',
+              'bottle_cost', 'bottle_qty', 'mph_freight_bottles',
+              'order_number_override', 'customer_po', 'order_type',
+              'ship_date', 'wanted_date', 'commission_paid_date',
+            ]
+            for (const field of ALLOWED_LOAD_FIELDS) {
+              if (field in load) clean[field] = (load as Record<string, unknown>)[field]
+            }
             for (const field of NUMERIC_FIELDS) {
               if (clean[field] === '' || clean[field] === undefined) clean[field] = null
             }

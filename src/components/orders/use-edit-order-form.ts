@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { matchOrderType } from '@/lib/orders/description-type-map'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { ChecklistItem } from '@/components/orders/order-checklist'
@@ -98,6 +99,11 @@ export function useEditOrderForm(orderId: string) {
   const [customerContacts, setCustomerContacts] = useState<CustomerContact[]>([])
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
   const [splitLoads, setSplitLoads] = useState<SplitLoadValue[]>([])
+  const [customerId, setCustomerId] = useState('')
+  const [vendorId, setVendorId] = useState('')
+  const [customerOptions, setCustomerOptions] = useState<Array<{ id: string; name: string }>>([])
+  const [vendorOptions, setVendorOptions] = useState<Array<{ id: string; name: string }>>([])
+  const [orderTypeManuallySet, setOrderTypeManuallySet] = useState(false)
 
   useEffect(() => {
     fetch('/api/users?permission=CSR').then(r => r.json()).then(setCsrUserOptions).catch(() => {})
@@ -106,6 +112,13 @@ export function useEditOrderForm(orderId: string) {
         Array.isArray(v) ? v.map((u: { id: string; name: string | null }) =>
           ({ id: u.id, name: u.name ?? u.id })) : []
       ))
+      .catch(() => {})
+    fetch('/api/customers').then(r => r.json())
+      .then(v => setCustomerOptions(Array.isArray(v) ? v : []))
+      .catch(() => {})
+    fetch('/api/vendors').then(r => r.json())
+      .then(v => setVendorOptions(Array.isArray(v) ?
+        v.map((u: { id: string; name: string }) => ({ id: u.id, name: u.name })) : []))
       .catch(() => {})
     fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()).then(v => setCarriers(Array.isArray(v) ? v : [])).catch(() => {})
     fetch('/api/dropdown-configs?type=ORDER_STATUS').then(r => r.json()).then(v => setStatusOptions(Array.isArray(v) ? v : [])).catch(() => {})
@@ -116,6 +129,8 @@ export function useEditOrderForm(orderId: string) {
         setCsrId(data.csr_id ?? '')
         setCsr2Id(data.csr2_id)
         setSalespersonId(data.salesperson_id ?? '')
+        setCustomerId(data.customer_id ?? '')
+        setVendorId(data.vendor_id ?? '')
         setOrderDate(data.order_date ?? '')
         setOrderType(data.order_type ?? '')
         setStatus(data.status)
@@ -165,6 +180,13 @@ export function useEditOrderForm(orderId: string) {
       .catch(err => { setError(err.message); setLoading(false) })
   }, [orderId])
 
+  useEffect(() => {
+    if (orderTypeManuallySet) return
+    const firstDesc = splitLoads[0]?.description ?? ''
+    const matched = matchOrderType(firstDesc)
+    if (matched) setOrderType(matched)
+  }, [splitLoads, orderTypeManuallySet])
+
   async function handleSave() {
     setSaving(true)
     setSaved(false)
@@ -177,6 +199,8 @@ export function useEditOrderForm(orderId: string) {
           order_date: orderDate || null,
           order_type: orderType || null,
           status,
+          customer_id: customerId || null,
+          vendor_id: vendorId || null,
           salesperson_id: salespersonId || null,
           csr_id: csrId || null,
           csr2_id: csr2Id || null,
@@ -264,6 +288,10 @@ export function useEditOrderForm(orderId: string) {
     csrId, setCsrId,
     csr2Id, setCsr2Id,
     salespersonId, setSalespersonId,
+    customerId, setCustomerId,
+    vendorId, setVendorId,
+    customerOptions, vendorOptions,
+    setOrderTypeManuallySet,
     emailingPo, emailingBol,
     orderDate, setOrderDate,
     orderType, setOrderType,
