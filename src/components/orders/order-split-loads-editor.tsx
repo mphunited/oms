@@ -29,7 +29,7 @@ export function OrderSplitLoadsEditor({
 
   function add() {
     const first = loads[0]
-    onChange([...loads, { ...emptyLoad(), ship_date: first?.ship_date ?? '', wanted_date: first?.wanted_date ?? '' }])
+    onChange([...loads, { ...emptyLoad(), ship_date: orderShipDate, wanted_date: orderWantedDate }])
   }
 
   function remove(index: number) {

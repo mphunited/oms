@@ -238,10 +238,10 @@ export const orders = pgTable(
     wanted_date: date("wanted_date"),
 
     ship_to: jsonb("ship_to"),
-    // { name, street, street2, city, state, zip, phone_office, phone_ext, phone_cell, shipping_notes }
+    // { name, street, street2, city, state, zip, phone_office, phone_ext, phone_cell, email, email2, shipping_notes }
     // legacy: phone key present on old rows — fall back to phone when phone_office/phone_cell absent
     bill_to: jsonb("bill_to"),
-    // { name, street, street2, city, state, zip, phone_office, phone_ext, phone_cell, shipping_notes }
+    // { name, street, street2, city, state, zip, phone_office, phone_ext, phone_cell, email, email2, shipping_notes }
     // legacy: phone key present on old rows — fall back to phone when phone_office/phone_cell absent
     customer_contacts: jsonb("customer_contacts"),
     // [{ name, email }] — extract emails directly for Outlook deeplinks

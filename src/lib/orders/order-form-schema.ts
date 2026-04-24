@@ -33,10 +33,16 @@ export function emptyLoad(): SplitLoadValue {
 const addressSchema = z.object({
   name:           z.string().optional(),
   street:         z.string().optional(),
+  street2:        z.string().optional(),
   city:           z.string().optional(),
   state:          z.string().optional(),
   zip:            z.string().optional(),
-  phone:          z.string().optional(),
+  phone_office:   z.string().optional(),
+  phone_ext:      z.string().optional(),
+  phone_cell:     z.string().optional(),
+  phone:          z.string().optional(), // legacy fallback — do not write on new orders
+  email:          z.string().optional(),
+  email2:         z.string().optional(),
   shipping_notes: z.string().optional(),
 })
 
