@@ -242,6 +242,9 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       Server validates role (ADMIN|CSR) and uniqueness via GET /api/orders/check-po
       before submit. Used for historical import. When active, shows an Invoice Number
       field (qb_invoice_number) to the right of the MPH PO Number field.
+    - When a vendor is selected, is_blind_shipment is auto-set to the vendor's
+      is_blind_shipment_default value. The toggle remains fully editable; re-selecting
+      a vendor re-applies its default.
 ---
 
 ## TECHNOLOGY STACK
