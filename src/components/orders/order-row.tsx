@@ -107,7 +107,7 @@ export function OrderTableRow({
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy)}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatShipTo(order.ship_to)}</td>
-        <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.freight_cost)}</td>
+        <td className="px-3 py-2 text-muted-foreground">{order.freight_carrier ?? '—'}</td>
         <td className="px-3 py-2">
           <div className="flex items-center gap-1">
             <Link href={`/orders/${order.id}`}
