@@ -181,6 +181,7 @@ export function OrdersTable() {
                   <th className="w-8 px-2 py-2" aria-label="Flag" />
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">MPH PO</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Status</th>
+                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Sales / CSR</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Customer</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Customer PO</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Description</th>
@@ -188,7 +189,6 @@ export function OrdersTable() {
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Ship Date</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Wanted Date</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Vendor</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Sales / CSR</th>
                   <th className="px-3 py-2 text-right font-medium text-muted-foreground">Buy</th>
                   <th className="px-3 py-2 text-right font-medium text-muted-foreground">Sell</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Ship To</th>
