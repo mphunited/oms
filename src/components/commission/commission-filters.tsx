@@ -29,12 +29,12 @@ export function CommissionFiltersBar({ filters, salespersons, role, onChange }: 
     <div className="flex flex-wrap items-end gap-3">
       {(role === 'ADMIN' || role === 'ACCOUNTING') && (
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Salesperson</label>
+          <label htmlFor="salesperson-filter" className="text-xs text-muted-foreground">Salesperson</label>
           <Select
             value={filters.salespersonId}
             onValueChange={v => onChange({ salespersonId: v })}
           >
-            <SelectTrigger className="h-8 w-44 text-sm">
+            <SelectTrigger id="salesperson-filter" className="h-8 w-44 text-sm">
               <SelectValue placeholder="All salespersons" />
             </SelectTrigger>
             <SelectContent>
@@ -47,8 +47,9 @@ export function CommissionFiltersBar({ filters, salespersons, role, onChange }: 
         </div>
       )}
       <div className="space-y-1">
-        <label className="text-xs text-muted-foreground">Ship Date From</label>
+        <label htmlFor="ship-date-from" className="text-xs text-muted-foreground">Ship Date From</label>
         <Input
+          id="ship-date-from"
           type="date"
           className="h-8 w-36 text-sm"
           value={filters.startDate}
@@ -56,8 +57,9 @@ export function CommissionFiltersBar({ filters, salespersons, role, onChange }: 
         />
       </div>
       <div className="space-y-1">
-        <label className="text-xs text-muted-foreground">To</label>
+        <label htmlFor="ship-date-to" className="text-xs text-muted-foreground">To</label>
         <Input
+          id="ship-date-to"
           type="date"
           className="h-8 w-36 text-sm"
           value={filters.endDate}

@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils/format-date'
 
+const COMMISSION_RATE_PER_UNIT = 3
+
 export type CommissionRow = {
   load_id: string
   order_id: string
@@ -12,7 +14,6 @@ export type CommissionRow = {
   qty: string | null
   ship_date: string | null
   order_type: string | null
-  invoice_payment_status: string
   vendorName: string
   customerName: string
   salespersonInitials: string
@@ -33,7 +34,7 @@ export function CommissionTable({ rows, selectedIds, onToggle, onToggleAll, role
 
   const selectedRows = rows.filter(r => selectedIds.has(r.load_id))
   const totalQty = selectedRows.reduce((acc, r) => acc + (parseFloat(r.qty ?? '0') || 0), 0)
-  const totalCommission = totalQty * 3
+  const totalCommission = totalQty * COMMISSION_RATE_PER_UNIT
 
   return (
     <div className="overflow-x-auto rounded-md border">
