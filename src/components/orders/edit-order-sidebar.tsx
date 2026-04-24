@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { INVOICE_PAYMENT_STATUSES, COMMISSION_STATUSES } from '@/lib/db/schema'
+import { INVOICE_PAYMENT_STATUSES } from '@/lib/db/schema'
 import type { SplitLoadValue } from '@/lib/orders/order-form-schema'
 
 function computeMargin(
@@ -15,9 +15,8 @@ function computeMargin(
   freightCost: string,
   freightToCustomer: string,
   additionalCosts: string,
-  commissionStatus: string,
 ) {
-  let revenue = 0, grossProfit = 0, totalQty = 0
+  let revenue = 0, grossProfit = 0
   for (const l of loads) {
     const qty = parseFloat(l.qty) || 0
     const sell = parseFloat(l.sell) || 0
@@ -27,12 +26,11 @@ function computeMargin(
     const mf = parseFloat(l.mph_freight_bottles) || 0
     revenue += sell * qty
     grossProfit += (sell - buy) * qty - bc * bq - (mf / 90) * bq
-    totalQty += qty
   }
   const ftc = parseFloat(freightToCustomer) || 0
   const fc = parseFloat(freightCost) || 0
   const ac = parseFloat(additionalCosts) || 0
-  const commDeduction = commissionStatus === 'Eligible' ? totalQty * 3 : 0
+  const commDeduction = 0
   const totalRevenue = revenue + ftc
   const profit = grossProfit + ftc - fc - ac - commDeduction
   const pct = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0
@@ -50,13 +48,11 @@ type EditOrderSidebarProps = {
   isBlind: boolean
   isRevised: boolean
   invoicePaymentStatus: string
-  commissionStatus: string
   qbInvoiceNumber: string
   onFlagChange: (v: boolean) => void
   onIsBlindChange: (v: boolean) => void
   onIsRevisedChange: (v: boolean) => void
   onInvoiceStatusChange: (v: string) => void
-  onCommissionStatusChange: (v: string) => void
   onQbInvoiceNumberChange: (v: string) => void
   onSave: () => void
 }
@@ -64,12 +60,12 @@ type EditOrderSidebarProps = {
 export function EditOrderSidebar({
   loads, freightCost, freightToCustomer, additionalCosts,
   saving, saved, flag, isBlind, isRevised,
-  invoicePaymentStatus, commissionStatus, qbInvoiceNumber,
+  invoicePaymentStatus, qbInvoiceNumber,
   onFlagChange, onIsBlindChange, onIsRevisedChange,
-  onInvoiceStatusChange, onCommissionStatusChange, onQbInvoiceNumberChange,
+  onInvoiceStatusChange, onQbInvoiceNumberChange,
   onSave,
 }: EditOrderSidebarProps) {
-  const margin = computeMargin(loads, freightCost, freightToCustomer, additionalCosts, commissionStatus)
+  const margin = computeMargin(loads, freightCost, freightToCustomer, additionalCosts)
 
   return (
     <aside className="w-64 shrink-0 sticky top-6 space-y-4">
@@ -95,15 +91,6 @@ export function EditOrderSidebar({
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {INVOICE_PAYMENT_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Commission Status</Label>
-          <Select value={commissionStatus} onValueChange={v => { if (v) onCommissionStatusChange(v) }}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {COMMISSION_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>

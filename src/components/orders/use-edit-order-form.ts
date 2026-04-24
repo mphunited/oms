@@ -63,10 +63,12 @@ export function useEditOrderForm(orderId: string) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [csrUserOptions, setCsrUserOptions] = useState<Array<{ id: string; name: string | null; role: string }>>([])
+  const [salespersonOptions, setSalespersonOptions] = useState<Array<{ id: string; name: string | null }>>([])
   const [carriers, setCarriers] = useState<string[]>([])
   const [statusOptions, setStatusOptions] = useState<string[]>([])
   const [csrId, setCsrId] = useState('')
   const [csr2Id, setCsr2Id] = useState<string | null>(null)
+  const [salespersonId, setSalespersonId] = useState('')
   const [emailingPo, setEmailingPo] = useState(false)
   const [emailingBol, setEmailingBol] = useState(false)
   const [orderDate, setOrderDate] = useState('')
@@ -99,6 +101,9 @@ export function useEditOrderForm(orderId: string) {
 
   useEffect(() => {
     fetch('/api/users?permission=CSR').then(r => r.json()).then(setCsrUserOptions).catch(() => {})
+    fetch('/api/users?permission=SALES').then(r => r.json())
+      .then(v => setSalespersonOptions(Array.isArray(v) ? v : []))
+      .catch(() => {})
     fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()).then(v => setCarriers(Array.isArray(v) ? v : [])).catch(() => {})
     fetch('/api/dropdown-configs?type=ORDER_STATUS').then(r => r.json()).then(v => setStatusOptions(Array.isArray(v) ? v : [])).catch(() => {})
     fetch(`/api/orders/${orderId}`)
@@ -107,6 +112,7 @@ export function useEditOrderForm(orderId: string) {
         setOrder(data)
         setCsrId(data.csr_id ?? '')
         setCsr2Id(data.csr2_id)
+        setSalespersonId(data.salesperson_id ?? '')
         setOrderDate(data.order_date ?? '')
         setOrderType(data.order_type ?? '')
         setStatus(data.status)
@@ -168,6 +174,7 @@ export function useEditOrderForm(orderId: string) {
           order_date: orderDate || null,
           order_type: orderType || null,
           status,
+          salesperson_id: salespersonId || null,
           csr_id: csrId || null,
           csr2_id: csr2Id || null,
           customer_po: customerPo || null,
@@ -250,9 +257,10 @@ export function useEditOrderForm(orderId: string) {
     loading, error,
     saving, saved,
     loads: splitLoads, setLoads: setSplitLoads,
-    csrUserOptions, carriers, statusOptions,
+    csrUserOptions, salespersonOptions, carriers, statusOptions,
     csrId, setCsrId,
     csr2Id, setCsr2Id,
+    salespersonId, setSalespersonId,
     emailingPo, emailingBol,
     orderDate, setOrderDate,
     orderType, setOrderType,
