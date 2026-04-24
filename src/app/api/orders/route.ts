@@ -3,18 +3,7 @@ import { db } from '@/lib/db'
 import { orders, order_split_loads, users, vendors, customers } from '@/lib/db/schema'
 import { eq, sql, desc, and, or, ilike, inArray, notInArray, gte, lte, count } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
-
-function deriveCommissionStatus(orderType: string): string {
-  const eligible = ['New IBC', 'Bottle', 'Rebottle', 'Washout', 'Wash & Return']
-  return eligible.some(kw => orderType.includes(kw)) ? 'Eligible' : 'Not Eligible'
-}
-
-function deriveInitials(name: string | null | undefined): string {
-  if (!name?.trim()) return 'XX'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) return (parts[0][0] ?? 'X').toUpperCase() + 'X'
-  return ((parts[0][0] ?? 'X') + (parts[parts.length - 1][0] ?? 'X')).toUpperCase()
-}
+import { deriveLoadCommissionStatus, deriveOrderCommissionStatus, deriveInitials } from '@/lib/orders/commission-eligibility'
 
 function parseList(param: string | null): string[] {
   if (!param) return []
@@ -185,8 +174,6 @@ export async function POST(req: Request) {
       if (orderFields[key] === '') orderFields[key] = null
     }
 
-    const commission_status = deriveCommissionStatus(orderFields.order_type ?? '')
-
     let order_number: string
     let checklist: unknown = null
 
@@ -214,16 +201,45 @@ export async function POST(req: Request) {
     }
 
     const result = await db.transaction(async (tx) => {
+      // Insert order without commission_status first
       const [newOrder] = await tx
         .insert(orders)
-        .values({ ...orderFields, order_number, commission_status, checklist })
+        .values({ ...orderFields, order_number, checklist })
         .returning({ id: orders.id, order_number: orders.order_number })
 
+      let orderCommissionStatus = 'Not Eligible'
+
       if (split_loads?.length) {
-        await tx.insert(order_split_loads).values(
-          split_loads.map((load: any) => ({ ...load, order_id: newOrder.id }))
+        const loadValues: Record<string, unknown>[] = split_loads.map((load: Record<string, unknown>) => ({
+          ...load,
+          order_id: newOrder.id,
+          commission_status: deriveLoadCommissionStatus(load.order_type as string),
+        }))
+
+        // For loads with separate_po = true, consume nextval and set order_number_override
+        for (const lv of loadValues) {
+          if (lv.separate_po) {
+            const seqRes = await tx.execute(sql`SELECT nextval('order_number_seq') AS num`)
+            const num = (seqRes as unknown as Array<{ num: string | number }>)[0].num
+            lv.order_number_override = `${initials}-MPH${num}`
+          }
+          delete lv.separate_po
+          delete lv.preview_po
+        }
+
+        await tx.insert(order_split_loads).values(loadValues)
+
+        orderCommissionStatus = deriveOrderCommissionStatus(
+          loadValues.map(l => ({
+            commission_status: l.commission_status as string,
+            commission_paid_date: null,
+          }))
         )
       }
+
+      await tx.update(orders)
+        .set({ commission_status: orderCommissionStatus })
+        .where(eq(orders.id, newOrder.id))
 
       return newOrder
     })
