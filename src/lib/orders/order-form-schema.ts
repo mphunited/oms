@@ -40,7 +40,7 @@ const addressSchema = z.object({
   phone_office:   z.string().optional(),
   phone_ext:      z.string().optional(),
   phone_cell:     z.string().optional(),
-  phone:          z.string().optional(), // legacy fallback — do not write on new orders
+  phone:          z.string().optional(),
   email:          z.string().optional(),
   email2:         z.string().optional(),
   shipping_notes: z.string().optional(),

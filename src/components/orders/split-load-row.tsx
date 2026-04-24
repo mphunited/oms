@@ -105,32 +105,26 @@ export function SplitLoadRow({
           <Input type="number" min="0" step="1" value={load.qty}
             onChange={e => set('qty', e.target.value)} placeholder="0" />
         </div>
-        {index === 0 ? (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Ship Date</Label>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Ship Date</Label>
+          {index === 0 ? (
             <Input type="date"
               value={load.ship_date || orderShipDate}
               onChange={e => set('ship_date', e.target.value)} />
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Ship Date</Label>
-            <p className="text-sm text-muted-foreground">{orderShipDate || '—'}</p>
-          </div>
-        )}
-        {index === 0 ? (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Wanted Date</Label>
+          ) : (
+            <p className="text-sm text-muted-foreground pt-1">{orderShipDate || '—'}</p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Wanted Date</Label>
+          {index === 0 ? (
             <Input type="date"
               value={load.wanted_date || orderWantedDate}
               onChange={e => set('wanted_date', e.target.value)} />
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Wanted Date</Label>
-            <p className="text-sm text-muted-foreground">{orderWantedDate || '—'}</p>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground pt-1">{orderWantedDate || '—'}</p>
+          )}
+        </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Order Type</Label>
           <Select value={load.order_type} onValueChange={v => { if (v !== null) set('order_type', v) }}>
