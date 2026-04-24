@@ -84,12 +84,14 @@ export function OrdersTable() {
   function handleFilterChange(update: Partial<FilterState>) {
     setFilters(prev => ({ ...prev, ...update }))
     if (!('search' in update)) setPage(1)
+    setExpandedIds(new Set())
   }
 
   function handleClearAll() {
     setFilters(DEFAULT_FILTERS)
     setDebouncedSearch('')
     setPage(1)
+    setExpandedIds(new Set())
   }
 
   function toggleExpand(id: string) {
