@@ -99,32 +99,28 @@ export function SplitLoadRow({
       </div>
 
       {/* Row 2: Qty & Ship Date & Wanted Date & Order Type */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className={`grid gap-3 ${index === 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
         <div className="space-y-1.5">
           <Label className="text-xs">Qty</Label>
           <Input type="number" min="0" step="1" value={load.qty}
             onChange={e => set('qty', e.target.value)} placeholder="0" />
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Ship Date</Label>
-          {index === 0 ? (
-            <Input type="date"
-              value={load.ship_date || orderShipDate}
-              onChange={e => set('ship_date', e.target.value)} />
-          ) : (
-            <p className="text-sm text-muted-foreground pt-1">{orderShipDate || '—'}</p>
-          )}
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Wanted Date</Label>
-          {index === 0 ? (
-            <Input type="date"
-              value={load.wanted_date || orderWantedDate}
-              onChange={e => set('wanted_date', e.target.value)} />
-          ) : (
-            <p className="text-sm text-muted-foreground pt-1">{orderWantedDate || '—'}</p>
-          )}
-        </div>
+        {index === 0 && (
+          <>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Ship Date</Label>
+              <Input type="date"
+                value={load.ship_date || orderShipDate}
+                onChange={e => set('ship_date', e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Wanted Date</Label>
+              <Input type="date"
+                value={load.wanted_date || orderWantedDate}
+                onChange={e => set('wanted_date', e.target.value)} />
+            </div>
+          </>
+        )}
         <div className="space-y-1.5">
           <Label className="text-xs">Order Type</Label>
           <Select value={load.order_type} onValueChange={v => { if (v !== null) set('order_type', v) }}>
