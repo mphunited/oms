@@ -8,6 +8,11 @@ import { formatDate } from '@/lib/utils/format-date'
 import { formatCurrency, firstDescription, firstQty, formatShipTo } from '@/lib/utils/order-table-utils'
 import type { OrderStatus } from '@/types/order'
 
+function firstName(full: string | null | undefined): string {
+  if (!full) return '—'
+  return full.trim().split(' ')[0]
+}
+
 export type OrderRow = {
   id: string
   order_number: string
@@ -28,6 +33,7 @@ export type OrderRow = {
   customer_name: string | null
   vendor_name: string | null
   salesperson_name: string | null
+  csr_name: string | null
   split_loads: FullSplitLoad[]
 }
 
@@ -95,6 +101,9 @@ export function OrderTableRow({
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.ship_date)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.wanted_date)}</td>
         <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ?? '—'}</td>
+        <td className="px-3 py-2 text-muted-foreground text-xs">
+          {firstName(order.salesperson_name)} / {firstName(order.csr_name)}
+        </td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy)}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatShipTo(order.ship_to)}</td>

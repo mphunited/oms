@@ -11,10 +11,10 @@ export type FilterState = {
   flagOnly: boolean
   vendorIds: string[]
   customerIds: string[]
+  salespersonIds: string[]
+  csrIds: string[]
   shipDateFrom: string
   shipDateTo: string
-  invoiceStatuses: string[]
-  commissionStatuses: string[]
 }
 
 export const DEFAULT_FILTERS: FilterState = {
@@ -24,10 +24,10 @@ export const DEFAULT_FILTERS: FilterState = {
   flagOnly: false,
   vendorIds: [],
   customerIds: [],
+  salespersonIds: [],
+  csrIds: [],
   shipDateFrom: '',
   shipDateTo: '',
-  invoiceStatuses: [],
-  commissionStatuses: [],
 }
 
 type NamedItem = { id: string; name: string }
@@ -46,13 +46,12 @@ const LIFECYCLE_OPTIONS = [
 ] as const
 
 
-const INVOICE_OPTIONS = ['Not Invoiced', 'Invoiced', 'Paid'].map(s => ({ value: s, label: s }))
-const COMMISSION_OPTIONS = ['Eligible', 'Not Eligible', 'Commission Paid'].map(s => ({ value: s, label: s }))
-
 export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
   const [moreOpen, setMoreOpen] = useState(false)
   const [vendors, setVendors] = useState<NamedItem[]>([])
   const [customers, setCustomers] = useState<NamedItem[]>([])
+  const [salespersons, setSalespersons] = useState<NamedItem[]>([])
+  const [csrUsers, setCsrUsers] = useState<NamedItem[]>([])
   const [statusOptions, setStatusOptions] = useState<{ value: string; label: string }[]>([])
 
   useEffect(() => {
@@ -64,6 +63,14 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
       .then(r => r.json())
       .then((d: NamedItem[]) => setCustomers(d.map(c => ({ id: c.id, name: c.name }))))
       .catch(() => {})
+    fetch('/api/users?permission=SALES')
+      .then(r => r.json())
+      .then((d: NamedItem[]) => setSalespersons(d))
+      .catch(() => {})
+    fetch('/api/users?permission=CSR')
+      .then(r => r.json())
+      .then((d: NamedItem[]) => setCsrUsers(d))
+      .catch(() => {})
     fetch('/api/dropdown-configs?type=ORDER_STATUS')
       .then(r => r.json())
       .then((d: string[]) => setStatusOptions(d.map(s => ({ value: s, label: s }))))
@@ -71,12 +78,12 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
   }, [])
 
   const moreActiveCount = [
+    filters.salespersonIds.length > 0,
+    filters.csrIds.length > 0,
     filters.vendorIds.length > 0,
     filters.customerIds.length > 0,
     !!filters.shipDateFrom,
     !!filters.shipDateTo,
-    filters.invoiceStatuses.length > 0,
-    filters.commissionStatuses.length > 0,
   ].filter(Boolean).length
 
   const hasAnyFilter =
@@ -176,6 +183,18 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
       {moreOpen && (
         <div className="flex flex-wrap items-end gap-3 border-t pt-3">
           <FilterMultiSelect
+            label="Salesperson"
+            options={salespersons.map(u => ({ value: u.id, label: u.name }))}
+            selected={filters.salespersonIds}
+            onChange={v => onChange({ salespersonIds: v })}
+          />
+          <FilterMultiSelect
+            label="CSR"
+            options={csrUsers.map(u => ({ value: u.id, label: u.name }))}
+            selected={filters.csrIds}
+            onChange={v => onChange({ csrIds: v })}
+          />
+          <FilterMultiSelect
             label="Vendor"
             options={vendors.map(v => ({ value: v.id, label: v.name }))}
             selected={filters.vendorIds}
@@ -203,18 +222,6 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
               className="h-8 rounded-md border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#00205B]"
             />
           </div>
-          <FilterMultiSelect
-            label="Invoice Status"
-            options={INVOICE_OPTIONS}
-            selected={filters.invoiceStatuses}
-            onChange={v => onChange({ invoiceStatuses: v })}
-          />
-          <FilterMultiSelect
-            label="Commission"
-            options={COMMISSION_OPTIONS}
-            selected={filters.commissionStatuses}
-            onChange={v => onChange({ commissionStatuses: v })}
-          />
         </div>
       )}
     </div>

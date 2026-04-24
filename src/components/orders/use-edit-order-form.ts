@@ -104,8 +104,12 @@ export function useEditOrderForm(orderId: string) {
   const [customerOptions, setCustomerOptions] = useState<Array<{ id: string; name: string }>>([])
   const [vendorOptions, setVendorOptions] = useState<Array<{ id: string; name: string }>>([])
   const [orderTypeManuallySet, setOrderTypeManuallySet] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
+    fetch('/api/me').then(r => r.json())
+      .then(me => setIsAdmin(me?.role === 'ADMIN'))
+      .catch(() => {})
     fetch('/api/users?permission=CSR').then(r => r.json()).then(setCsrUserOptions).catch(() => {})
     fetch('/api/users?permission=SALES').then(r => r.json())
       .then(v => setSalespersonOptions(
@@ -319,6 +323,7 @@ export function useEditOrderForm(orderId: string) {
     billTo, setBillTo,
     customerContacts, setCustomerContacts,
     checklist, setChecklist,
+    isAdmin,
     handleSave,
     handleDuplicate,
     handleEmailPoClick,

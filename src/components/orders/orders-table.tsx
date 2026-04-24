@@ -57,8 +57,8 @@ export function OrdersTable() {
     if (filters.customerIds.length > 0)     params.set('customer_id', filters.customerIds.join(','))
     if (filters.shipDateFrom)               params.set('ship_date_from', filters.shipDateFrom)
     if (filters.shipDateTo)                 params.set('ship_date_to', filters.shipDateTo)
-    if (filters.invoiceStatuses.length > 0) params.set('invoice_payment_status', filters.invoiceStatuses.join(','))
-    if (filters.commissionStatuses.length > 0) params.set('commission_status', filters.commissionStatuses.join(','))
+    if (filters.salespersonIds.length > 0) params.set('salesperson_id', filters.salespersonIds.join(','))
+    if (filters.csrIds.length > 0)         params.set('csr_id', filters.csrIds.join(','))
     params.set('page', String(page))
     params.set('limit', String(LIMIT))
 
@@ -79,7 +79,7 @@ export function OrdersTable() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, filters.lifecycle, filters.statuses, filters.flagOnly,
       filters.vendorIds, filters.customerIds, filters.shipDateFrom, filters.shipDateTo,
-      filters.invoiceStatuses, filters.commissionStatuses, page])
+      filters.salespersonIds, filters.csrIds, page])
 
   function handleFilterChange(update: Partial<FilterState>) {
     setFilters(prev => ({ ...prev, ...update }))
@@ -188,6 +188,7 @@ export function OrdersTable() {
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Ship Date</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Wanted Date</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Vendor</th>
+                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Sales / CSR</th>
                   <th className="px-3 py-2 text-right font-medium text-muted-foreground">Buy</th>
                   <th className="px-3 py-2 text-right font-medium text-muted-foreground">Sell</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Ship To</th>

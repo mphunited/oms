@@ -141,3 +141,28 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update order', detail: message }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ orderId: string }> }
+) {
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) })
+  if (user?.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { orderId } = await params
+
+  try {
+    await db.delete(orders).where(eq(orders.id, orderId))
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[DELETE /api/orders/:id]', message)
+    return NextResponse.json({ error: 'Failed to delete order', detail: message }, { status: 500 })
+  }
+}

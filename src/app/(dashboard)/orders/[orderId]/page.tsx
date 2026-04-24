@@ -1,8 +1,10 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, FileText, Truck, Copy, Mail } from 'lucide-react'
+import { ChevronLeft, FileText, Truck, Copy, Mail, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
@@ -54,10 +56,30 @@ export default function OrderDetailPage() {
     billTo, setBillTo,
     customerContacts, setCustomerContacts,
     checklist, setChecklist,
+    isAdmin,
     handleSave, handleDuplicate,
     handleEmailPoClick, handleEmailBolClick,
     csrInitials,
   } = useEditOrderForm(orderId)
+
+  const router = useRouter()
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteInput, setDeleteInput] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDelete() {
+    if (deleteInput !== 'DELETE') return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`${res.status}`)
+      toast.success('Order deleted')
+      router.push('/orders')
+    } catch (err) {
+      toast.error('Delete failed: ' + (err instanceof Error ? err.message : String(err)))
+      setDeleting(false)
+    }
+  }
 
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
@@ -290,6 +312,19 @@ export default function OrderDetailPage() {
         <OrderChecklist items={checklist} onChange={setChecklist} />
       </section>
 
+      {isAdmin && (
+        <section className="space-y-3 pt-4">
+          <Separator />
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="inline-flex items-center gap-2 rounded-md border border-destructive px-3 py-1.5 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete Order
+          </button>
+        </section>
+      )}
+
       <div className="pb-8" />
       </div>
 
@@ -313,6 +348,43 @@ export default function OrderDetailPage() {
         onSave={handleSave}
       />
       </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg space-y-4">
+            <h2 className="text-lg font-semibold">Delete Order</h2>
+            <p className="text-sm text-muted-foreground">
+              This will permanently delete order <span className="font-mono font-medium">{order.order_number}</span> and all its split loads. This cannot be undone.
+            </p>
+            <p className="text-sm">Type <span className="font-mono font-semibold">DELETE</span> to confirm:</p>
+            <input
+              type="text"
+              value={deleteInput}
+              onChange={e => setDeleteInput(e.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-destructive"
+              placeholder="Type DELETE"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowDeleteModal(false); setDeleteInput('') }}
+                className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleteInput !== 'DELETE' || deleting}
+                className="rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+              >
+                {deleting ? 'Deleting…' : 'Delete Order'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
