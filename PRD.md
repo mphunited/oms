@@ -706,6 +706,7 @@ When Harding National is onboarded as a second tenant:
 | Commission report salesperson filter | Fetches /api/users?commission_eligible=true. Auto-selects first eligible user (Renee) on load for ADMIN/ACCOUNTING. Non-eligible salespersons never appear in dropdown. |
 | Flag This Order / Revised PO | Not on New Order form. Set on Edit Order page only. |
 | Blind Shipment on New Order form | Toggle is in the Customer & Vendor section, second row under Vendor dropdown. |
+| Split load date pre-fill | When a CSR adds a second or subsequent split load (on both New Order and Edit Order pages), ship_date and wanted_date are pre-populated from Load 1. Fields remain fully editable per load. Implemented in OrderSplitLoadsEditor.add(). |
 ---
 
 ## 22. What the Current Prototype Is NOT
