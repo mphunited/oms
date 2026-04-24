@@ -574,6 +574,8 @@ This is the primary mechanism for repeat customer orders where most info stays t
 32. ✅ COMPLETE — Order Status management in /settings General section (ORDER_STATUS type via OrderStatusesSection; inline status editing on /orders table reads from DB).
 33. ✅ COMPLETE — is_commission_eligible boolean on users table. API and UI filter correctly.
 34. ✅ COMPLETE — Manual PO entry mode for historical order import (ADMIN and CSR toggle on New Order form; GET /api/orders/check-po uniqueness check; GET /api/orders/next-po-preview preview endpoint; Invoice Number field shown alongside MPH PO Number in manual mode).
+35. ✅ COMPLETE — is_blind_shipment_default boolean on vendors table. Vendor detail page toggle ("Blind Shipment by Default"). New Order form auto-checks Blind Shipment toggle on vendor selection. 8 vendors seeded with default = true.
+36. ✅ COMPLETE — Split load date pre-fill: ship_date and wanted_date auto-populate from Load 1 when adding a 2nd+ split load on New Order form and Edit Order page. Fields remain fully editable per load.
 
 ---
 
@@ -688,7 +690,7 @@ When Harding National is onboarded as a second tenant:
 | Outlook draft signatures | Graph API cannot read Outlook signatures. Signatures stored in users.email_signature, managed on /team page, appended automatically to all drafts via createDraft() signature parameter. |
 | PO PDF signature lines | Removed from PO PDF. |
 | Two CSRs per order | csr2_id added to orders table. Order form and edit page have optional CSR 2 dropdown. Schedule PDFs show both first names as First1 / First2. |
-| Vendor blind shipment default | is_blind_shipment_default boolean on vendors (default false). When a CSR selects a vendor on the New Order form, is_blind_shipment is auto-set to the vendor's default. The toggle remains fully editable; changing vendor re-applies the default. Core, Eco Green, and Ted Levine seeded with default = true. |
+| Vendor blind shipment default | is_blind_shipment_default boolean on vendors (default false). When a CSR selects a vendor on the New Order form, is_blind_shipment is auto-set to the vendor's default. The toggle remains fully editable; changing vendor re-applies the default. 8 vendors seeded with default = true: all 6 MPH United / Core locations (Calhoun GA, Houston TX, Nashua IA, Shreveport LA, South Holland IL, Waterloo IA), MPH United / Eco Green -- Houston TX, and MPH United / TLD (Ted Levine Drum Co) -- South El Monte CA. |
 | permissions field on users | jsonb array (default []) controlling which order-form role dropdowns a user appears in, independent of their app role. Values: "SALES" \| "CSR". Salesperson dropdown → ?permission=SALES; CSR dropdown → ?permission=CSR. Managed on /team page by ADMIN. |
 | Vendor naming convention | All vendor names use format: "MPH United / [Vendor Name] -- [City, State]". 32 vendors seeded. |
 | dropdown_configs CARRIER type | freight_carrier field on orders is a Select populated from dropdown_configs where type='CARRIER'. Values are a jsonb string[] on the single CARRIER row. Seeded with 34 freight carriers in Supabase Studio. API: GET /api/dropdown-configs?type=CARRIER. |
