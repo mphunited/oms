@@ -27,7 +27,10 @@ export function OrderSplitLoadsEditor({
     onChange(loads.map((l, i) => i === index ? load : l))
   }
 
-  function add() { onChange([...loads, emptyLoad()]) }
+  function add() {
+    const first = loads[0]
+    onChange([...loads, { ...emptyLoad(), ship_date: first?.ship_date ?? '', wanted_date: first?.wanted_date ?? '' }])
+  }
 
   function remove(index: number) {
     if (loads.length === 1) return
