@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { orders, order_split_loads, customers, vendors, users } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
+import { deriveLoadCommissionStatus, deriveOrderCommissionStatus, deriveInitials } from '@/lib/orders/commission-eligibility'
 
 export async function GET(
   _req: Request,
@@ -66,6 +67,9 @@ export async function PATCH(
   const { orderId } = await params
 
   try {
+    const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) })
+    const initials = deriveInitials(user?.name)
+
     const body = await req.json()
     const { split_loads, ...orderFields } = body
 
@@ -74,26 +78,48 @@ export async function PATCH(
     }
 
     orderFields.updated_at = new Date()
+    delete orderFields.commission_status
 
     const NUMERIC_FIELDS = ['qty', 'buy', 'sell', 'bottle_cost', 'bottle_qty', 'mph_freight_bottles']
 
     await db.transaction(async (tx) => {
-      await tx.update(orders).set(orderFields).where(eq(orders.id, orderId))
-
       if (Array.isArray(split_loads)) {
         await tx.delete(order_split_loads).where(eq(order_split_loads.order_id, orderId))
+
         if (split_loads.length > 0) {
-          await tx.insert(order_split_loads).values(
-            split_loads.map((load: any) => {
-              const clean: any = { ...load, order_id: orderId }
-              for (const field of NUMERIC_FIELDS) {
-                if (clean[field] === '' || clean[field] === undefined) clean[field] = null
-              }
-              return clean
-            })
+          const loadValues: Record<string, unknown>[] = split_loads.map((load: Record<string, unknown>) => {
+            const clean: Record<string, unknown> = { ...load, order_id: orderId }
+            for (const field of NUMERIC_FIELDS) {
+              if (clean[field] === '' || clean[field] === undefined) clean[field] = null
+            }
+            clean.commission_status = deriveLoadCommissionStatus(clean.order_type as string)
+            return clean
+          })
+
+          // Handle separate_po: generate PO for loads that need their own
+          for (const lv of loadValues) {
+            if (lv.separate_po) {
+              const seqRes = await tx.execute(sql`SELECT nextval('order_number_seq') AS num`)
+              const num = (seqRes as unknown as Array<{ num: string | number }>)[0].num
+              lv.order_number_override = `${initials}-MPH${num}`
+            }
+            delete lv.separate_po
+            delete lv.preview_po
+          }
+
+          await tx.insert(order_split_loads).values(loadValues)
+
+          const orderCommissionStatus = deriveOrderCommissionStatus(
+            loadValues.map(l => ({
+              commission_status: l.commission_status as string,
+              commission_paid_date: (l.commission_paid_date as string) ?? null,
+            }))
           )
+          orderFields.commission_status = orderCommissionStatus
         }
       }
+
+      await tx.update(orders).set(orderFields).where(eq(orders.id, orderId))
     })
 
     const updated = await db.query.orders.findFirst({ where: eq(orders.id, orderId) })
