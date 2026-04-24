@@ -38,6 +38,11 @@ invoicing. They do not manufacture or warehouse product.
 | Jack2 (test) | Admin | (none) | Test/dev account (jack2@mphunited.com). |
 | Service Account | — | (none) | System service account, no UI access. |
 
+**Commission eligibility note:** `is_commission_eligible = true` for Renee Sauvageau only.
+All other users default false. Controls commission report salesperson dropdown and
+GET /api/commission API filtering. Distinct from `can_view_commission` (sidebar visibility).
+Managed on /team page by ADMIN.
+
 **Permissions field note:** The `permissions` jsonb column on users (default `[]`) controls
 which order-form role dropdowns a user appears in, independently of their app access `role`.
 Valid values: `"SALES"` | `"CSR"`. A user with `role=ADMIN` may have either or both permissions
@@ -110,7 +115,8 @@ All tables are in Supabase. Migrations managed via Drizzle in `drizzle/`.
 id (UUID, mirrors auth.users), email, name, avatar_url, entra_id, title, phone,
 email_signature, role (user_role enum: ADMIN|CSR|ACCOUNTING|SALES), permissions (jsonb,
 default [] — array of "SALES"|"CSR" controlling order form dropdown appearance independently
-of app role), can_view_commission (boolean), is_active (boolean), created_at
+of app role), can_view_commission (boolean), is_commission_eligible (boolean, default false —
+controls commission report filtering; currently true for Renee Sauvageau only), is_active (boolean), created_at
 
 ### orders table — key fields
 id, order_number (text, unique), order_date, order_type, customer_id, vendor_id,
@@ -125,7 +131,15 @@ checklist (jsonb), sales_order_number, created_at, updated_at
 
 ### order_split_loads — key fields
 id, order_id (FK→orders), description, part_number, qty, buy, sell,
-bottle_cost, bottle_qty, mph_freight_bottles, order_number_override, created_at
+bottle_cost, bottle_qty, mph_freight_bottles,
+order_number_override (text, nullable — per-load MPH PO; auto-generated via nextval() on save when separate_po=true),
+customer_po (text, nullable — per-load Customer PO, overrides order-level when set),
+order_type (text, nullable — per-load Order Type, drives commission eligibility for this load),
+ship_date (date, nullable — per-load Ship Date),
+wanted_date (date, nullable — per-load Wanted Date),
+commission_status (text, default 'Not Eligible' — computed per load from order_type keyword matching),
+commission_paid_date (date, nullable — stamped when commission paid for this load),
+created_at, updated_at
 
 ### vendors table — key fields
 id, name, is_active, address (jsonb: {street, city, state, zip}), notes, lead_contact,
@@ -147,7 +161,8 @@ created_at
 ### dropdown_configs — active types
 | type | purpose |
 |------|---------|
-| CARRIER | Freight carrier names for the freight_carrier field on orders. Seeded with 34 carriers. Fetched via GET /api/dropdown-configs?type=CARRIER (returns string[]). Managed in Supabase Studio. |
+| CARRIER | Freight carrier names for the freight_carrier field on orders. Seeded with 34 carriers. Fetched via GET /api/dropdown-configs?type=CARRIER (returns string[]). Managed via /settings Carriers section (ADMIN only). |
+| ORDER_STATUS | Order status values for inline editing on the orders table. Seeded from ORDER_STATUSES constant. Managed via /settings General section (ADMIN only). ORDER_STATUSES const in schema.ts kept for TypeScript type safety but runtime status values come from DB. |
 
 ### Contact object shape
 
@@ -226,7 +241,11 @@ Ready To Ship | Ready To Invoice | Complete | Cancelled
 330 Gal Washout IBC | 55 Gal Drums | Other — Parts & Supplies
 
 Commission eligibility is keyword-based: any type containing `New IBC`, `Bottle`,
-`Rebottle`, `Washout`, or `Wash & Return` is eligible. Commission eligibility is only for one salesperson and that is Renee (not Mike, Larry, or Jennifer)
+`Rebottle`, `Washout`, or `Wash & Return` is eligible. Commission eligibility is only for one salesperson and that is Renee (not Mike, Larry, or Jennifer).
+
+**order_type now lives per split load on order_split_loads** in addition to the order-level
+field on orders. Commission eligibility is evaluated per split load based on its own
+order_type. The order-level order_type remains for filtering and display on the orders list.
 
 ---
 
@@ -420,8 +439,9 @@ Rules:
 - Description has compact/full toggle
 - Flag column shows flag icon; clickable to toggle; Flag column: lucide Flag icon, gold filled when true, gray outline when false.
 - Actions column: Edit, Duplicate, View PO, View BOL (when applicable)
-- Status is inline-editable
+- **Status is inline-editable** via a Select populated from GET /api/dropdown-configs?type=ORDER_STATUS. SALES role sees status as a read-only badge.
 - Table supports multi-select for bulk actions (bulk status update, bulk flag)
+- **Each order row is expandable** via a chevron icon. Expanded view shows one sub-row per split load with columns: MPH PO (order_number_override if set, else order_number), Customer PO (split load customer_po if set, else order-level), Description, Order Type, Qty, Ship Date, Wanted Date, Buy, Sell.
 
 Filters available:
 - Search: order number, customer, vendor, customer PO, description (full text)
@@ -476,7 +496,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | /vendors | Vendor list | 1 — Done |
 | /vendors/[vendorId] | Vendor detail, contacts, checklist template | 1 — Done |
 | /schedules | Weekly schedule generation | 1 — Done (Graph API email, auto-attached PDF) |
-| /commission | Commission report (Renee) | 1 — Built, needs real data test |
+| /commission | Commission report rebuilt around order_split_loads. One row per eligible split load. Filters: salesperson (commission_eligible only, auto-selects Renee), commission status (unpaid/paid/all), invoice payment status, ship date range, commission paid date range. Columns: Vendor, Customer, Sales/CSR, MPH PO (clickable link), Customer PO, Description, Ship Date, Qty, Invoice Status, Invoice Paid Date, Comm Paid Date. Footer: total selected qty + commission amount (qty × $3). Mark Commission Paid stamps split load rows. | 1 — Done |
 | /settings | Admin settings | 1 |
 | /team | User management — ADMIN only, manages title/phone/email_signature/role/can_view_commission/permissions | 1 — Done |
 | /api/orders | GET orders with server-side filtering + pagination; POST new order | 1 — Done |
@@ -488,7 +508,9 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | /api/vendors | GET vendor list | 1 — Done |
 | /api/users | GET users list; ?permission=SALES\|CSR filters by permissions jsonb | 1 — Done |
 | /api/me | GET current user id/name/email/role/email_signature | 1 — Done |
-| /api/dropdown-configs | GET dropdown values by type; ?type=CARRIER returns string[] | 1 — Done |
+| /api/dropdown-configs | GET dropdown values by type; ?type=CARRIER\|ORDER_STATUS returns string[]. PUT replaces full array for a type (ADMIN only). | 1 — Done |
+| /api/orders/check-po | GET ?number=X — returns { exists: boolean }; checks PO number uniqueness for manual entry mode. Auth required. | 1 — Done |
+| /api/orders/next-po-preview | GET ?initials=XX — returns { preview: string } next sequence PO WITHOUT consuming it (uses pg_sequence_last_value). | 1 — Done |
 | /api/schedules/admin-pdf | POST admin schedule PDF | 1 — Done |
 | /api/schedules/vendor-pdf | POST vendor/Frontline schedule PDF | 1 — Done |
 | /api/commission | GET commission data, role-filtered | 1 — Done |
@@ -521,9 +543,9 @@ This is the primary mechanism for repeat customer orders where most info stays t
 12. Recycling orders table + new recycling order form + detail page
 
 ### Reports and admin
-13. Commission report page
+13. ✅ COMPLETE — Commission report page — rebuilt around order_split_loads. Per-load commission tracking, mark-paid workflow, salesperson filter (commission_eligible only), status/invoice/date filters.
 14. Invoicing queue
-15. Admin/settings page (company settings, dropdown config, order number sequence)
+15. ✅ COMPLETE (partial) — Admin/settings page — Carriers section (CARRIER type in dropdown_configs) and Order Statuses section (ORDER_STATUS type) built and working. Company settings / order number sequence management not yet built.
 16. Dashboard (hero stats, status distribution, weekly chart)
 17. Financial snapshot (admin only)
 
@@ -538,6 +560,13 @@ This is the primary mechanism for repeat customer orders where most info stays t
 25. ✅ COMPLETE — Customers seeded: 192 customers imported.
 26. ✅ COMPLETE — Vendors seeded: 32 vendors. Naming convention: "MPH United / [Vendor Name] -- [City, State]".
 27. ✅ COMPLETE — Recycling placeholder page at /recycling ("Coming Soon").
+28. ✅ COMPLETE — Per-load commission tracking on order_split_loads (commission_status, commission_paid_date per load; order-level derived for backward compat).
+29. ✅ COMPLETE — Per-load MPH PO, Customer PO, Order Type, Ship Date, Wanted Date added to order_split_loads. Inline expand on orders table shows per-load detail rows.
+30. ✅ COMPLETE — Commission report rebuilt around split loads (one row per eligible load, mark-paid workflow, new filter controls).
+31. ✅ COMPLETE — Carriers management in /settings (CARRIER type in dropdown_configs via CarriersSection component).
+32. ✅ COMPLETE — Order Status management in /settings General section (ORDER_STATUS type via OrderStatusesSection; inline status editing on /orders table reads from DB).
+33. ✅ COMPLETE — is_commission_eligible boolean on users table. API and UI filter correctly.
+34. ✅ COMPLETE — Manual PO entry mode for historical order import (ADMIN-only toggle on New Order form; GET /api/orders/check-po uniqueness check; GET /api/orders/next-po-preview preview endpoint).
 
 ---
 
@@ -659,6 +688,15 @@ When Harding National is onboarded as a second tenant:
 | Entra SSO token name fields | Require profile scope in signInWithOAuth call. full_name at top level of raw_user_meta_data. given_name and family_name nested under raw_user_meta_data->'custom_claims'. |
 | inviteMember function | src/actions/team.ts uses supabase.auth.admin.inviteUserByEmail() (requires SUPABASE_SERVICE_ROLE_KEY). Direct insert into public.users removed — the on_auth_user_created trigger handles sync on first login. |
 | Sign-out bug in development | Sign-out does not work reliably on localhost. Use incognito window as workaround. Not yet fixed. |
+| Per-load commission_status | commission_status and commission_paid_date live on order_split_loads. Order-level commission_status is derived (any eligible load → Eligible; all paid → Commission Paid; else Not Eligible) and kept for backward compatibility and orders table filtering. |
+| Split load MPH PO | order_split_loads.order_number_override stores per-load PO. Auto-generated via nextval() on save only. Preview uses pg_sequence_last_value without consuming sequence (GET /api/orders/next-po-preview). |
+| Split load Ship Date / Wanted Date | Saved at both order level (from Load 1) and per split load on order_split_loads. Order-level dates drive filtering and schedule logic. Per-load dates display in expanded rows and commission report. |
+| Split load Customer PO | order_split_loads.customer_po overrides order-level customer_po when set. Load 1 defaults to order-level value on the form. |
+| ORDER_STATUS in dropdown_configs | Order statuses seeded into dropdown_configs type=ORDER_STATUS. UI reads from DB at runtime via GET /api/dropdown-configs?type=ORDER_STATUS. Managed via /settings General section. ORDER_STATUSES const in schema.ts kept for TypeScript type safety but runtime values come from DB. |
+| Manual PO entry mode | ADMIN-only toggle on New Order form bypasses sequence. Accepts plain numbers (12345) or prefixed (PM-MPH12345). Server-side validates role and uniqueness. Used for historical order import. |
+| Commission report salesperson filter | Fetches /api/users?commission_eligible=true. Auto-selects first eligible user (Renee) on load for ADMIN/ACCOUNTING. Non-eligible salespersons never appear in dropdown. |
+| Flag This Order / Revised PO | Not on New Order form. Set on Edit Order page only. |
+| Blind Shipment on New Order form | Toggle is in the Customer & Vendor section, second row under Vendor dropdown. |
 ---
 
 ## 22. What the Current Prototype Is NOT
@@ -728,6 +766,8 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 
 ---
 
-*Last updated: April 23, 2026 — permissions jsonb column added to users (controls order-form salesperson/CSR dropdowns independently of app role; seeded for 15 users); freight_carrier changed from text Input to Select populated from dropdown_configs CARRIER type (34 carriers seeded); GET /api/users now accepts ?permission= filter; GET /api/dropdown-configs route created; on_auth_user_created auth trigger applied via Supabase MCP (tracks full_name → custom_claims → email priority); inviteMember fixed to use supabase.auth.admin.inviteUserByEmail; orders table server-side filters and search fully built; recycling placeholder page added; 192 customers and 32 vendors seeded.*
+*Last updated: April 24, 2026 — per-load fields added to order_split_loads (customer_po, order_type, ship_date, wanted_date, commission_status, commission_paid_date); commission report rebuilt around split loads with expanded filters and columns; is_commission_eligible added to users; ORDER_STATUS type added to dropdown_configs; /settings page built with Carriers and Order Statuses sections; inline status editing on orders table; orders table expandable rows showing per-load detail; GET /api/orders/check-po and next-po-preview routes added; manual PO entry mode for historical import (ADMIN); PUT /api/dropdown-configs added; salesperson SelectValue bug fixed in commission filters.*
+
+*Prior: April 23, 2026 — permissions jsonb column added to users (controls order-form salesperson/CSR dropdowns independently of app role; seeded for 15 users); freight_carrier changed from text Input to Select populated from dropdown_configs CARRIER type (34 carriers seeded); GET /api/users now accepts ?permission= filter; GET /api/dropdown-configs route created; on_auth_user_created auth trigger applied via Supabase MCP (tracks full_name → custom_claims → email priority); inviteMember fixed to use supabase.auth.admin.inviteUserByEmail; orders table server-side filters and search fully built; recycling placeholder page added; 192 customers and 32 vendors seeded.*
 *This document should be updated whenever significant decisions are made or scope changes.*
 *Retire: New_MPH_Order_Management_App.docx and MPH-OMS-HANDOFF.md once this file is committed to the repo.*

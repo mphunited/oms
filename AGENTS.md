@@ -123,9 +123,11 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Route files handle data fetching only. PDF components handle rendering only.
 
 21. **invoice_paid_date and commission_paid_date are date columns on orders.**
-    invoice_paid_date = when customer paid. commission_paid_date = Friday payroll
-    date when commission was paid to salesperson. Both nullable. Set by Accounting.
-    commission_paid_date is set in bulk from /commission page, not the order form.
+    invoice_paid_date = when customer paid. Set by Accounting on the order edit form.
+    commission_paid_date on orders is updated for backward compatibility only — the
+    canonical commission_paid_date lives on order_split_loads rows, stamped by
+    POST /api/commission/mark-paid. Set in bulk from /commission page by ADMIN or
+    ACCOUNTING using a payroll date input.
 
 22. **schedule_contacts is a jsonb array on vendors** — [{name, email, is_primary}]
     Same shape as po_contacts. Used for vendor schedule email distribution.
@@ -196,6 +198,48 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Tracked in drizzle/0010_auth_user_sync_trigger.sql for version control.
     Applied via Supabase MCP (not drizzle-kit — pooler lacks auth schema DDL permission).
     Do NOT attempt to re-apply via npm run db:migrate — use Supabase MCP apply_migration.
+
+35. **Commission eligibility is determined per split load** based on
+    order_split_loads.order_type using keyword matching (New IBC, Bottle, Rebottle,
+    Washout, Wash & Return). commission_status and commission_paid_date live on
+    order_split_loads. The order-level commission_status on orders is derived from
+    split load statuses and kept for backward compatibility only.
+
+36. **order_split_loads carries per-load fields** in addition to its pricing columns:
+    customer_po (overrides order-level when set), order_type (drives commission
+    eligibility for this load), ship_date, wanted_date, commission_status
+    (default 'Not Eligible'), commission_paid_date, and order_number_override
+    (per-load MPH PO when the load needs its own sequential number).
+
+37. **Split load MPH PO numbers** are generated via SELECT nextval('order_number_seq')
+    on save only — never on preview. Preview uses pg_sequence_last_value without
+    consuming the sequence. The generated number is stored in
+    order_split_loads.order_number_override.
+
+38. **GET /api/orders search includes order_split_loads.order_number_override**
+    via a subquery so searching for a split-load override PO number surfaces the
+    parent order in the results.
+
+39. **GET /api/dropdown-configs?type=X returns string[].
+    PUT /api/dropdown-configs performs full array replacement for a given type.**
+    ADMIN role enforced server-side on PUT. Currently manages types:
+    CARRIER (freight carriers), ORDER_STATUS (order status values).
+    PUT sorts values alphabetically before saving.
+
+40. **users table has is_commission_eligible boolean (default false).** Only users
+    with is_commission_eligible = true appear in the commission report salesperson
+    dropdown and commission API queries. Currently only Renee Sauvageau is eligible.
+    Managed on /team page by ADMIN. Distinct from can_view_commission (controls
+    whether a user can see the commission nav item at all).
+
+41. **New Order form layout rules:**
+    - Blind Shipment toggle is in the Customer & Vendor section, second row under Vendor.
+    - Flag This Order and Revised PO are NOT on the New Order form — Edit page only.
+    - Save Order button is at the bottom of the form, below Misc Notes.
+    - Invoice & Payment section (payment status, paid dates) is on Edit page only.
+    - Manual PO entry mode is ADMIN-only via a toggle. Bypasses sequence. Accepts both
+      plain numbers (12345) and prefixed format (PM-MPH12345). Server validates role and
+      uniqueness via GET /api/orders/check-po before submit. Used for historical import.
 ---
 
 ## TECHNOLOGY STACK
@@ -415,7 +459,9 @@ Key routes:
 - /api/commission/mark-paid — POST bulk mark commission paid
 - /api/me — GET current user id/name/email/role
 - /api/users — GET users list; accepts ?permission=SALES|CSR to filter by permissions jsonb
-- /api/dropdown-configs — GET dropdown values by type; accepts ?type=CARRIER (returns string[])
+- /api/dropdown-configs — GET dropdown values by type; accepts ?type=CARRIER|ORDER_STATUS (returns string[]). PUT replaces full array for a type (ADMIN only).
+- /api/orders/check-po?number=X — GET, returns { exists: boolean }; checks uniqueness of a manual PO number. Auth required.
+- /api/orders/next-po-preview?initials=XX — GET, returns { preview: string } formatted as [Initials]-MPH[N] WITHOUT consuming the sequence (uses pg_sequence_last_value).
 
 ---
 
@@ -455,6 +501,12 @@ src/actions/team.ts           — server actions for user/team management (invit
 src/components/layout/        — sidebar, header, nav
 src/components/orders/        — order components including new-order-form.tsx
 src/components/recycling/     — recycling order components
+src/components/commission/commission-client.tsx  — commission report page client component
+src/components/commission/commission-filters.tsx — commission filter bar (status, date, salesperson controls)
+src/components/commission/commission-table.tsx   — commission report table with mark-paid checkboxes
+src/components/commission/commission-badge.tsx   — commission status badge (Not Eligible/Eligible/Paid)
+src/components/settings/carriers-section.tsx     — carriers management UI (/settings page)
+src/components/settings/order-statuses-section.tsx — order status management UI (/settings page)
 src/config/nav.ts             — navigation items
 reference/                    — HTML prototype (UI reference only, not a spec)
 AGENTS.md                     — technical conventions, read at every session
