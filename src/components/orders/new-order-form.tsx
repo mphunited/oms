@@ -15,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { InvoicePanel } from '@/components/orders/invoice-panel'
 import { OrderSplitLoadsEditor } from '@/components/orders/order-split-loads-editor'
 import { OrderMarginCard } from '@/components/orders/order-margin-card'
 import { OrderCombobox } from '@/components/orders/order-combobox'
@@ -202,13 +201,6 @@ export function NewOrderForm() {
               <Input id="customer_po" placeholder="PO number" {...form.register('customer_po')} />
               {form.formState.errors.customer_po && <p className="text-xs text-destructive">{form.formState.errors.customer_po.message}</p>}
             </div>
-            <div className="space-y-1.5">
-              <Label>Freight Carrier</Label>
-              <Select value={form.watch('freight_carrier') ?? ''} onValueChange={v => form.setValue('freight_carrier', v || undefined, { shouldValidate: true })}>
-                <SelectTrigger className="h-9"><SelectValue placeholder="Select carrier" /></SelectTrigger>
-                <SelectContent>{carriers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
             <div className="col-span-2 flex items-center gap-2">
               <Switch id="is_blind_shipment" checked={watchedValues.is_blind_shipment ?? false} onCheckedChange={v => form.setValue('is_blind_shipment', v)} />
               <Label htmlFor="is_blind_shipment" className="cursor-pointer">Blind Shipment</Label>
@@ -239,6 +231,13 @@ export function NewOrderForm() {
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Freight & Logistics</h2>
           <div className="grid grid-cols-4 gap-4">
+            <div className="space-y-1.5">
+              <Label>Freight Carrier</Label>
+              <Select value={form.watch('freight_carrier') ?? ''} onValueChange={v => form.setValue('freight_carrier', v || undefined, { shouldValidate: true })}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Select carrier" /></SelectTrigger>
+                <SelectContent>{carriers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <div className="space-y-1.5"><Label>MPH Freight Cost</Label><Input type="number" min="0" step="0.01" placeholder="0.00" {...form.register('freight_cost', { valueAsNumber: true })} /></div>
             <div className="space-y-1.5"><Label>Customer Freight Cost</Label><Input type="number" min="0" step="0.01" placeholder="0.00" {...form.register('freight_to_customer', { valueAsNumber: true })} /></div>
             <div className="space-y-1.5"><Label>Additional Costs</Label><Input type="number" min="0" step="0.01" placeholder="0.00" {...form.register('additional_costs', { valueAsNumber: true })} /></div>
@@ -288,7 +287,6 @@ export function NewOrderForm() {
 
       <aside className="w-64 shrink-0 space-y-4">
         <OrderMarginCard control={form.control} loads={loads} />
-        <InvoicePanel control={form.control} />
       </aside>
     </form>
   )
