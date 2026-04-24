@@ -204,6 +204,12 @@ export function NewOrderForm() {
               <Input id="customer_po" placeholder="PO number" {...form.register('customer_po')} />
               {form.formState.errors.customer_po && <p className="text-xs text-destructive">{form.formState.errors.customer_po.message}</p>}
             </div>
+            {vendors.find(v => v.id === watchedValues.vendor_id)?.name === 'MPH United / Alliance Container -- Hillsboro, TX' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="sales_order_number">Sales Order #</Label>
+                <Input id="sales_order_number" placeholder="Sales order number" {...form.register('sales_order_number')} />
+              </div>
+            )}
             <div className="col-span-2 flex items-center gap-2">
               <Switch id="is_blind_shipment" checked={watchedValues.is_blind_shipment ?? false} onCheckedChange={v => form.setValue('is_blind_shipment', v)} />
               <Label htmlFor="is_blind_shipment" className="cursor-pointer">Blind Shipment</Label>

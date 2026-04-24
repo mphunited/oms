@@ -73,6 +73,9 @@ export function useNewOrderForm() {
       if (name !== 'vendor_id') return
       const vendor = vendors.find(v => v.id === values.vendor_id)
       form.setValue('is_blind_shipment', vendor?.is_blind_shipment_default ?? false)
+      if (vendor?.name !== 'MPH United / Alliance Container -- Hillsboro, TX') {
+        form.setValue('sales_order_number', '')
+      }
     })
     return () => sub.unsubscribe()
   }, [vendors, form])
