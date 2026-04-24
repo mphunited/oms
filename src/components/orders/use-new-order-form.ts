@@ -24,6 +24,7 @@ export function useNewOrderForm() {
   const [isSubmitting,     setIsSubmitting]     = useState(false)
   const [submitError,      setSubmitError]      = useState<string | null>(null)
   const [isAdmin,          setIsAdmin]          = useState(false)
+  const [canUseManualPO,   setCanUseManualPO]   = useState(false)
   const [csrInitials,      setCsrInitials]      = useState('XX')
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export function useNewOrderForm() {
       setCarriers(Array.isArray(car) ? car : [])
       setStatusOptions(Array.isArray(statuses) ? statuses : [])
       setIsAdmin(me?.role === 'ADMIN')
+      setCanUseManualPO(me?.role === 'ADMIN' || me?.role === 'CSR')
       setCsrInitials(deriveInitials(me?.name))
     })
   }, [])
@@ -139,6 +141,7 @@ export function useNewOrderForm() {
     isSubmitting,
     submitError,
     isAdmin,
+    canUseManualPO,
     csrInitials,
     customers,
     vendors,
