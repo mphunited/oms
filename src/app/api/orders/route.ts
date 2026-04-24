@@ -42,7 +42,10 @@ export async function GET(req: Request) {
       const descSubquery = db
         .select({ id: order_split_loads.order_id })
         .from(order_split_loads)
-        .where(ilike(order_split_loads.description, `%${search}%`))
+        .where(or(
+          ilike(order_split_loads.description, `%${search}%`),
+          ilike(order_split_loads.order_number_override, `%${search}%`),
+        ))
 
       conditions.push(or(
         ilike(orders.order_number,  `%${search}%`),
@@ -117,16 +120,37 @@ export async function GET(req: Request) {
       .offset((page - 1) * limit)
 
     const orderIds = rows.map(r => r.id)
-    const splitMap: Record<string, { description: string | null; qty: string | null; buy: string | null; sell: string | null }[]> = {}
+
+    type SplitLoadRow = {
+      order_id: string
+      id: string
+      description: string | null
+      qty: string | null
+      buy: string | null
+      sell: string | null
+      order_number_override: string | null
+      customer_po: string | null
+      order_type: string | null
+      ship_date: string | null
+      wanted_date: string | null
+    }
+
+    const splitMap: Record<string, SplitLoadRow[]> = {}
 
     if (orderIds.length > 0) {
       const loads = await db
         .select({
-          order_id:    order_split_loads.order_id,
-          description: order_split_loads.description,
-          qty:         order_split_loads.qty,
-          buy:         order_split_loads.buy,
-          sell:        order_split_loads.sell,
+          order_id:              order_split_loads.order_id,
+          id:                    order_split_loads.id,
+          description:           order_split_loads.description,
+          qty:                   order_split_loads.qty,
+          buy:                   order_split_loads.buy,
+          sell:                  order_split_loads.sell,
+          order_number_override: order_split_loads.order_number_override,
+          customer_po:           order_split_loads.customer_po,
+          order_type:            order_split_loads.order_type,
+          ship_date:             order_split_loads.ship_date,
+          wanted_date:           order_split_loads.wanted_date,
         })
         .from(order_split_loads)
         .where(inArray(order_split_loads.order_id, orderIds))
