@@ -8,7 +8,7 @@ export type AddressValue = {
   zip: string; phone: string; shipping_notes: string
 }
 
-export type CustomerContact = { name: string; email: string }
+export type CustomerContact = { id?: string; name: string; email: string }
 
 function emptyAddress(): AddressValue {
   return { name: '', street: '', city: '', state: '', zip: '', phone: '', shipping_notes: '' }
@@ -88,7 +88,7 @@ export function EditOrderAddresses({
       <section className="space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Customer Contacts</h2>
         {customerContacts.map((contact, index) => (
-          <div key={index} className="grid grid-cols-5 gap-2 rounded-md border p-3">
+          <div key={contact.id ?? `contact-${index}`} className="grid grid-cols-5 gap-2 rounded-md border p-3">
             <div className="col-span-2 space-y-1">
               <Label className="text-xs text-muted-foreground">Name</Label>
               <Input
@@ -119,7 +119,7 @@ export function EditOrderAddresses({
         ))}
         <button
           type="button"
-          onClick={() => onContactsChange([...customerContacts, { name: '', email: '' }])}
+          onClick={() => onContactsChange([...customerContacts, { id: crypto.randomUUID(), name: '', email: '' }])}
           className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         >
           + Add Contact
