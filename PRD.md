@@ -142,7 +142,7 @@ commission_paid_date (date, nullable — stamped when commission paid for this l
 created_at, updated_at
 
 ### vendors table — key fields
-id, name, is_active, address (jsonb: {street, city, state, zip}), notes, lead_contact,
+id, name, is_active, is_blind_shipment_default (boolean, default false — when true, new orders for this vendor auto-check the Blind Shipment toggle), address (jsonb: {street, city, state, zip}), notes, lead_contact,
 dock_info (text — dock hours, carrier contact instructions),
 contacts (jsonb array — general contacts),
 po_contacts (jsonb array — PO email recipients),
@@ -178,9 +178,16 @@ created_at
 
 ### Address JSONB shape (ship_to, bill_to on orders)
 ```json
-{ "name": "", "street": "", "city": "", "state": "", "zip": "", "phone": "", "shipping_notes": "" }
+{ "name": "", "street": "", "street2": "", "city": "", "state": "", "zip": "", "phone_office": "", "phone_ext": "", "phone_cell": "", "shipping_notes": "" }
 ```
-shipping_notes is free text for dock hours, contact titles, extra phones, appointment instructions.
+- `street` — primary street address
+- `street2` — optional second address line (PO Box, suite, unit, etc.); printed on its own line directly below `street` when present
+- `phone_office` — main office/direct line
+- `phone_ext` — extension for the office line
+- `phone_cell` — mobile number
+- `shipping_notes` — free text for dock hours, contact titles, appointment instructions, etc.
+
+**Legacy records:** older rows may have a `phone` key instead of `phone_office`/`phone_cell`. Display code must fall back to showing `phone` when both `phone_office` and `phone_cell` are absent.
 
 --- 
 
@@ -681,6 +688,7 @@ When Harding National is onboarded as a second tenant:
 | Outlook draft signatures | Graph API cannot read Outlook signatures. Signatures stored in users.email_signature, managed on /team page, appended automatically to all drafts via createDraft() signature parameter. |
 | PO PDF signature lines | Removed from PO PDF. |
 | Two CSRs per order | csr2_id added to orders table. Order form and edit page have optional CSR 2 dropdown. Schedule PDFs show both first names as First1 / First2. |
+| Vendor blind shipment default | is_blind_shipment_default boolean on vendors (default false). When a CSR selects a vendor on the New Order form, is_blind_shipment is auto-set to the vendor's default. The toggle remains fully editable; changing vendor re-applies the default. Core, Eco Green, and Ted Levine seeded with default = true. |
 | permissions field on users | jsonb array (default []) controlling which order-form role dropdowns a user appears in, independent of their app role. Values: "SALES" \| "CSR". Salesperson dropdown → ?permission=SALES; CSR dropdown → ?permission=CSR. Managed on /team page by ADMIN. |
 | Vendor naming convention | All vendor names use format: "MPH United / [Vendor Name] -- [City, State]". 32 vendors seeded. |
 | dropdown_configs CARRIER type | freight_carrier field on orders is a Select populated from dropdown_configs where type='CARRIER'. Values are a jsonb string[] on the single CARRIER row. Seeded with 34 freight carriers in Supabase Studio. API: GET /api/dropdown-configs?type=CARRIER. |
