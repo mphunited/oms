@@ -101,6 +101,7 @@ export function useEditOrderForm(orderId: string) {
   const [splitLoads, setSplitLoads] = useState<SplitLoadValue[]>([])
   const [customerId, setCustomerId] = useState('')
   const [vendorId, setVendorId] = useState('')
+  const [salesOrderNumber, setSalesOrderNumber] = useState('')
   const [customerOptions, setCustomerOptions] = useState<Array<{ id: string; name: string }>>([])
   const [vendorOptions, setVendorOptions] = useState<Array<{ id: string; name: string }>>([])
   const [orderTypeManuallySet, setOrderTypeManuallySet] = useState(false)
@@ -135,6 +136,7 @@ export function useEditOrderForm(orderId: string) {
         setSalespersonId(data.salesperson_id ?? '')
         setCustomerId(data.customer_id ?? '')
         setVendorId(data.vendor_id ?? '')
+        setSalesOrderNumber(data.sales_order_number ?? '')
         setOrderDate(data.order_date ?? '')
         setOrderType(data.order_type ?? '')
         setStatus(data.status)
@@ -205,6 +207,7 @@ export function useEditOrderForm(orderId: string) {
           status,
           customer_id: customerId || null,
           vendor_id: vendorId || null,
+          sales_order_number: salesOrderNumber || null,
           salesperson_id: salespersonId || null,
           csr_id: csrId || null,
           csr2_id: csr2Id || null,
@@ -294,6 +297,7 @@ export function useEditOrderForm(orderId: string) {
     salespersonId, setSalespersonId,
     customerId, setCustomerId,
     vendorId, setVendorId,
+    salesOrderNumber, setSalesOrderNumber,
     customerOptions, vendorOptions,
     setOrderTypeManuallySet,
     emailingPo, emailingBol,
