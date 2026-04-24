@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import type { Resolver, SubmitHandler } from 'react-hook-form'
 import { toast } from 'sonner'
 import { orderFormSchema, emptyLoad, type OrderFormValues, type SplitLoadValue } from '@/lib/orders/order-form-schema'
+import { deriveInitials } from '@/lib/orders/commission-eligibility'
 
 type UserOption = { id: string; name: string | null; role: string }
 type Option = { id: string; name: string }
@@ -16,6 +17,7 @@ export function useNewOrderForm() {
   const [salespersonUsers, setSalespersonUsers] = useState<UserOption[]>([])
   const [csrUsers,         setCsrUsers]         = useState<UserOption[]>([])
   const [carriers,         setCarriers]         = useState<string[]>([])
+  const [statusOptions,    setStatusOptions]    = useState<string[]>([])
   const [loads,            setLoads]            = useState<SplitLoadValue[]>([emptyLoad()])
   const [savedOrder,       setSavedOrder]       = useState<{ id: string; order_number: string } | null>(null)
   const [isSubmitting,     setIsSubmitting]     = useState(false)
@@ -30,20 +32,17 @@ export function useNewOrderForm() {
       fetch('/api/users?permission=SALES').then(r => r.json()),
       fetch('/api/users?permission=CSR').then(r => r.json()),
       fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()),
+      fetch('/api/dropdown-configs?type=ORDER_STATUS').then(r => r.json()),
       fetch('/api/me').then(r => r.json()),
-    ]).then(([c, v, sp, csr, car, me]) => {
+    ]).then(([c, v, sp, csr, car, statuses, me]) => {
       setCustomers(c)
       setVendors(v)
       setSalespersonUsers(sp)
       setCsrUsers(csr)
       setCarriers(Array.isArray(car) ? car : [])
+      setStatusOptions(Array.isArray(statuses) ? statuses : [])
       setIsAdmin(me?.role === 'ADMIN')
-      // Derive initials from logged-in user's name for PO preview
-      if (me?.name) {
-        const parts = (me.name as string).trim().split(/\s+/)
-        const initials = parts.map((p: string) => p[0]?.toUpperCase() ?? '').join('')
-        setCsrInitials(initials || 'XX')
-      }
+      setCsrInitials(deriveInitials(me?.name))
     })
   }, [])
 
@@ -65,12 +64,6 @@ export function useNewOrderForm() {
 
   const salespersonOptions: Option[] = salespersonUsers.map(u => ({ id: u.id, name: u.name ?? u.id }))
   const csrOptions: Option[] = csrUsers.map(u => ({ id: u.id, name: u.name ?? u.id }))
-
-  async function checkPoUnique(value: string): Promise<boolean> {
-    const res = await fetch(`/api/orders/check-po?number=${encodeURIComponent(value)}`)
-    const { exists } = await res.json()
-    return !exists
-  }
 
   const onSubmit: SubmitHandler<OrderFormValues> = async (data) => {
     setSubmitError(null)
@@ -142,7 +135,7 @@ export function useNewOrderForm() {
     salespersonOptions,
     csrOptions,
     carriers,
+    statusOptions,
     onSubmit,
-    checkPoUnique,
   }
 }

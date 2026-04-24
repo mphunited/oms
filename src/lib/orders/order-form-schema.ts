@@ -105,6 +105,8 @@ export const orderFormSchema = z.object({
   qb_invoice_number:      z.string().optional(),
   invoice_paid_date:      z.string().optional(),
 
+  manual_order_number: z.string().optional(),
+
   split_loads: z.array(splitLoadSchema).min(1),
 })
 

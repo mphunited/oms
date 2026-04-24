@@ -22,20 +22,15 @@ import { OrderAddressFields } from '@/components/orders/order-address-fields'
 import { OrderContactFields } from '@/components/orders/order-contact-fields'
 import { useNewOrderForm } from '@/components/orders/use-new-order-form'
 import { matchOrderType } from '@/lib/orders/description-type-map'
+import { emptyLoad } from '@/lib/orders/order-form-schema'
 import type { OrderFormValues } from '@/lib/orders/order-form-schema'
-
-const STATUSES = [
-  'Pending', 'Waiting On Vendor To Confirm', 'Waiting To Confirm To Customer',
-  'Confirmed To Customer', 'Rinse And Return Stage', 'Sent Order To Carrier',
-  'Ready To Ship', 'Ready To Invoice', 'Complete', 'Cancelled',
-]
 
 export function NewOrderForm() {
   const router = useRouter()
   const {
     form, loads, setLoads, savedOrder, setSavedOrder, isSubmitting, submitError,
     isAdmin, csrInitials, customers, vendors, salespersonOptions, csrOptions,
-    carriers, onSubmit,
+    carriers, statusOptions, onSubmit,
   } = useNewOrderForm()
 
   const [notesOpen, setNotesOpen] = useState(true)
@@ -90,7 +85,7 @@ export function NewOrderForm() {
       const checkRes = await fetch(`/api/orders/check-po?number=${encodeURIComponent(trimmed)}`)
       const { exists } = await checkRes.json()
       if (exists) { toast.error('PO number already exists'); return }
-      await onSubmit({ ...data, manual_order_number: trimmed } as unknown as OrderFormValues)
+      await onSubmit({ ...data, manual_order_number: trimmed })
     } else {
       await onSubmit(data)
     }
@@ -98,7 +93,7 @@ export function NewOrderForm() {
 
   function handleNewOrder() {
     setSavedOrder(null); setOrderTypeManuallySet(false); form.reset()
-    setLoads([{ description: '', part_number: '', qty: '', buy: '', sell: '', bottle_cost: '', bottle_qty: '', mph_freight_bottles: '', order_number_override: '', customer_po: '', order_type: '', ship_date: '', wanted_date: '', separate_po: false, preview_po: '' }])
+    setLoads([emptyLoad()])
   }
 
   if (savedOrder) {
@@ -153,7 +148,7 @@ export function NewOrderForm() {
               <Label>Status *</Label>
               <Select defaultValue="Pending" onValueChange={v => form.setValue('status', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">

@@ -5,9 +5,6 @@ import { Plus } from 'lucide-react'
 import { SplitLoadRow } from './split-load-row'
 import { emptyLoad, type SplitLoadValue } from '@/lib/orders/order-form-schema'
 
-export type { SplitLoadValue }
-export { emptyLoad }
-
 type Props = {
   loads: SplitLoadValue[]
   orderPo: string

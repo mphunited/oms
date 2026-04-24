@@ -1,4 +1,8 @@
-const COMMISSION_KEYWORDS = ['New IBC', 'Bottle', 'Rebottle', 'Washout', 'Wash & Return']
+// Keywords that make a load commission-eligible
+export const COMMISSION_KEYWORDS = ['New IBC', 'Bottle', 'Rebottle', 'Washout', 'Wash & Return'] as const
+
+// Keywords that show bottle cost fields (New IBC does NOT use bottle fields)
+export const BOTTLE_KEYWORDS = ['Bottle', 'Rebottle', 'Washout', 'Wash & Return'] as const
 
 export function deriveLoadCommissionStatus(orderType: string | null | undefined): string {
   if (!orderType) return 'Not Eligible'
