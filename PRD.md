@@ -178,13 +178,15 @@ created_at
 
 ### Address JSONB shape (ship_to, bill_to on orders)
 ```json
-{ "name": "", "street": "", "street2": "", "city": "", "state": "", "zip": "", "phone_office": "", "phone_ext": "", "phone_cell": "", "shipping_notes": "" }
+{ "name": "", "street": "", "street2": "", "city": "", "state": "", "zip": "", "phone_office": "", "phone_ext": "", "phone_cell": "", "email": "", "email2": "", "shipping_notes": "" }
 ```
 - `street` — primary street address
 - `street2` — optional second address line (PO Box, suite, unit, etc.); printed on its own line directly below `street` when present
 - `phone_office` — main office/direct line
 - `phone_ext` — extension for the office line
 - `phone_cell` — mobile number
+- `email` — location-specific contact email (e.g. dock scheduler, receiving); distinct from customer_contacts order confirmation emails
+- `email2` — second location-specific email
 - `shipping_notes` — free text for dock hours, contact titles, appointment instructions, etc.
 
 **Legacy records:** older rows may have a `phone` key instead of `phone_office`/`phone_cell`. Display code must fall back to showing `phone` when both `phone_office` and `phone_cell` are absent.
@@ -576,6 +578,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 34. ✅ COMPLETE — Manual PO entry mode for historical order import (ADMIN and CSR toggle on New Order form; GET /api/orders/check-po uniqueness check; GET /api/orders/next-po-preview preview endpoint; Invoice Number field shown alongside MPH PO Number in manual mode).
 35. ✅ COMPLETE — is_blind_shipment_default boolean on vendors table. Vendor detail page toggle ("Blind Shipment by Default"). New Order form auto-checks Blind Shipment toggle on vendor selection. 8 vendors seeded with default = true.
 36. ✅ COMPLETE — Split load date pre-fill: ship_date and wanted_date auto-populate from Load 1 when adding a 2nd+ split load on New Order form and Edit Order page. Fields remain fully editable per load.
+37. ✅ COMPLETE — Ship To / Bill To address fields expanded: Street 2, Office Phone, Ext, Cell, Email 1, Email 2 added to OrderAddressFields component and addressSchema. Legacy `phone` key preserved for backward compatibility on display. Split load dates consolidated to order-level: Load 2+ show read-only date display instead of editable inputs.
 
 ---
 
@@ -700,7 +703,7 @@ When Harding National is onboarded as a second tenant:
 | Sign-out bug in development | Sign-out does not work reliably on localhost. Use incognito window as workaround. Not yet fixed. |
 | Per-load commission_status | commission_status and commission_paid_date live on order_split_loads. Order-level commission_status is derived (any eligible load → Eligible; all paid → Commission Paid; else Not Eligible) and kept for backward compatibility and orders table filtering. |
 | Split load MPH PO | order_split_loads.order_number_override stores per-load PO. Auto-generated via nextval() on save only. Preview uses pg_sequence_last_value without consuming sequence (GET /api/orders/next-po-preview). |
-| Split load Ship Date / Wanted Date | Saved at both order level (from Load 1) and per split load on order_split_loads. Order-level dates drive filtering and schedule logic. Per-load dates display in expanded rows and commission report. |
+| Split load Ship Date / Wanted Date | Ship Date and Wanted Date are order-level fields. All split loads share the same dates — loads never ship on different dates. Dates are saved at the order level (from the order form's Ship Date / Wanted Date fields) and stamped onto every order_split_loads row at save time. On the New Order and Edit Order forms, Load 1 shows editable date inputs. Load 2+ show read-only displays of the order-level dates — no separate inputs. The order-split-loads-editor.add() function initializes new loads with orderShipDate / orderWantedDate from order-level props, not from Load 1's local state. |
 | Split load Customer PO | order_split_loads.customer_po overrides order-level customer_po when set. Load 1 defaults to order-level value on the form. |
 | ORDER_STATUS in dropdown_configs | Order statuses seeded into dropdown_configs type=ORDER_STATUS. UI reads from DB at runtime via GET /api/dropdown-configs?type=ORDER_STATUS. Managed via /settings General section. ORDER_STATUSES const in schema.ts kept for TypeScript type safety but runtime values come from DB. |
 | Manual PO entry mode | Available to ADMIN and CSR roles. Toggle on New Order form bypasses sequence. Accepts plain numbers (12345) or prefixed (PM-MPH12345). Server-side validates role (ADMIN|CSR) and uniqueness. Used for historical order import. |
@@ -708,7 +711,7 @@ When Harding National is onboarded as a second tenant:
 | Commission report salesperson filter | Fetches /api/users?commission_eligible=true. Auto-selects first eligible user (Renee) on load for ADMIN/ACCOUNTING. Non-eligible salespersons never appear in dropdown. |
 | Flag This Order / Revised PO | Not on New Order form. Set on Edit Order page only. |
 | Blind Shipment on New Order form | Toggle is in the Customer & Vendor section, second row under Vendor dropdown. |
-| Split load date pre-fill | When a CSR adds a second or subsequent split load (on both New Order and Edit Order pages), ship_date and wanted_date are pre-populated from Load 1. Fields remain fully editable per load. Implemented in OrderSplitLoadsEditor.add(). |
+| Split load date pre-fill | Removed as a separate concept. Load 2+ date fields are read-only displays of the order-level Ship Date / Wanted Date. No pre-fill logic needed. |
 ---
 
 ## 22. What the Current Prototype Is NOT
@@ -779,6 +782,8 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 ---
 
 *Last updated: April 24, 2026 — per-load fields added to order_split_loads (customer_po, order_type, ship_date, wanted_date, commission_status, commission_paid_date); commission report rebuilt around split loads with expanded filters and columns; is_commission_eligible added to users; ORDER_STATUS type added to dropdown_configs; /settings page built with Carriers and Order Statuses sections; inline status editing on orders table; orders table expandable rows showing per-load detail; GET /api/orders/check-po and next-po-preview routes added; manual PO entry mode for historical import (ADMIN); PUT /api/dropdown-configs added; salesperson SelectValue bug fixed in commission filters.*
+
+*Last updated: April 24, 2026 — Ship To / Bill To address fields expanded (street2, phone_office, phone_ext, phone_cell, email, email2); split load dates consolidated to order-level (Load 2+ read-only display, no separate date inputs); address JSONB shape updated in schema comments.*
 
 *Prior: April 23, 2026 — permissions jsonb column added to users (controls order-form salesperson/CSR dropdowns independently of app role; seeded for 15 users); freight_carrier changed from text Input to Select populated from dropdown_configs CARRIER type (34 carriers seeded); GET /api/users now accepts ?permission= filter; GET /api/dropdown-configs route created; on_auth_user_created auth trigger applied via Supabase MCP (tracks full_name → custom_claims → email priority); inviteMember fixed to use supabase.auth.admin.inviteUserByEmail; orders table server-side filters and search fully built; recycling placeholder page added; 192 customers and 32 vendors seeded.*
 *This document should be updated whenever significant decisions are made or scope changes.*
