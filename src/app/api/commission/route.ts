@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { and, eq, gte, isNull, lte } from 'drizzle-orm'
+import { and, eq, gte, isNotNull, isNull, lte } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
   const salespersonIdParam = searchParams.get('salespersonId')
   const startDate = searchParams.get('startDate')
   const endDate = searchParams.get('endDate')
+  const commissionStatus = searchParams.get('commissionStatus') ?? 'unpaid'
 
   const salespersonAlias = alias(users, 'salesperson')
   const csrAlias = alias(users, 'csr')
@@ -30,8 +31,14 @@ export async function GET(req: NextRequest) {
   const conditions = [
     eq(order_split_loads.commission_status, 'Eligible'),
     eq(salespersonAlias.is_commission_eligible, true),
-    isNull(order_split_loads.commission_paid_date),
   ]
+
+  if (commissionStatus === 'unpaid') {
+    conditions.push(isNull(order_split_loads.commission_paid_date))
+  } else if (commissionStatus === 'paid') {
+    conditions.push(isNotNull(order_split_loads.commission_paid_date))
+  }
+  // 'all' → push nothing
 
   if (dbUser.role === 'SALES') {
     conditions.push(eq(orders.salesperson_id, dbUser.id))
@@ -56,6 +63,8 @@ export async function GET(req: NextRequest) {
       order_type:            order_split_loads.order_type,
       commission_status:     order_split_loads.commission_status,
       commission_paid_date:  order_split_loads.commission_paid_date,
+      invoice_payment_status: orders.invoice_payment_status,
+      invoice_paid_date:     orders.invoice_paid_date,
       customerName:          customers.name,
       vendorName:            vendors.name,
       salespersonName:       salespersonAlias.name,

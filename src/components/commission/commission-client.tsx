@@ -5,7 +5,15 @@ import { toast } from 'sonner'
 import { CommissionFiltersBar, type CommissionFilters } from './commission-filters'
 import { CommissionTable, type CommissionRow } from './commission-table'
 
-const DEFAULT_FILTERS: CommissionFilters = { salespersonId: '', startDate: '', endDate: '' }
+const DEFAULT_FILTERS: CommissionFilters = {
+  salespersonId: '',
+  startDate: '',
+  endDate: '',
+  commissionStatus: 'unpaid',
+  invoicePaymentStatus: '',
+  commissionPaidDateFrom: '',
+  commissionPaidDateTo: '',
+}
 
 export function CommissionClient() {
   const [rows, setRows] = useState<CommissionRow[]>([])
@@ -21,10 +29,16 @@ export function CommissionClient() {
   useEffect(() => {
     Promise.all([
       fetch('/api/me').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
-      fetch('/api/users?permission=SALES').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
+      fetch('/api/users?commission_eligible=true').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
     ]).then(([me, sps]: [{ role: string }, { id: string; name: string | null }[]]) => {
-      setRole(me?.role ?? null)
-      setSalespersons(Array.isArray(sps) ? sps : [])
+      const userRole = me?.role ?? null
+      const userList = Array.isArray(sps) ? sps : []
+      setRole(userRole)
+      setSalespersons(userList)
+      if (userList.length > 0 && userRole !== 'SALES') {
+        setFilters(f => ({ ...f, salespersonId: userList[0].id }))
+        setRefreshKey(k => k + 1)
+      }
     }).catch(() => { setRole(null); setSalespersons([]) })
   }, [])
 
@@ -35,6 +49,7 @@ export function CommissionClient() {
     if (filters.salespersonId) params.set('salespersonId', filters.salespersonId)
     if (filters.startDate) params.set('startDate', filters.startDate)
     if (filters.endDate) params.set('endDate', filters.endDate)
+    params.set('commissionStatus', filters.commissionStatus)
     fetch(`/api/commission?${params}`)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
       .then(data => { setRows(Array.isArray(data) ? data : []); setLoading(false) })
@@ -77,6 +92,11 @@ export function CommissionClient() {
     }
   }
 
+  const filteredRows = rows
+    .filter(r => !filters.invoicePaymentStatus || r.invoice_payment_status === filters.invoicePaymentStatus)
+    .filter(r => !filters.commissionPaidDateFrom || (r.commission_paid_date ?? '') >= filters.commissionPaidDateFrom)
+    .filter(r => !filters.commissionPaidDateTo || (r.commission_paid_date ?? '') <= filters.commissionPaidDateTo)
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -113,7 +133,7 @@ export function CommissionClient() {
         <p className="py-6 text-sm text-muted-foreground">Loading…</p>
       ) : (
         <CommissionTable
-          rows={rows}
+          rows={filteredRows}
           selectedIds={selectedIds}
           onToggle={toggleSelect}
           onToggleAll={toggleAll}
