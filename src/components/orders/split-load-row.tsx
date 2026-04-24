@@ -119,7 +119,7 @@ export function SplitLoadRow({
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Order Type</Label>
-          <Select value={load.order_type} onValueChange={v => set('order_type', v)}>
+          <Select value={load.order_type} onValueChange={v => { if (v !== null) set('order_type', v) }}>
             <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
               {ORDER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
@@ -142,7 +142,7 @@ export function SplitLoadRow({
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Terms</Label>
-          <Select value={terms} onValueChange={onTermsChange}>
+          <Select value={terms} onValueChange={v => { if (v !== null) onTermsChange(v) }}>
             <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Terms…" /></SelectTrigger>
             <SelectContent>
               {TERMS_VALUES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}

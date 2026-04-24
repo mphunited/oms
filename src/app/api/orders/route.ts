@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { orders, order_split_loads, users, vendors, customers } from '@/lib/db/schema'
+import { orders, order_split_loads, users, vendors, customers, type NewOrderSplitLoad } from '@/lib/db/schema'
 import { eq, sql, desc, and, or, ilike, inArray, notInArray, gte, lte, count } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { deriveLoadCommissionStatus, deriveOrderCommissionStatus, deriveInitials } from '@/lib/orders/commission-eligibility'
@@ -251,7 +251,7 @@ export async function POST(req: Request) {
           delete lv.preview_po
         }
 
-        await tx.insert(order_split_loads).values(loadValues)
+        await tx.insert(order_split_loads).values(loadValues as NewOrderSplitLoad[])
 
         orderCommissionStatus = deriveOrderCommissionStatus(
           loadValues.map(l => ({

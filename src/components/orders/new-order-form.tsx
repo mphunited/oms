@@ -96,6 +96,8 @@ export function NewOrderForm() {
     setLoads([emptyLoad()])
   }
 
+  const savedOrderNumber = savedOrder?.order_number ?? ''
+
   if (savedOrder) {
     return (
       <div className="p-6 max-w-xl space-y-4">
@@ -146,7 +148,7 @@ export function NewOrderForm() {
             </div>
             <div className="space-y-1.5">
               <Label>Status *</Label>
-              <Select defaultValue="Pending" onValueChange={v => form.setValue('status', v)}>
+              <Select defaultValue="Pending" onValueChange={v => { if (v !== null) form.setValue('status', v) }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
@@ -209,7 +211,7 @@ export function NewOrderForm() {
         <section>
           <OrderSplitLoadsEditor
             loads={loads}
-            orderPo={savedOrder?.order_number ?? ''}
+            orderPo={savedOrderNumber}
             orderCustomerPo={form.watch('customer_po') ?? ''}
             orderShipDate={form.watch('ship_date') ?? ''}
             orderWantedDate={form.watch('wanted_date') ?? ''}
