@@ -18,6 +18,9 @@ export type CommissionRow = {
   customerName: string
   salespersonInitials: string
   csrInitials: string
+  invoice_payment_status: string | null
+  invoice_paid_date: string | null
+  commission_paid_date: string | null
 }
 
 type Props = {
@@ -60,13 +63,16 @@ export function CommissionTable({ rows, selectedIds, onToggle, onToggleAll, role
             <th className="px-3 py-2 text-left font-medium text-muted-foreground">Description</th>
             <th className="px-3 py-2 text-left font-medium text-muted-foreground">Ship Date</th>
             <th className="px-3 py-2 text-right font-medium text-muted-foreground">Qty</th>
+            <th className="px-3 py-2 text-left font-medium text-muted-foreground">Invoice Status</th>
+            <th className="px-3 py-2 text-left font-medium text-muted-foreground">Invoice Paid Date</th>
+            <th className="px-3 py-2 text-left font-medium text-muted-foreground">Comm Paid Date</th>
           </tr>
         </thead>
         <tbody className="divide-y">
           {rows.length === 0 ? (
             <tr>
               <td
-                colSpan={canSelect ? 9 : 8}
+                colSpan={canSelect ? 12 : 11}
                 className="px-3 py-8 text-center text-sm text-muted-foreground"
               >
                 No eligible commissions found.
@@ -106,6 +112,19 @@ export function CommissionTable({ rows, selectedIds, onToggle, onToggleAll, role
               <td className="px-3 py-2 text-muted-foreground">{row.description ?? '—'}</td>
               <td className="px-3 py-2 text-muted-foreground">{formatDate(row.ship_date)}</td>
               <td className="px-3 py-2 text-right tabular-nums">{row.qty ?? '—'}</td>
+              <td className="px-3 py-2">
+                <span className={
+                  row.invoice_payment_status === 'Paid'
+                    ? 'text-xs font-medium text-green-700 dark:text-green-400'
+                    : row.invoice_payment_status === 'Partial'
+                    ? 'text-xs font-medium text-yellow-700 dark:text-yellow-500'
+                    : 'text-xs text-muted-foreground'
+                }>
+                  {row.invoice_payment_status ?? '—'}
+                </span>
+              </td>
+              <td className="px-3 py-2 text-sm">{row.invoice_paid_date ? formatDate(row.invoice_paid_date) : '—'}</td>
+              <td className="px-3 py-2 text-sm">{row.commission_paid_date ? formatDate(row.commission_paid_date) : '—'}</td>
             </tr>
           ))}
         </tbody>
@@ -113,7 +132,7 @@ export function CommissionTable({ rows, selectedIds, onToggle, onToggleAll, role
           <tfoot className="border-t bg-muted/30 text-sm font-medium">
             <tr>
               <td
-                colSpan={canSelect ? 8 : 7}
+                colSpan={canSelect ? 11 : 10}
                 className="px-3 py-2 text-right text-muted-foreground"
               >
                 Selected ({selectedIds.size} loads):
