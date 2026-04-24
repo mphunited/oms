@@ -92,6 +92,9 @@ export function OrderTableRow({
             </select>
           )}
         </td>
+        <td className="px-3 py-2 text-muted-foreground text-xs">
+          {firstName(order.salesperson_name)} / {firstName(order.csr_name)}
+        </td>
         <td className="px-3 py-2">{order.customer_name ?? '—'}</td>
         <td className="px-3 py-2 text-muted-foreground">{order.customer_po ?? ''}</td>
         <td className="px-3 py-2 text-muted-foreground" title={order.split_loads[0]?.description ?? ''}>
@@ -101,9 +104,6 @@ export function OrderTableRow({
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.ship_date)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.wanted_date)}</td>
         <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ?? '—'}</td>
-        <td className="px-3 py-2 text-muted-foreground text-xs">
-          {firstName(order.salesperson_name)} / {firstName(order.csr_name)}
-        </td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy)}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatShipTo(order.ship_to)}</td>

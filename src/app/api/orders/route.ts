@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { orders, order_split_loads, users, vendors, customers, type NewOrderSplitLoad } from '@/lib/db/schema'
 import { eq, sql, desc, and, or, ilike, inArray, notInArray, gte, lte, count } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/pg-core'
 import { createClient } from '@/lib/supabase/server'
 import { deriveLoadCommissionStatus, deriveOrderCommissionStatus, deriveInitials } from '@/lib/orders/commission-eligibility'
 
@@ -35,6 +36,8 @@ export async function GET(req: Request) {
     const csrIds                 = parseList(searchParams.get('csr_id'))
     const invoicePaymentStatuses = parseList(searchParams.get('invoice_payment_status'))
     const commissionStatuses     = parseList(searchParams.get('commission_status'))
+
+    const csrUser = alias(users, 'csr_user')
 
     const conditions = []
 
@@ -84,6 +87,7 @@ export async function GET(req: Request) {
         .leftJoin(customers, eq(orders.customer_id, customers.id))
         .leftJoin(vendors,   eq(orders.vendor_id,   vendors.id))
         .leftJoin(users,     eq(orders.salesperson_id, users.id))
+        .leftJoin(csrUser,   eq(orders.csr_id, csrUser.id))
         .where(where)
 
     const [{ count: total }] = await baseQuery()
@@ -109,11 +113,13 @@ export async function GET(req: Request) {
         customer_name:          customers.name,
         vendor_name:            vendors.name,
         salesperson_name:       users.name,
+        csr_name:               csrUser.name,
       })
       .from(orders)
       .leftJoin(customers, eq(orders.customer_id, customers.id))
       .leftJoin(vendors,   eq(orders.vendor_id,   vendors.id))
       .leftJoin(users,     eq(orders.salesperson_id, users.id))
+      .leftJoin(csrUser,   eq(orders.csr_id, csrUser.id))
       .where(where)
       .orderBy(desc(orders.created_at))
       .limit(limit)
