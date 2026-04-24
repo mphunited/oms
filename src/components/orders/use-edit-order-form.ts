@@ -63,7 +63,7 @@ export function useEditOrderForm(orderId: string) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [csrUserOptions, setCsrUserOptions] = useState<Array<{ id: string; name: string | null; role: string }>>([])
-  const [salespersonOptions, setSalespersonOptions] = useState<Array<{ id: string; name: string | null }>>([])
+  const [salespersonOptions, setSalespersonOptions] = useState<Array<{ id: string; name: string }>>([])
   const [carriers, setCarriers] = useState<string[]>([])
   const [statusOptions, setStatusOptions] = useState<string[]>([])
   const [csrId, setCsrId] = useState('')
@@ -102,7 +102,10 @@ export function useEditOrderForm(orderId: string) {
   useEffect(() => {
     fetch('/api/users?permission=CSR').then(r => r.json()).then(setCsrUserOptions).catch(() => {})
     fetch('/api/users?permission=SALES').then(r => r.json())
-      .then(v => setSalespersonOptions(Array.isArray(v) ? v : []))
+      .then(v => setSalespersonOptions(
+        Array.isArray(v) ? v.map((u: { id: string; name: string | null }) =>
+          ({ id: u.id, name: u.name ?? u.id })) : []
+      ))
       .catch(() => {})
     fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()).then(v => setCarriers(Array.isArray(v) ? v : [])).catch(() => {})
     fetch('/api/dropdown-configs?type=ORDER_STATUS').then(r => r.json()).then(v => setStatusOptions(Array.isArray(v) ? v : [])).catch(() => {})
