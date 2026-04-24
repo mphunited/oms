@@ -5,10 +5,8 @@ import type { Control } from 'react-hook-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import type { OrderFormValues } from '@/lib/orders/order-form-schema'
-import type { SplitLoadValue } from '@/lib/orders/order-form-schema'
-
-const COMMISSION_KEYWORDS = ['New IBC', 'Bottle', 'Rebottle', 'Washout', 'Wash & Return']
+import type { OrderFormValues, SplitLoadValue } from '@/lib/orders/order-form-schema'
+import { COMMISSION_KEYWORDS } from '@/lib/orders/commission-eligibility'
 
 function computeMargin(loads: SplitLoadValue[], values: Partial<OrderFormValues>) {
   const totalRevenue = loads.reduce((sum, l) => sum + (Number(l.sell) || 0) * (Number(l.qty) || 0), 0)

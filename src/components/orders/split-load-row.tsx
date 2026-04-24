@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ORDER_TYPES } from '@/lib/db/schema'
 import type { SplitLoadValue } from '@/lib/orders/order-form-schema'
+import { BOTTLE_KEYWORDS } from '@/lib/orders/commission-eligibility'
 
-const BOTTLE_KEYWORDS = ['Bottle', 'Rebottle', 'Washout', 'Wash & Return']
 const TERMS_VALUES = ['PPD', 'PPA', 'FOB'] as const
 
 type SplitLoadRowProps = {

@@ -17,7 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { OrderChecklist, type ChecklistItem } from '@/components/orders/order-checklist'
-import { OrderSplitLoadsEditor, type SplitLoadValue } from '@/components/orders/order-split-loads-editor'
+import { OrderSplitLoadsEditor } from '@/components/orders/order-split-loads-editor'
+import type { SplitLoadValue } from '@/lib/orders/order-form-schema'
 import { ORDER_TYPES, INVOICE_PAYMENT_STATUSES, COMMISSION_STATUSES, TERMS_VALUES } from '@/lib/db/schema'
 import { toast } from 'sonner'
 import { getMailToken } from '@/lib/email/msal-client'
