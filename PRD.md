@@ -573,7 +573,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 31. ✅ COMPLETE — Carriers management in /settings (CARRIER type in dropdown_configs via CarriersSection component).
 32. ✅ COMPLETE — Order Status management in /settings General section (ORDER_STATUS type via OrderStatusesSection; inline status editing on /orders table reads from DB).
 33. ✅ COMPLETE — is_commission_eligible boolean on users table. API and UI filter correctly.
-34. ✅ COMPLETE — Manual PO entry mode for historical order import (ADMIN-only toggle on New Order form; GET /api/orders/check-po uniqueness check; GET /api/orders/next-po-preview preview endpoint).
+34. ✅ COMPLETE — Manual PO entry mode for historical order import (ADMIN and CSR toggle on New Order form; GET /api/orders/check-po uniqueness check; GET /api/orders/next-po-preview preview endpoint; Invoice Number field shown alongside MPH PO Number in manual mode).
 
 ---
 
@@ -701,7 +701,8 @@ When Harding National is onboarded as a second tenant:
 | Split load Ship Date / Wanted Date | Saved at both order level (from Load 1) and per split load on order_split_loads. Order-level dates drive filtering and schedule logic. Per-load dates display in expanded rows and commission report. |
 | Split load Customer PO | order_split_loads.customer_po overrides order-level customer_po when set. Load 1 defaults to order-level value on the form. |
 | ORDER_STATUS in dropdown_configs | Order statuses seeded into dropdown_configs type=ORDER_STATUS. UI reads from DB at runtime via GET /api/dropdown-configs?type=ORDER_STATUS. Managed via /settings General section. ORDER_STATUSES const in schema.ts kept for TypeScript type safety but runtime values come from DB. |
-| Manual PO entry mode | ADMIN-only toggle on New Order form bypasses sequence. Accepts plain numbers (12345) or prefixed (PM-MPH12345). Server-side validates role and uniqueness. Used for historical order import. |
+| Manual PO entry mode | Available to ADMIN and CSR roles. Toggle on New Order form bypasses sequence. Accepts plain numbers (12345) or prefixed (PM-MPH12345). Server-side validates role (ADMIN|CSR) and uniqueness. Used for historical order import. |
+| Invoice Number in manual mode | When manual PO mode is active, an Invoice Number field (mapped to qb_invoice_number) appears to the right of MPH PO Number. Optional — can be left blank. Cleared automatically when manual mode is toggled off. Not shown outside manual mode (qb_invoice_number on the edit page is the canonical place for non-import orders). |
 | Commission report salesperson filter | Fetches /api/users?commission_eligible=true. Auto-selects first eligible user (Renee) on load for ADMIN/ACCOUNTING. Non-eligible salespersons never appear in dropdown. |
 | Flag This Order / Revised PO | Not on New Order form. Set on Edit Order page only. |
 | Blind Shipment on New Order form | Toggle is in the Customer & Vendor section, second row under Vendor dropdown. |

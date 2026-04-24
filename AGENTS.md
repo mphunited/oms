@@ -237,9 +237,11 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - Flag This Order and Revised PO are NOT on the New Order form — Edit page only.
     - Save Order button is at the bottom of the form, below Misc Notes.
     - Invoice & Payment section (payment status, paid dates) is on Edit page only.
-    - Manual PO entry mode is ADMIN-only via a toggle. Bypasses sequence. Accepts both
-      plain numbers (12345) and prefixed format (PM-MPH12345). Server validates role and
-      uniqueness via GET /api/orders/check-po before submit. Used for historical import.
+    - Manual PO entry mode is available to ADMIN and CSR roles via a toggle. Bypasses
+      sequence. Accepts both plain numbers (12345) and prefixed format (PM-MPH12345).
+      Server validates role (ADMIN|CSR) and uniqueness via GET /api/orders/check-po
+      before submit. Used for historical import. When active, shows an Invoice Number
+      field (qb_invoice_number) to the right of the MPH PO Number field.
 ---
 
 ## TECHNOLOGY STACK
