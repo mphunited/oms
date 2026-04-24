@@ -39,7 +39,11 @@ export function CommissionFiltersBar({ filters, salespersons, role, onChange }: 
             onValueChange={v => onChange({ salespersonId: v ?? '' })}
           >
             <SelectTrigger id="salesperson-filter" className="h-8 w-44 text-sm">
-              <SelectValue placeholder="All salespersons" />
+              <SelectValue placeholder="All salespersons">
+                {filters.salespersonId
+                  ? (salespersons.find(u => u.id === filters.salespersonId)?.name ?? filters.salespersonId)
+                  : 'All salespersons'}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">All</SelectItem>
