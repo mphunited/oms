@@ -29,41 +29,43 @@ export async function POST(req: NextRequest) {
   if (!splitLoadIds?.length) return new NextResponse('splitLoadIds is required', { status: 400 })
   if (!commissionPaidDate) return new NextResponse('commissionPaidDate is required', { status: 400 })
 
-  // Stamp commission_paid_date on the selected split loads
-  await db.update(order_split_loads)
-    .set({ commission_paid_date: commissionPaidDate })
-    .where(inArray(order_split_loads.id, splitLoadIds))
+  await db.transaction(async (tx) => {
+    // Stamp commission_paid_date on the selected split loads
+    await tx.update(order_split_loads)
+      .set({ commission_paid_date: commissionPaidDate })
+      .where(inArray(order_split_loads.id, splitLoadIds))
 
-  // Get affected order IDs
-  const affectedLoads = await db
-    .select({ order_id: order_split_loads.order_id })
-    .from(order_split_loads)
-    .where(inArray(order_split_loads.id, splitLoadIds))
-
-  const affectedOrderIds = [...new Set(affectedLoads.map(l => l.order_id))]
-
-  // Recompute order-level commission_status for each affected order
-  for (const orderId of affectedOrderIds) {
-    const allLoads = await db
-      .select({
-        commission_status: order_split_loads.commission_status,
-        commission_paid_date: order_split_loads.commission_paid_date,
-      })
+    // Get affected order IDs from those split loads
+    const affectedLoads = await tx
+      .select({ order_id: order_split_loads.order_id })
       .from(order_split_loads)
-      .where(eq(order_split_loads.order_id, orderId))
+      .where(inArray(order_split_loads.id, splitLoadIds))
 
-    const orderStatus = deriveOrderCommissionStatus(
-      allLoads as Array<{ commission_status: string; commission_paid_date: string | null }>
-    )
+    const affectedOrderIds = [...new Set(affectedLoads.map(l => l.order_id))]
 
-    await db.update(orders)
-      .set({
-        commission_status: orderStatus,
-        commission_paid_date: commissionPaidDate,
-        updated_at: new Date(),
-      })
-      .where(eq(orders.id, orderId))
-  }
+    // Recompute order-level commission_status for each affected order
+    for (const orderId of affectedOrderIds) {
+      const allLoads = await tx
+        .select({
+          commission_status: order_split_loads.commission_status,
+          commission_paid_date: order_split_loads.commission_paid_date,
+        })
+        .from(order_split_loads)
+        .where(eq(order_split_loads.order_id, orderId))
+
+      const orderStatus = deriveOrderCommissionStatus(
+        allLoads as Array<{ commission_status: string; commission_paid_date: string | null }>
+      )
+
+      await tx.update(orders)
+        .set({
+          commission_status: orderStatus,
+          commission_paid_date: commissionPaidDate,
+          updated_at: new Date(),
+        })
+        .where(eq(orders.id, orderId))
+    }
+  })
 
   return NextResponse.json({ updated: splitLoadIds.length })
 }
