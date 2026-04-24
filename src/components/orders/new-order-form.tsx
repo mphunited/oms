@@ -29,7 +29,7 @@ export function NewOrderForm() {
   const router = useRouter()
   const {
     form, loads, setLoads, savedOrder, setSavedOrder, isSubmitting, submitError,
-    isAdmin, csrInitials, customers, vendors, salespersonOptions, csrOptions,
+    isAdmin, canUseManualPO, csrInitials, customers, vendors, salespersonOptions, csrOptions,
     carriers, statusOptions, onSubmit,
   } = useNewOrderForm()
 
@@ -124,18 +124,24 @@ export function NewOrderForm() {
         {/* Order Identity */}
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Order Identity</h2>
-          {isAdmin && (
+          {canUseManualPO && (
             <div className="space-y-3">
               <div className="flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
-                <Switch id="manual_po_toggle" checked={isManualMode} onCheckedChange={v => { setIsManualMode(v); if (!v) { setManualPONumber(''); setManualPOError(null) } }} />
+                <Switch id="manual_po_toggle" checked={isManualMode} onCheckedChange={v => { setIsManualMode(v); if (!v) { setManualPONumber(''); setManualPOError(null); form.setValue('qb_invoice_number', '') } }} />
                 <Label htmlFor="manual_po_toggle" className="cursor-pointer font-medium">Manual PO Number</Label>
                 <span className="text-xs text-muted-foreground">For importing historical orders</span>
               </div>
               {isManualMode && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="manual_po_number">MPH PO Number *</Label>
-                  <Input id="manual_po_number" placeholder="e.g. 12345 or PM-MPH12345" value={manualPONumber} onChange={e => { setManualPONumber(e.target.value); setManualPOError(null) }} />
-                  {manualPOError && <p className="text-xs text-destructive">{manualPOError}</p>}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="manual_po_number">MPH PO Number *</Label>
+                    <Input id="manual_po_number" placeholder="e.g. 12345 or PM-MPH12345" value={manualPONumber} onChange={e => { setManualPONumber(e.target.value); setManualPOError(null) }} />
+                    {manualPOError && <p className="text-xs text-destructive">{manualPOError}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="qb_invoice_number">Invoice Number</Label>
+                    <Input id="qb_invoice_number" placeholder="QB invoice #" {...form.register('qb_invoice_number')} />
+                  </div>
                 </div>
               )}
             </div>
