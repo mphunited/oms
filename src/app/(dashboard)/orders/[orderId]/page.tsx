@@ -60,8 +60,6 @@ export default function OrderDetailPage() {
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
   if (!order)  return null
 
-  const csrOptions = csrUserOptions
-
   return (
     <div className="p-6">
       <div className="flex gap-6 items-start">
@@ -153,10 +151,10 @@ export default function OrderDetailPage() {
             <Select value={csrId} onValueChange={v => setCsrId(v ?? '')}>
               <SelectTrigger>
                 <SelectValue placeholder="Select CSR">
-                  {csrId ? (csrOptions.find(u => u.id === csrId)?.name ?? csrId) : 'Select CSR'}
+                  {csrId ? (csrUserOptions.find(u => u.id === csrId)?.name ?? csrId) : 'Select CSR'}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>{csrOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}</SelectContent>
+              <SelectContent>{csrUserOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
@@ -164,12 +162,12 @@ export default function OrderDetailPage() {
             <Select value={csr2Id ?? 'none'} onValueChange={v => setCsr2Id(v === 'none' ? null : (v ?? null))}>
               <SelectTrigger>
                 <SelectValue placeholder="None">
-                  {csr2Id && csr2Id !== 'none' ? (csrOptions.find(u => u.id === csr2Id)?.name ?? csr2Id) : 'None'}
+                  {csr2Id && csr2Id !== 'none' ? (csrUserOptions.find(u => u.id === csr2Id)?.name ?? csr2Id) : 'None'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
-                {csrOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}
+                {csrUserOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -258,7 +256,6 @@ export default function OrderDetailPage() {
       </div>{/* end main column */}
 
       <EditOrderSidebar
-        order={order}
         loads={loads}
         freightCost={freightCost}
         freightToCustomer={freightToCustomer}

@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/select'
 import { INVOICE_PAYMENT_STATUSES, COMMISSION_STATUSES } from '@/lib/db/schema'
 import type { SplitLoadValue } from '@/lib/orders/order-form-schema'
-import type { OrderDetail } from '@/components/orders/use-edit-order-form'
 
 function computeMargin(
   loads: SplitLoadValue[],
@@ -41,7 +40,6 @@ function computeMargin(
 }
 
 type EditOrderSidebarProps = {
-  order: OrderDetail | null
   loads: SplitLoadValue[]
   freightCost: string
   freightToCustomer: string
