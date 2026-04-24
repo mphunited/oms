@@ -32,7 +32,7 @@ export async function PATCH(
   try {
     const body = await req.json()
     const allowed = [
-      'name', 'is_active', 'notes', 'lead_contact', 'dock_info',
+      'name', 'is_active', 'is_blind_shipment_default', 'notes', 'lead_contact', 'dock_info',
       'address', 'contacts', 'po_contacts', 'bol_contacts',
       'checklist_template', 'default_bottle_cost',
       'default_bottle_qty', 'default_mph_freight_bottles',
