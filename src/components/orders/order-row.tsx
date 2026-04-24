@@ -53,7 +53,7 @@ export function OrderTableRow({
         <td className="px-2 py-2">
           <button type="button" onClick={onToggleExpand}
             className="flex items-center justify-center h-6 w-6 rounded hover:bg-muted transition-colors"
-            aria-label={expanded ? 'Collapse' : 'Expand'}>
+            aria-label={expanded ? `Collapse loads for ${order.order_number}` : `Expand loads for ${order.order_number}`}>
             {expanded
               ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
               : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
@@ -112,9 +112,9 @@ export function OrderTableRow({
           </div>
         </td>
       </tr>
-      {expanded && order.split_loads.map((load, i) => (
+      {expanded && order.split_loads.map(load => (
         <SplitLoadSubRow
-          key={load.id ?? i}
+          key={load.id}
           load={load}
           orderNumber={order.order_number}
           orderCustomerPo={order.customer_po}
