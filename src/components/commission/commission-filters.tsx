@@ -32,7 +32,7 @@ export function CommissionFiltersBar({ filters, salespersons, role, onChange }: 
           <label htmlFor="salesperson-filter" className="text-xs text-muted-foreground">Salesperson</label>
           <Select
             value={filters.salespersonId}
-            onValueChange={v => onChange({ salespersonId: v })}
+            onValueChange={v => onChange({ salespersonId: v ?? '' })}
           >
             <SelectTrigger id="salesperson-filter" className="h-8 w-44 text-sm">
               <SelectValue placeholder="All salespersons" />
