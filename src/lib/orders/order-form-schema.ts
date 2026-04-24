@@ -59,6 +59,10 @@ const splitLoadSchema = z.object({
   bottle_qty:            numericField,
   mph_freight_bottles:   numericField,
   order_number_override: z.string().optional(),
+  customer_po:           z.string().optional(),
+  order_type:            z.string().optional(),
+  ship_date:             z.string().optional(),
+  wanted_date:           z.string().optional(),
 })
 
 export const orderFormSchema = z.object({

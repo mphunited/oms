@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       await tx.update(orders)
         .set({
           commission_status: orderStatus,
-          commission_paid_date: commissionPaidDate,
+          commission_paid_date: orderStatus === 'Commission Paid' ? commissionPaidDate : null,
           updated_at: new Date(),
         })
         .where(eq(orders.id, orderId))
