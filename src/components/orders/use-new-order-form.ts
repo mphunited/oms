@@ -10,10 +10,11 @@ import { deriveInitials } from '@/lib/orders/commission-eligibility'
 
 type UserOption = { id: string; name: string | null; role: string }
 type Option = { id: string; name: string }
+type VendorOption = { id: string; name: string; is_blind_shipment_default: boolean }
 
 export function useNewOrderForm() {
   const [customers,        setCustomers]        = useState<Option[]>([])
-  const [vendors,          setVendors]          = useState<Option[]>([])
+  const [vendors,          setVendors]          = useState<VendorOption[]>([])
   const [salespersonUsers, setSalespersonUsers] = useState<UserOption[]>([])
   const [csrUsers,         setCsrUsers]         = useState<UserOption[]>([])
   const [carriers,         setCarriers]         = useState<string[]>([])
@@ -64,6 +65,15 @@ export function useNewOrderForm() {
 
   const salespersonOptions: Option[] = salespersonUsers.map(u => ({ id: u.id, name: u.name ?? u.id }))
   const csrOptions: Option[] = csrUsers.map(u => ({ id: u.id, name: u.name ?? u.id }))
+
+  useEffect(() => {
+    const sub = form.watch((values, { name }) => {
+      if (name !== 'vendor_id') return
+      const vendor = vendors.find(v => v.id === values.vendor_id)
+      form.setValue('is_blind_shipment', vendor?.is_blind_shipment_default ?? false)
+    })
+    return () => sub.unsubscribe()
+  }, [vendors, form])
 
   const onSubmit: SubmitHandler<OrderFormValues> = async (data) => {
     setSubmitError(null)
