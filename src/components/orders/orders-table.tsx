@@ -11,6 +11,8 @@ import { OrderSummaryDrawer } from './order-summary-drawer'
 
 const LIMIT = 50
 
+type BadgeMeta = Record<string, { color: string }> | null
+
 export function OrdersTable() {
   const [orderRows, setOrderRows] = useState<OrderRow[]>([])
   const [loading, setLoading]     = useState(true)
@@ -24,6 +26,8 @@ export function OrdersTable() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [role, setRole]           = useState<string | null>(null)
   const [statusOptions, setStatusOptions] = useState<string[]>([])
+  const [statusMeta, setStatusMeta] = useState<BadgeMeta>(null)
+  const [carrierMeta, setCarrierMeta] = useState<BadgeMeta>(null)
   const [summaryOrderId, setSummaryOrderId] = useState<string | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -34,9 +38,12 @@ export function OrdersTable() {
     Promise.all([
       fetch('/api/me').then(r => r.json()),
       fetch('/api/dropdown-configs?type=ORDER_STATUS').then(r => r.json()),
-    ]).then(([me, statuses]: [{ role: string }, string[]]) => {
+      fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()),
+    ]).then(([me, statusData, carrierData]: [{ role: string }, { values: string[]; meta: BadgeMeta }, { meta: BadgeMeta }]) => {
       setRole(me?.role ?? null)
-      setStatusOptions(Array.isArray(statuses) ? statuses : [])
+      setStatusOptions(Array.isArray(statusData?.values) ? statusData.values : [])
+      setStatusMeta(statusData?.meta ?? null)
+      setCarrierMeta(carrierData?.meta ?? null)
     }).catch(() => {})
   }, [])
 
@@ -206,6 +213,8 @@ export function OrdersTable() {
                     selected={selectedIds.has(order.id)}
                     role={role}
                     statusOptions={statusOptions}
+                    statusMeta={statusMeta}
+                    carrierMeta={carrierMeta}
                     onToggleExpand={() => toggleExpand(order.id)}
                     onToggleSelect={() => toggleSelect(order.id)}
                     onToggleFlag={() => toggleFlag(order.id, order.flag)}
@@ -222,6 +231,7 @@ export function OrdersTable() {
 
       <OrderSummaryDrawer
         orderId={summaryOrderId}
+        statusMeta={statusMeta}
         onClose={() => setSummaryOrderId(null)}
       />
     </div>

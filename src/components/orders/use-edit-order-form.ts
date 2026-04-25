@@ -125,8 +125,8 @@ export function useEditOrderForm(orderId: string) {
       .then(v => setVendorOptions(Array.isArray(v) ?
         v.map((u: { id: string; name: string }) => ({ id: u.id, name: u.name })) : []))
       .catch(() => {})
-    fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()).then(v => setCarriers(Array.isArray(v) ? v : [])).catch(() => {})
-    fetch('/api/dropdown-configs?type=ORDER_STATUS').then(r => r.json()).then(v => setStatusOptions(Array.isArray(v) ? v : [])).catch(() => {})
+    fetch('/api/dropdown-configs?type=CARRIER').then(r => r.json()).then(v => setCarriers(Array.isArray(v?.values) ? v.values : [])).catch(() => {})
+    fetch('/api/dropdown-configs?type=ORDER_STATUS').then(r => r.json()).then(v => setStatusOptions(Array.isArray(v?.values) ? v.values : [])).catch(() => {})
     fetch(`/api/orders/${orderId}`)
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() as Promise<OrderDetail> })
       .then(data => {
