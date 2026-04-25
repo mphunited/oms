@@ -233,7 +233,6 @@ export function useEditOrderForm(orderId: string) {
           ship_to: shipTo,
           bill_to: billTo,
           customer_contacts: customerContacts,
-          checklist,
           split_loads: loadsToSend,
         }),
       })

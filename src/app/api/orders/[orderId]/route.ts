@@ -73,6 +73,12 @@ export async function PATCH(
     const body = await req.json()
     const { split_loads, ...orderFields } = body
 
+    // Only allow checklist updates when it is the sole field in the body (sent by the checklist popup).
+    // Full-form saves from the edit page must never overwrite the checklist column.
+    if (!('checklist' in body) || Object.keys(body).length > 1) {
+      delete orderFields.checklist
+    }
+
     for (const key of ['order_date', 'ship_date', 'wanted_date', 'appointment_time', 'csr_id', 'csr2_id', 'salesperson_id', 'vendor_id', 'customer_id']) {
       if (orderFields[key] === '') orderFields[key] = null
     }
