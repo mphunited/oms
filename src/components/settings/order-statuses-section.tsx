@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Trash2, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ export function OrderStatusesSection() {
   const [saving, setSaving] = useState(false);
   const [colorsDirty, setColorsDirty] = useState(false);
   const [newStatus, setNewStatus] = useState("");
-  const colorRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     fetchStatuses();
@@ -165,18 +164,12 @@ export function OrderStatusesSection() {
                   key={status}
                   className="flex items-center gap-3 px-3 py-2 hover:bg-muted/40"
                 >
-                  <div
-                    className="h-6 w-6 shrink-0 rounded border border-gray-300 cursor-pointer"
-                    style={{ backgroundColor: color }}
-                    onClick={() => colorRefs.current[status]?.click()}
-                    title="Click to change color"
-                  />
                   <input
                     type="color"
-                    className="sr-only"
                     value={color}
-                    ref={el => { colorRefs.current[status] = el }}
                     onChange={e => handleColorChange(status, e.target.value)}
+                    className="h-6 w-6 shrink-0 rounded border border-gray-300 cursor-pointer p-0"
+                    title="Click to change color"
                   />
                   <span className="text-sm flex-1">{status}</span>
                   <Button
