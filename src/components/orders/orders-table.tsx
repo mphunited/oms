@@ -7,6 +7,7 @@ import { OrdersFilterBar, DEFAULT_FILTERS, type FilterState } from './orders-fil
 import { OrdersPagination } from './orders-pagination'
 import { useOrderEmailActions } from './use-order-email-actions'
 import { OrderTableRow, type OrderRow } from './order-row'
+import { OrderSummaryDrawer } from './order-summary-drawer'
 
 const LIMIT = 50
 
@@ -23,6 +24,7 @@ export function OrdersTable() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [role, setRole]           = useState<string | null>(null)
   const [statusOptions, setStatusOptions] = useState<string[]>([])
+  const [summaryOrderId, setSummaryOrderId] = useState<string | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { emailingPos, emailingBols, handleEmailPosClick, handleEmailBolsClick } =
@@ -209,6 +211,7 @@ export function OrdersTable() {
                     onToggleSelect={() => toggleSelect(order.id)}
                     onToggleFlag={() => toggleFlag(order.id, order.flag)}
                     onPatchStatus={status => patchStatus(order.id, status)}
+                    onOpenSummary={setSummaryOrderId}
                   />
                 ))}
               </tbody>
@@ -217,6 +220,11 @@ export function OrdersTable() {
           <OrdersPagination page={page} totalPages={totalPages} total={total} limit={LIMIT} onPage={setPage} />
         </>
       )}
+
+      <OrderSummaryDrawer
+        orderId={summaryOrderId}
+        onClose={() => setSummaryOrderId(null)}
+      />
     </div>
   )
 }
