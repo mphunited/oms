@@ -403,6 +403,8 @@ Each order can have a checklist of action items the CSR must complete.
 
 A CSR List button on each row of the orders list page opens a checklist popup. CSRs can check and uncheck items directly from the list page without navigating to the order detail page. Each toggle auto-saves immediately via PATCH. The popup also shows a progress count (e.g. 3/5) and a progress bar.
 
+**Checklist save ownership:** The checklist column is saved exclusively through ChecklistPopup (in order-row.tsx), which sends PATCH with `{ checklist: updated }` as the only body field. The edit page OrderChecklist component manages local checklist state for display but does not independently PATCH the checklist column — that responsibility belongs to the popup only.
+
 ---
 
 ## 14. Recycling Orders
