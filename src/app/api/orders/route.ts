@@ -37,7 +37,8 @@ export async function GET(req: Request) {
     const invoicePaymentStatuses = parseList(searchParams.get('invoice_payment_status'))
     const commissionStatuses     = parseList(searchParams.get('commission_status'))
 
-    const csrUser = alias(users, 'csr_user')
+    const csrUser  = alias(users, 'csr_user')
+    const csr2User = alias(users, 'csr2_user')
 
     const conditions = []
 
@@ -114,12 +115,14 @@ export async function GET(req: Request) {
         vendor_name:            vendors.name,
         salesperson_name:       users.name,
         csr_name:               csrUser.name,
+        csr2_name:              csr2User.name,
       })
       .from(orders)
       .leftJoin(customers, eq(orders.customer_id, customers.id))
       .leftJoin(vendors,   eq(orders.vendor_id,   vendors.id))
       .leftJoin(users,     eq(orders.salesperson_id, users.id))
       .leftJoin(csrUser,   eq(orders.csr_id, csrUser.id))
+      .leftJoin(csr2User,  eq(orders.csr2_id, csr2User.id))
       .where(where)
       .orderBy(desc(orders.created_at))
       .limit(limit)

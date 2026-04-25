@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { OrderStatusBadge } from './order-status-badge'
 import type { FullSplitLoad } from './split-load-sub-row'
 import { formatDate } from '@/lib/utils/format-date'
-import { formatCurrency, firstDescription, firstQty, formatShipTo } from '@/lib/utils/order-table-utils'
+import { formatCurrency, firstDescription, firstQty } from '@/lib/utils/order-table-utils'
 import type { OrderStatus } from '@/types/order'
 
 function firstName(full: string | null | undefined): string {
@@ -29,11 +29,11 @@ export type OrderRow = {
   flag: boolean
   invoice_payment_status: string
   commission_status: string
-  ship_to: { city?: string; state?: string } | null
   customer_name: string | null
   vendor_name: string | null
   salesperson_name: string | null
   csr_name: string | null
+  csr2_name: string | null
   split_loads: FullSplitLoad[]
 }
 
@@ -106,7 +106,11 @@ export function OrderTableRow({
           )}
         </td>
         <td className="px-3 py-2 text-muted-foreground text-xs">
-          {firstName(order.salesperson_name)} / {firstName(order.csr_name)}
+          {firstName(order.salesperson_name)} / {
+            order.csr2_name
+              ? `${firstName(order.csr_name)} / ${firstName(order.csr2_name)}`
+              : firstName(order.csr_name)
+          }
         </td>
         <td className="px-3 py-2">{order.customer_name ?? '—'}</td>
         <td className="px-3 py-2 text-muted-foreground">{order.customer_po ?? ''}</td>
@@ -119,7 +123,6 @@ export function OrderTableRow({
         <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ?? '—'}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy)}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell)}</td>
-        <td className="px-3 py-2 text-muted-foreground">{formatShipTo(order.ship_to)}</td>
         <td className="px-3 py-2 text-muted-foreground">{order.freight_carrier ?? '—'}</td>
         <td className="px-3 py-2">
           <div className="flex items-center gap-1">
@@ -137,7 +140,7 @@ export function OrderTableRow({
 
       {expanded && (
         <tr>
-          <td colSpan={18} className="px-6 py-3 bg-muted/20">
+          <td colSpan={17} className="px-6 py-3 bg-muted/20">
             {order.split_loads.map((load, index) => (
               <div
                 key={load.id}

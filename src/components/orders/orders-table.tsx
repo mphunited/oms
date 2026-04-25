@@ -193,7 +193,6 @@ export function OrdersTable() {
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Vendor</th>
                   <th className="px-3 py-2 text-right font-medium text-muted-foreground">Buy</th>
                   <th className="px-3 py-2 text-right font-medium text-muted-foreground">Sell</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Ship To</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Carrier</th>
                   <th className="px-3 py-2 text-left font-medium text-muted-foreground">Actions</th>
                 </tr>
