@@ -275,6 +275,10 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - When a vendor is selected, is_blind_shipment is auto-set to the vendor's
       is_blind_shipment_default value. The toggle remains fully editable; re-selecting
       a vendor re-applies its default.
+
+47. **Color inputs in settings — Use `<input type="color">` directly as the visible swatch element.**
+    Never use a hidden input triggered via a ref click — this pattern does not reliably fire onChange.
+    The colorRefs ref pattern was removed from both order-statuses-section.tsx and carriers-section.tsx.
 ---
 
 ## TECHNOLOGY STACK
