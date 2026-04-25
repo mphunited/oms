@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight, Copy, Flag, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { OrderStatusBadge } from './order-status-badge'
-import { SplitLoadSubRow, type FullSplitLoad } from './split-load-sub-row'
+import type { FullSplitLoad } from './split-load-sub-row'
 import { formatDate } from '@/lib/utils/format-date'
 import { formatCurrency, firstDescription, firstQty, formatShipTo } from '@/lib/utils/order-table-utils'
 import type { OrderStatus } from '@/types/order'
@@ -47,12 +47,15 @@ type Props = {
   onToggleSelect: () => void
   onToggleFlag: () => void
   onPatchStatus: (status: string) => void
+  onOpenSummary?: (id: string) => void
 }
 
 export function OrderTableRow({
   order, expanded, selected, role, statusOptions,
-  onToggleExpand, onToggleSelect, onToggleFlag, onPatchStatus,
+  onToggleExpand, onToggleSelect, onToggleFlag, onPatchStatus, onOpenSummary,
 }: Props) {
+  const showLoadLabels = order.split_loads.length > 1
+
   return (
     <>
       <tr className={`hover:bg-muted/30 transition-colors${selected ? ' bg-muted/20' : ''}`}>
@@ -78,9 +81,19 @@ export function OrderTableRow({
           </button>
         </td>
         <td className="px-3 py-2 font-mono font-medium">
-          <Link href={`/orders/${order.id}`} className="hover:underline text-primary">
-            {order.order_number}
-          </Link>
+          {onOpenSummary ? (
+            <button
+              type="button"
+              onClick={() => onOpenSummary(order.id)}
+              className="hover:underline cursor-pointer text-primary"
+            >
+              {order.order_number}
+            </button>
+          ) : (
+            <Link href={`/orders/${order.id}`} className="hover:underline text-primary">
+              {order.order_number}
+            </Link>
+          )}
         </td>
         <td className="px-3 py-2">
           {role === 'SALES' ? (
@@ -121,14 +134,50 @@ export function OrderTableRow({
           </div>
         </td>
       </tr>
-      {expanded && order.split_loads.map(load => (
-        <SplitLoadSubRow
-          key={load.id}
-          load={load}
-          orderNumber={order.order_number}
-          orderCustomerPo={order.customer_po}
-        />
-      ))}
+
+      {expanded && (
+        <tr>
+          <td colSpan={18} className="px-6 py-3 bg-muted/20">
+            {order.split_loads.map((load, index) => (
+              <div
+                key={load.id}
+                className="bg-muted/40 rounded-md p-3 mb-2 last:mb-0 border-l-4 border-[#B88A44]"
+              >
+                {showLoadLabels && (
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">
+                    Load {index + 1}
+                  </p>
+                )}
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                  <span className="text-muted-foreground">Load PO</span>
+                  <span className="font-mono">{load.order_number_override ?? order.order_number}</span>
+
+                  <span className="text-muted-foreground">Order Type</span>
+                  <span>{load.order_type ?? '—'}</span>
+
+                  <span className="col-span-2 text-muted-foreground text-xs font-medium">Description</span>
+                  <span className="col-span-2 whitespace-pre-wrap">{load.description ?? '—'}</span>
+
+                  <span className="text-muted-foreground">Qty</span>
+                  <span>{load.qty ?? '—'}</span>
+
+                  <span className="text-muted-foreground">Buy</span>
+                  <span>{formatCurrency(load.buy)}</span>
+
+                  <span className="text-muted-foreground">Sell</span>
+                  <span>{formatCurrency(load.sell)}</span>
+
+                  <span className="text-muted-foreground">Ship Date</span>
+                  <span>{formatDate(load.ship_date)}</span>
+
+                  <span className="text-muted-foreground">Wanted Date</span>
+                  <span>{formatDate(load.wanted_date)}</span>
+                </div>
+              </div>
+            ))}
+          </td>
+        </tr>
+      )}
     </>
   )
 }
