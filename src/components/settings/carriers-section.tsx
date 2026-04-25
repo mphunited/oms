@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Trash2, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ export function CarriersSection() {
   const [saving, setSaving] = useState(false);
   const [colorsDirty, setColorsDirty] = useState(false);
   const [newCarrier, setNewCarrier] = useState("");
-  const colorRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     fetchCarriers();
@@ -158,18 +157,12 @@ export function CarriersSection() {
               const color = localMeta[carrier]?.color ?? FALLBACK_COLOR;
               return (
                 <div key={carrier} className="flex items-center gap-3 px-3 py-2 hover:bg-muted/40">
-                  <div
-                    className="h-6 w-6 shrink-0 rounded border border-gray-300 cursor-pointer"
-                    style={{ backgroundColor: color }}
-                    onClick={() => colorRefs.current[carrier]?.click()}
-                    title="Click to change color"
-                  />
                   <input
                     type="color"
-                    className="sr-only"
                     value={color}
-                    ref={el => { colorRefs.current[carrier] = el }}
                     onChange={e => handleColorChange(carrier, e.target.value)}
+                    className="h-6 w-6 shrink-0 rounded border border-gray-300 cursor-pointer p-0"
+                    title="Click to change color"
                   />
                   <span className="text-sm flex-1">{carrier}</span>
                   <Button
