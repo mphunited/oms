@@ -12,6 +12,7 @@ import {
 import { OrderStatusBadge } from './order-status-badge'
 import { formatDate } from '@/lib/utils/format-date'
 import { formatCurrency } from '@/lib/utils/order-table-utils'
+import { getBadgeColor } from '@/lib/orders/badge-colors'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -78,8 +79,11 @@ type DrawerOrder = {
   split_loads: DrawerSplitLoad[]
 }
 
+type BadgeMeta = Record<string, { color: string }> | null
+
 export interface OrderSummaryDrawerProps {
   orderId: string | null
+  statusMeta?: BadgeMeta
   onClose: () => void
 }
 
@@ -119,7 +123,7 @@ function AddressBlock({ label, address }: { label: string; address: DrawerAddres
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function OrderSummaryDrawer({ orderId, onClose }: OrderSummaryDrawerProps) {
+export function OrderSummaryDrawer({ orderId, statusMeta, onClose }: OrderSummaryDrawerProps) {
   const [data, setData] = useState<DrawerOrder | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -173,7 +177,7 @@ export function OrderSummaryDrawer({ orderId, onClose }: OrderSummaryDrawerProps
                     {data.order_number}
                   </SheetTitle>
                   <div className="mt-1.5">
-                    <OrderStatusBadge status={data.status} />
+                    <OrderStatusBadge status={data.status} color={getBadgeColor(statusMeta ?? null, data.status)} />
                   </div>
                 </div>
                 <Link

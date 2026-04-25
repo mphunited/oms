@@ -87,7 +87,7 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
       .catch(() => {})
     fetch('/api/dropdown-configs?type=ORDER_STATUS')
       .then(r => r.json())
-      .then((d: string[]) => setStatusOptions(d.map(s => ({ value: s, label: s }))))
+      .then((d: { values: string[] }) => setStatusOptions((d.values ?? []).map(s => ({ value: s, label: s }))))
       .catch(() => {})
   }, [])
 
