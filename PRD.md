@@ -401,6 +401,8 @@ Each order can have a checklist of action items the CSR must complete.
 - United Container: 1–3 steps depending on order (BOL to vendor, optionally stock sheet updates)
 - Most other vendors: 1–3 steps (Send confirmation, Send order to carrier, BOL to vendor)
 
+A CSR List button on each row of the orders list page opens a checklist popup. CSRs can check and uncheck items directly from the list page without navigating to the order detail page. Each toggle auto-saves immediately via PATCH. The popup also shows a progress count (e.g. 3/5) and a progress bar.
+
 ---
 
 ## 14. Recycling Orders
@@ -456,6 +458,7 @@ Rules:
 - **MPH PO number cell is a button** — clicking it opens the Order Summary Drawer (Sheet, right side). It does NOT navigate to the edit page. The Edit link is inside the drawer header.
 - **Status** renders as a colored pill badge (color from dropdown_configs.meta for ORDER_STATUS).
   Non-SALES roles see an inline-editable Select; SALES role sees a read-only badge.
+  The status select element renders with its badge color as inline background and text color styles, using getBadgeColor() and getBadgeTextColor() from src/lib/orders/badge-colors.ts.
 - **Carrier** renders as a colored pill badge (color from dropdown_configs.meta for CARRIER).
   Dash if freight_carrier is null.
 - Sales/CSR column shows "FirstName / FirstName" format; two CSRs shown as "First / First2".
@@ -481,6 +484,8 @@ Split Loads (full fields including commission status and bottle fields), Freight
 - Row 1: Search field | lifecycle pills (Active / Complete / Flagged / All) | Status multi-select
 - Row 2: Customer multi-select | Vendor multi-select | CSR multi-select | Salesperson multi-select | Ship Date range
 Both rows flex-wrap for graceful degradation on smaller screens. No Cancelled lifecycle pill.
+
+Each order row in the MPH PO cell contains two small action buttons rendered below the order number: CSR List — opens a popup modal showing the order's checklist items with checkboxes; auto-saves each item to orders.checklist via PATCH on toggle. Notes — opens a popup modal showing and editing po_notes, freight_invoice_notes, and misc_notes; requires explicit Save button. Both popups fetch order data from GET /api/orders/[orderId] on open.
 
 List API (GET /api/orders) returns csr2_name alongside csr_name.
 
@@ -742,6 +747,7 @@ When Harding National is onboarded as a second tenant:
 | Flag This Order / Revised PO | Not on New Order form. Set on Edit Order page only. |
 | Blind Shipment on New Order form | Toggle is in the Customer & Vendor section, second row under Vendor dropdown. |
 | Split load date pre-fill | Removed as a separate concept. Load 2+ date fields are read-only displays of the order-level Ship Date / Wanted Date. No pre-fill logic needed. |
+| Color picker in settings | Input type="color" is used directly as the visible swatch. The hidden input + ref click pattern was removed — it did not reliably fire onChange across browsers. |
 ---
 
 ## 22. What the Current Prototype Is NOT
