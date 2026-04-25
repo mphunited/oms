@@ -433,6 +433,8 @@ export const dropdown_configs = pgTable("dropdown_configs", {
   // type values: 'STATUS' | 'CARRIER' | 'PAYMENT_TERMS' | 'ORDER_TYPE'
   values: jsonb("values").notNull().default([]),
   // string[]
+  meta: jsonb("meta"),
+  // { [label: string]: { color: string } } — badge colors per label
   created_at: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
