@@ -279,6 +279,11 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 47. **Color inputs in settings — Use `<input type="color">` directly as the visible swatch element.**
     Never use a hidden input triggered via a ref click — this pattern does not reliably fire onChange.
     The colorRefs ref pattern was removed from both order-statuses-section.tsx and carriers-section.tsx.
+
+48. **PATCH /api/orders/[orderId] — checklist is intentionally excluded from full-form saves.**
+    It is only written when the PATCH body contains checklist as the sole field (sent by
+    ChecklistPopup in order-row.tsx). Do not add checklist back to the edit page handleSave
+    body in use-edit-order-form.ts.
 ---
 
 ## TECHNOLOGY STACK
@@ -540,6 +545,7 @@ src/lib/email/build-po-email.ts — PO email subject/body builder (pure function
 src/lib/utils/format-date.ts  — formatDate() MM/DD/YYYY display helper
 src/lib/orders/badge-colors.ts — getBadgeColor(), getBadgeTextColor() helpers for colored pill badges
 src/components/orders/order-summary-drawer.tsx — Sheet drawer (right side), fetches from GET /api/orders/[orderId], triggered by PO number click in orders table
+src/components/orders/order-row.tsx — contains ChecklistPopup (local component, not a separate file); fetches GET /api/orders/[orderId] on open and saves via PATCH with { checklist: updated } as the only body field
 src/app/(dashboard)/          — all authenticated pages
 src/app/(auth)/login/         — login page
 src/proxy.ts                  — session handler (Next.js 16 middleware equivalent)
