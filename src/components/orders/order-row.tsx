@@ -6,12 +6,15 @@ import { OrderStatusBadge } from './order-status-badge'
 import type { FullSplitLoad } from './split-load-sub-row'
 import { formatDate } from '@/lib/utils/format-date'
 import { formatCurrency, firstDescription, firstQty } from '@/lib/utils/order-table-utils'
+import { getBadgeColor, getBadgeTextColor } from '@/lib/orders/badge-colors'
 import type { OrderStatus } from '@/types/order'
 
 function firstName(full: string | null | undefined): string {
   if (!full) return '—'
   return full.trim().split(' ')[0]
 }
+
+type BadgeMeta = Record<string, { color: string }> | null
 
 export type OrderRow = {
   id: string
@@ -43,6 +46,8 @@ type Props = {
   selected: boolean
   role: string | null
   statusOptions: string[]
+  statusMeta: BadgeMeta
+  carrierMeta: BadgeMeta
   onToggleExpand: () => void
   onToggleSelect: () => void
   onToggleFlag: () => void
@@ -51,10 +56,11 @@ type Props = {
 }
 
 export function OrderTableRow({
-  order, expanded, selected, role, statusOptions,
+  order, expanded, selected, role, statusOptions, statusMeta, carrierMeta,
   onToggleExpand, onToggleSelect, onToggleFlag, onPatchStatus, onOpenSummary,
 }: Props) {
   const showLoadLabels = order.split_loads.length > 1
+  const statusColor = getBadgeColor(statusMeta, order.status)
 
   return (
     <>
@@ -97,7 +103,7 @@ export function OrderTableRow({
         </td>
         <td className="px-3 py-2">
           {role === 'SALES' ? (
-            <OrderStatusBadge status={order.status as OrderStatus} />
+            <OrderStatusBadge status={order.status as OrderStatus} color={statusColor} />
           ) : (
             <select value={order.status} onChange={e => onPatchStatus(e.target.value)}
               className="text-xs rounded border border-border bg-background px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#00205B] max-w-[180px]">
@@ -123,7 +129,20 @@ export function OrderTableRow({
         <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ?? '—'}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy)}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell)}</td>
-        <td className="px-3 py-2 text-muted-foreground">{order.freight_carrier ?? '—'}</td>
+        <td className="px-3 py-2">
+          {order.freight_carrier ? (() => {
+            const color = getBadgeColor(carrierMeta, order.freight_carrier)
+            const textColor = getBadgeTextColor(color)
+            return (
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{ backgroundColor: color, color: textColor }}
+              >
+                {order.freight_carrier}
+              </span>
+            )
+          })() : <span className="text-muted-foreground">—</span>}
+        </td>
         <td className="px-3 py-2">
           <div className="flex items-center gap-1">
             <Link href={`/orders/${order.id}`}

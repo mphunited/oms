@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
   })
 
   const values: string[] = Array.isArray(row?.values) ? (row!.values as string[]) : []
-  return NextResponse.json(values)
+  const meta = (row?.meta ?? null) as Record<string, { color: string }> | null
+  return NextResponse.json({ type, values, meta })
 }
 
 export async function PUT(req: NextRequest) {
@@ -38,16 +39,26 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'type (string) and values (array) are required' }, { status: 400 })
   }
 
-  const { type, values } = body as { type: string; values: string[] }
+  const { type, values, meta } = body as { type: string; values: string[]; meta?: Record<string, { color: string }> }
   const sortedValues = [...values].sort((a, b) => a.localeCompare(b))
 
-  // Upsert: insert if the row doesn't exist yet, otherwise update values
+  // Fetch existing meta so we only overwrite when meta is explicitly provided
+  const existing = await db.query.dropdown_configs.findFirst({
+    where: eq(dropdown_configs.type, type),
+  })
+  const existingMeta = (existing?.meta ?? null) as Record<string, { color: string }> | null
+  const updatedMeta = meta !== undefined ? meta : existingMeta
+
   await db
     .insert(dropdown_configs)
-    .values({ type, values: sortedValues as unknown as string[] })
+    .values({ type, values: sortedValues as unknown as string[], meta: updatedMeta as unknown as Record<string, { color: string }> })
     .onConflictDoUpdate({
       target: dropdown_configs.type,
-      set: { values: sortedValues as unknown as string[], updated_at: new Date() },
+      set: {
+        values: sortedValues as unknown as string[],
+        meta: updatedMeta as unknown as Record<string, { color: string }>,
+        updated_at: new Date(),
+      },
     })
 
   return NextResponse.json({ ok: true })
