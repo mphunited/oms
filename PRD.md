@@ -161,8 +161,15 @@ created_at
 ### dropdown_configs — active types
 | type | purpose |
 |------|---------|
-| CARRIER | Freight carrier names for the freight_carrier field on orders. Seeded with 34 carriers. Fetched via GET /api/dropdown-configs?type=CARRIER (returns string[]). Managed via /settings Carriers section (ADMIN only). |
+| CARRIER | Freight carrier names for the freight_carrier field on orders. Seeded with 34 carriers. Fetched via GET /api/dropdown-configs?type=CARRIER (returns { type, values, meta }). Managed via /settings Carriers section (ADMIN only). |
 | ORDER_STATUS | Order status values for inline editing on the orders table. Seeded from ORDER_STATUSES constant. Managed via /settings General section (ADMIN only). ORDER_STATUSES const in schema.ts kept for TypeScript type safety but runtime status values come from DB. |
+
+**dropdown_configs.meta** — nullable JSONB column on every dropdown_configs row.
+Shape: `{ [label: string]: { color: string } }`. Stores per-label badge colors for
+ORDER_STATUS and CARRIER types. Seeded with defaults for all 17 ORDER_STATUS values
+and all 34 CARRIER values. Editable via /settings (inline color swatches per item).
+GET /api/dropdown-configs returns `{ type, values, meta }`. PUT merges meta — never
+nulls it when meta is absent from the request body.
 
 ### Contact object shape
 
@@ -441,28 +448,51 @@ Ready To Invoice | Complete | Canceled
 ## 15. Ongoing Orders Table — Column Specification
 
 Default visible columns (in order):
-Flag | MPH PO | Status | Customer | Customer PO | Description | Qty | Ship Date |
-Wanted Date | Vendor | Buy | Sell | Ship To | Freight | Actions
+Flag | MPH PO | Status | Sales/CSR | Customer | Customer PO | Description | Qty |
+Ship Date | Wanted Date | Vendor | Buy | Sell | Carrier | Actions
 
 Rules:
-- Description has compact/full toggle
-- Flag column shows flag icon; clickable to toggle; Flag column: lucide Flag icon, gold filled when true, gray outline when false.
-- Actions column: Edit, Duplicate, View PO, View BOL (when applicable)
-- **Status is inline-editable** via a Select populated from GET /api/dropdown-configs?type=ORDER_STATUS. SALES role sees status as a read-only badge.
-- Table supports multi-select for bulk actions (bulk status update, bulk flag)
-- **Each order row is expandable** via a chevron icon. Expanded view shows one sub-row per split load with columns: MPH PO (order_number_override if set, else order_number), Customer PO (split load customer_po if set, else order-level), Description, Order Type, Qty, Ship Date, Wanted Date, Buy, Sell.
+- Flag column shows flag icon; clickable to toggle; lucide Flag icon, gold filled when true, gray outline when false.
+- **MPH PO number cell is a button** — clicking it opens the Order Summary Drawer (Sheet, right side). It does NOT navigate to the edit page. The Edit link is inside the drawer header.
+- **Status** renders as a colored pill badge (color from dropdown_configs.meta for ORDER_STATUS).
+  Non-SALES roles see an inline-editable Select; SALES role sees a read-only badge.
+- **Carrier** renders as a colored pill badge (color from dropdown_configs.meta for CARRIER).
+  Dash if freight_carrier is null.
+- Sales/CSR column shows "FirstName / FirstName" format; two CSRs shown as "First / First2".
+- Actions column: Edit (pencil icon), Duplicate (copy icon).
+- Table supports multi-select for bulk Email POs / Email BOLs actions.
+- **Each order row is expandable** via a chevron icon. Expanded view renders a single
+  colSpan cell containing one card per split load. Card style: bg-muted/40 rounded-md p-3
+  border-l-4 border-[#B88A44]. Grid inside: grid-cols-2 gap-x-6 gap-y-1 text-sm.
+  "Load N" label only shown when 2+ loads exist. Fields shown: Load PO, Order Type,
+  Description (col-span-2), Qty, Buy, Sell, Ship Date, Wanted Date.
+  Commission status and bottle fields are NOT shown in the expanded row (not returned by
+  list API — use the Order Summary Drawer for full detail).
+  Do NOT attempt to align expanded row cells to parent column widths.
+
+**Order Summary Drawer** — Sheet component, side="right", w-[520px]. Triggered by
+clicking the MPH PO number. Fetches from GET /api/orders/[orderId] on open. Clears
+stale data immediately on orderId change. Loading spinner while fetching; error + retry
+on failure. Sections: Order Info grid, Ship To / Bill To addresses, Order Contacts,
+Split Loads (full fields including commission status and bottle fields), Freight & Costs
+(only if non-zero), Notes (only if populated). Edit Order link in drawer header.
+
+**Filter bar** — two always-visible rows (no More Filters toggle, no hidden filters):
+- Row 1: Search field | lifecycle pills (Active / Complete / Flagged / All) | Status multi-select
+- Row 2: Customer multi-select | Vendor multi-select | CSR multi-select | Salesperson multi-select | Ship Date range
+Both rows flex-wrap for graceful degradation on smaller screens. No Cancelled lifecycle pill.
+
+List API (GET /api/orders) returns csr2_name alongside csr_name.
 
 Filters available:
-- Search: order number, customer, vendor, customer PO, description (full text)
-- Status: single or multi-select
-- Lifecycle: Active (not Complete/Cancelled) | Complete | Cancelled | All
+- Search: order number, customer, vendor, customer PO, description, split-load override PO
+- Status: multi-select (values from dropdown_configs ORDER_STATUS type)
+- Lifecycle: Active (not Complete/Cancelled) | Complete | All
 - Customer: multi-select
 - Vendor: multi-select
 - CSR: multi-select
 - Salesperson: multi-select
 - Ship date: range
-- Invoice payment status
-- Commission status
 - Flag: flagged only toggle
 
 ---
@@ -554,7 +584,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 ### Reports and admin
 13. ✅ COMPLETE — Commission report page — rebuilt around order_split_loads. Per-load commission tracking, mark-paid workflow, salesperson filter (commission_eligible only), status/invoice/date filters.
 14. Invoicing queue
-15. ✅ COMPLETE (partial) — Admin/settings page — Carriers section (CARRIER type in dropdown_configs) and Order Statuses section (ORDER_STATUS type) built and working. Company settings / order number sequence management not yet built.
+15. ✅ COMPLETE (partial) — Admin/settings page — Carriers section (CARRIER type in dropdown_configs) and Order Statuses section (ORDER_STATUS type) built and working. Company settings / order number sequence management not yet built. Both sections include inline color swatches per item: clicking a swatch opens a native color picker; color changes update the swatch in real time; a "Save Colors" button appears only when colors are dirty and calls PUT /api/dropdown-configs with the updated meta. New items default to #6b7280; deleted items are removed from meta.
 16. Dashboard (hero stats, status distribution, weekly chart)
 17. Financial snapshot (admin only)
 

@@ -220,17 +220,47 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     via a subquery so searching for a split-load override PO number surfaces the
     parent order in the results.
 
-39. **GET /api/dropdown-configs?type=X returns string[].
-    PUT /api/dropdown-configs performs full array replacement for a given type.**
+39. **GET /api/dropdown-configs?type=X returns { type, values, meta }.**
+    values is string[]. meta is nullable JSONB of per-label badge colors.
+    PUT /api/dropdown-configs performs full array replacement for a given type.
     ADMIN role enforced server-side on PUT. Currently manages types:
     CARRIER (freight carriers), ORDER_STATUS (order status values).
-    PUT sorts values alphabetically before saving.
+    PUT sorts values alphabetically before saving. PUT merges meta — does not
+    null it out when meta is absent from the request body.
 
 40. **users table has is_commission_eligible boolean (default false).** Only users
     with is_commission_eligible = true appear in the commission report salesperson
     dropdown and commission API queries. Currently only Renee Sauvageau is eligible.
     Managed on /team page by ADMIN. Distinct from can_view_commission (controls
     whether a user can see the commission nav item at all).
+
+42. **dropdown_configs.meta is a nullable JSONB column storing per-label badge colors.**
+    Shape: { [label: string]: { color: string } }. The existing values column stays
+    as string[]. Do not change the values shape. GET /api/dropdown-configs returns
+    { type, values, meta }. PUT accepts optional meta and merges — never nulls it.
+    Default colors seeded for ORDER_STATUS (17 values) and CARRIER (34 values).
+    Colors editable in /settings via inline swatches on each item row.
+
+43. **The orders table expanded row uses card-style layout** inside a single colSpan cell.
+    Do not attempt to align expanded row cells to parent column widths — column widths
+    are dynamic and this pattern always misaligns. Each split load renders as a card:
+    bg-muted/40 rounded-md p-3 border-l-4 border-[#B88A44], grid grid-cols-2 inside.
+
+44. **Order Summary Drawer** — clicking the MPH PO number in the orders table opens a
+    Sheet drawer (side="right", w-[520px]) that fetches from GET /api/orders/[orderId].
+    The PO number cell is a button, not a link. The Edit Order link is in the drawer header.
+    The drawer shows: Order Info, Ship To/Bill To addresses, Order Contacts, Split Loads
+    (full fields including commission + bottle), Freight & Costs, Notes.
+
+45. **GET /api/dropdown-configs returns { type, values, meta }** — NOT a plain string[].
+    Callers that only need the values array must extract .values from the response.
+    Three existing callers were patched when meta was added:
+    orders-filter-bar.tsx, use-edit-order-form.ts, use-new-order-form.ts.
+
+46. **Filter bar on /orders has two always-visible rows — no More Filters toggle.**
+    Row 1: Search | lifecycle pills (Active/Complete/Flagged/All) | Status multi-select.
+    Row 2: Customer | Vendor | CSR | Salesperson | Ship Date range.
+    No Cancelled lifecycle pill. Both rows flex-wrap for smaller screens.
 
 41. **New Order form layout rules:**
     - Blind Shipment toggle is in the Customer & Vendor section, second row under Vendor.
@@ -446,7 +476,7 @@ Outlook Web deeplinks are no longer used anywhere in the app.
 Full route table in PRD.md Section 17.
 
 Key routes:
-- /orders — ongoing orders table (working)
+- /orders — ongoing orders table (working). MPH PO number cell is a button that opens the Order Summary Drawer (Sheet, right side) — does NOT navigate. Edit link is in the drawer header. Expandable row shows per-load card layout inside a single colSpan cell (not column-mirroring). Filter bar has two always-visible rows; no More Filters toggle. Status and Carrier columns render as colored pill badges (colors from dropdown_configs.meta). List API returns csr2_name alongside csr_name.
 - /orders/new — new order form (built, tested, working)
 - /orders/[orderId] — order detail/edit (built, working — duplicate button stubs to /orders/new, no pre-fill yet)
 - /customers — customer list (built, working)
@@ -464,7 +494,7 @@ Key routes:
 - /api/commission/mark-paid — POST bulk mark commission paid
 - /api/me — GET current user id/name/email/role
 - /api/users — GET users list; accepts ?permission=SALES|CSR to filter by permissions jsonb
-- /api/dropdown-configs — GET dropdown values by type; accepts ?type=CARRIER|ORDER_STATUS (returns string[]). PUT replaces full array for a type (ADMIN only).
+- /api/dropdown-configs — GET dropdown values by type; accepts ?type=CARRIER|ORDER_STATUS; returns { type, values, meta } (NOT a plain string[]). PUT replaces values array and merges meta for a type (ADMIN only).
 - /api/orders/check-po?number=X — GET, returns { exists: boolean }; checks uniqueness of a manual PO number. Auth required.
 - /api/orders/next-po-preview?initials=XX — GET, returns { preview: string } formatted as [Initials]-MPH[N] WITHOUT consuming the sequence (uses pg_sequence_last_value).
 
@@ -489,6 +519,12 @@ Claude Code creates git worktrees under .claude/worktrees/ for each task. This i
 Verify with `git log --oneline -5` after every task.
 Do not trust Claude Code's success confirmations — verify with git log yourself.
 
+**If gh CLI is not available**, merge manually and do not ask the user to open a PR:
+```
+git checkout main && git merge [branch] && git push origin main
+```
+Always verify the commit appears on main with `git log --oneline -5` before reporting the task complete. Never end a task by asking the user to open a PR.
+
 ---
 
 ## FILE STRUCTURE REFERENCE
@@ -498,6 +534,8 @@ src/lib/email/msal-client.ts  — MSAL singleton + getMailToken()
 src/lib/email/graph-mail.ts   — createDraft(), attachFileToDraft(), openDraft()
 src/lib/email/build-po-email.ts — PO email subject/body builder (pure function)
 src/lib/utils/format-date.ts  — formatDate() MM/DD/YYYY display helper
+src/lib/orders/badge-colors.ts — getBadgeColor(), getBadgeTextColor() helpers for colored pill badges
+src/components/orders/order-summary-drawer.tsx — Sheet drawer (right side), fetches from GET /api/orders/[orderId], triggered by PO number click in orders table
 src/app/(dashboard)/          — all authenticated pages
 src/app/(auth)/login/         — login page
 src/proxy.ts                  — session handler (Next.js 16 middleware equivalent)
