@@ -195,6 +195,7 @@ nulls it when meta is absent from the request body.
 - `email` — location-specific contact email (e.g. dock scheduler, receiving); distinct from customer_contacts order confirmation emails
 - `email2` — second location-specific email
 - `shipping_notes` — free text for dock hours, contact titles, appointment instructions, etc.
+- `phone_office`, `phone_ext`, `phone_cell`, `email`, `email2` — **Legacy fields.** No longer rendered on the order form or BOL PDF. Retained in the JSONB schema for historical data only. Do not add new form inputs for these keys.
 
 **Legacy records:** older rows may have a `phone` key instead of `phone_office`/`phone_cell`. Display code must fall back to showing `phone` when both `phone_office` and `phone_cell` are absent.
 
@@ -364,10 +365,8 @@ Hide customer name, Customer PO column, Ship To, and Sales Order # from both sub
 - BOL email contacts are separate from PO contacts (configured on vendor record).
 - **Ship To box** on the BOL PDF shows name and address only — no contact fields.
 - **Contact Information & Delivery Notes section** renders below the Ship To box.
-  Pulls phone_office, phone_cell, email, email2, and shipping_notes from the
-  ship_to JSONB. Each non-empty field renders on its own line. Legacy phone key
-  used as fallback when phone_office and phone_cell are both absent. Section is
-  hidden when all fields are empty.
+  Pulls ship_to.shipping_notes only. Rendered as a free-text block. Section is
+  hidden when shipping_notes is empty or absent.
 - **BOL return email:** bol@mphunited.com. Hardcoded in build-bol-pdf.tsx.
   Rendered right-aligned and bold, separated from contact fields by a divider line.
 
@@ -778,7 +777,7 @@ When Harding National is onboarded as a second tenant:
 | PO PDF background | White (#ffffff). Constant PAGE_BG in build-po-pdf.tsx. |
 | Sales Order # on PO | Only rendered when vendor.name === 'MPH United / Alliance Container -- Hillsboro, TX'. Strict equality. |
 | BOL product_weights naming | product_name must match bolDescription() output exactly. Use Gal not Gallon, no apostrophe-s. If weight shows --, check that the extracted description matches a row in product_weights. Check Vercel logs for "[BOL PDF] keys going into inArray:" to see the exact string being queried. |
-| BOL Contact Information & Delivery Notes | Renders below Ship To box. Pulls phone_office, phone_cell, email, email2, shipping_notes from ship_to JSONB. Each field on its own line. Legacy phone fallback supported. Hidden when all fields empty. Ship To box shows name and address only. |
+| BOL Contact Information & Delivery Notes | Renders below Ship To box. Pulls ship_to.shipping_notes only. Free-text block. Hidden when shipping_notes is empty or absent. Ship To box shows name and address only. |
 | BOL email address | bol@mphunited.com. Hardcoded in build-bol-pdf.tsx. Right-aligned, bold, separated from contact fields by a divider line inside the Contact Information & Delivery Notes section. |
 ---
 
