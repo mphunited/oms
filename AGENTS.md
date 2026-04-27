@@ -114,10 +114,8 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     text before first "|". CSR convention: always use "|" to separate product
     specs in description field.
     The BOL PDF renders a **Contact Information & Delivery Notes** section below
-    the Ship To box. It pulls from ship_to.phone_office, ship_to.phone_cell,
-    ship_to.email, ship_to.email2, and ship_to.shipping_notes — each field on
-    its own line. Legacy phone key is the fallback when phone_office and
-    phone_cell are both absent. The section is hidden when all fields are empty.
+    the Ship To box. It pulls from ship_to.shipping_notes only. Rendered as a
+    free-text block. Section is hidden when shipping_notes is empty or absent.
     The Ship To box renders name and address only — no contact fields.
 
 19. **product_weights table** stores canonical BOL product names and weights.
