@@ -225,13 +225,17 @@ export function BillOfLadingPDF({order,splitLoads,vendor,companySetting,weightMa
           <View style={S.sigC}>
             <Text style={S.sigLbl}>SHIPPER SIGNATURE / DATE</Text>
             <Text style={S.sigTxt}>Received, subject to individually determined rates or contracts that have been agreed upon in writing between the carrier and shipper, if applicable, otherwise to the rates, classifications, and rules that have been established.</Text>
-            <Text style={{fontSize:8,color:NAVY,marginTop:24}}>Signature: ______________________________</Text>
+            <Text style={{fontSize:8,color:NAVY,marginTop:24}}>Signature:</Text>
+            <Text style={{fontSize:8}}>{' '}</Text>
+            <Text style={{fontSize:8,color:NAVY}}>______________________________</Text>
           </View>
           <View style={S.sigCR}>
             <Text style={S.sigLbl}>CARRIER SIGNATURE / PICKUP DATE</Text>
             <Text style={S.sigTxt}>Trailer Loaded:  □ By shipper  □ By driver</Text>
             <Text style={S.sigTxt}>Freight Counted:  □ By shipper  □ By driver/pallets  □ By driver/pieces</Text>
-            <Text style={{fontSize:8,color:NAVY,marginTop:24}}>Signature: ______________________________</Text>
+            <Text style={{fontSize:8,color:NAVY,marginTop:24}}>Signature:</Text>
+            <Text style={{fontSize:8}}>{' '}</Text>
+            <Text style={{fontSize:8,color:NAVY}}>______________________________</Text>
           </View>
           <View style={S.sigCR}>
             <Text style={S.sigLbl}>CONSIGNEE SIGNATURE / RECEIVED DATE</Text>
