@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronDown, ChevronRight, Copy, Flag, Pencil, X, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { OrderStatusBadge } from './order-status-badge'
@@ -46,6 +47,7 @@ export type OrderRow = {
   salesperson_name: string | null
   csr_name: string | null
   csr2_name: string | null
+  ship_to: { name?: string | null; city?: string | null; state?: string | null } | null
   split_loads: FullSplitLoad[]
 }
 
@@ -414,6 +416,7 @@ export function OrderTableRow({
 }: Props) {
   const [checklistOpen, setChecklistOpen] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
+  const router = useRouter()
 
   const showLoadLabels = order.split_loads.length > 1
   const statusColor = getBadgeColor(statusMeta, order.status)
@@ -421,7 +424,7 @@ export function OrderTableRow({
 
   return (
     <>
-      <tr className={`hover:bg-muted/30 transition-colors${selected ? ' bg-muted/20' : ''}`}>
+      <tr className={`group hover:bg-muted/30 transition-colors${selected ? ' bg-muted/20' : ''}`}>
         {/* Expand */}
         <td className="px-2 py-2">
           <button type="button" onClick={onToggleExpand}
@@ -519,7 +522,30 @@ export function OrderTableRow({
         </td>
 
         <td className="px-3 py-2">{order.customer_name ?? '—'}</td>
-        <td className="px-3 py-2 text-muted-foreground">{order.customer_po ?? ''}</td>
+        <td className="px-3 py-2 text-muted-foreground">
+          <div className="flex flex-col">
+            <span>{order.customer_po ?? ''}</span>
+            {(() => {
+              const loads = order.split_loads
+              const hasWashReturn = loads.some(l => l.order_type?.includes('Wash & Return'))
+              if (hasWashReturn) {
+                return (
+                  <span className="text-xs rounded px-1.5 py-0.5 font-medium mt-0.5 inline-block bg-[#B88A44]/15 text-[#B88A44]">
+                    Wash &amp; Return
+                  </span>
+                )
+              }
+              if (loads.length > 1) {
+                return (
+                  <span className="text-xs rounded px-1.5 py-0.5 font-medium mt-0.5 inline-block bg-muted text-muted-foreground">
+                    Split Load
+                  </span>
+                )
+              }
+              return null
+            })()}
+          </div>
+        </td>
         <td className="px-3 py-2 text-muted-foreground" title={order.split_loads[0]?.description ?? ''}>
           {firstDescription(order.split_loads)}
         </td>
@@ -529,6 +555,20 @@ export function OrderTableRow({
         <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ?? '—'}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy)}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell)}</td>
+
+        {/* Ship To */}
+        <td className="px-3 py-2">
+          {order.ship_to ? (
+            <div className="flex flex-col">
+              <span>{order.ship_to.name ?? '—'}</span>
+              {(order.ship_to.city || order.ship_to.state) && (
+                <span className="text-xs text-muted-foreground">
+                  {[order.ship_to.city, order.ship_to.state].filter(Boolean).join(', ')}
+                </span>
+              )}
+            </div>
+          ) : <span className="text-muted-foreground">—</span>}
+        </td>
 
         {/* Carrier badge */}
         <td className="px-3 py-2">
@@ -549,10 +589,14 @@ export function OrderTableRow({
         {/* Actions */}
         <td className="px-3 py-2">
           <div className="flex items-center gap-1">
-            <Link href={`/orders/${order.id}`}
-              className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              type="button"
+              onClick={() => router.push(`/orders/${order.id}`)}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Edit order"
+            >
               <Pencil className="h-3.5 w-3.5" />
-            </Link>
+            </button>
             <Link href={`/orders/${order.id}?duplicate=1`}
               className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
               <Copy className="h-3.5 w-3.5" />
@@ -564,7 +608,7 @@ export function OrderTableRow({
       {/* Expanded split loads */}
       {expanded && (
         <tr>
-          <td colSpan={17} className="px-6 py-3 bg-muted/20">
+          <td colSpan={18} className="px-6 py-3 bg-muted/20">
             {order.split_loads.map((load, index) => (
               <div
                 key={load.id}
