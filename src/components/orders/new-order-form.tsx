@@ -263,7 +263,7 @@ export function NewOrderForm() {
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Addresses & Contacts</h2>
           <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-3"><p className="text-sm font-medium">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" /></div>
+            <div className="space-y-3"><p className="text-sm font-medium">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /></div>
             <div className="space-y-3"><p className="text-sm font-medium">Bill To</p><OrderAddressFields prefix="bill_to" register={form.register} notesLabel="Bill To Notes" /></div>
             <OrderContactFields control={form.control} register={form.register} />
           </div>
