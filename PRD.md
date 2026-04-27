@@ -362,6 +362,28 @@ Hide customer name, Customer PO column, Ship To, and Sales Order # from both sub
 - BOL records stored in bills_of_lading table, linked to order.
 - Whether MPH creates the BOL is determined per vendor (some vendors create their own).
 - BOL email contacts are separate from PO contacts (configured on vendor record).
+- **Ship To box** on the BOL PDF shows name and address only — no contact fields.
+- **Contact Information & Delivery Notes section** renders below the Ship To box.
+  Pulls phone_office, phone_cell, email, email2, and shipping_notes from the
+  ship_to JSONB. Each non-empty field renders on its own line. Legacy phone key
+  used as fallback when phone_office and phone_cell are both absent. Section is
+  hidden when all fields are empty.
+- **BOL return email:** bol@mphunited.com. Hardcoded in build-bol-pdf.tsx.
+  Rendered right-aligned and bold, separated from contact fields by a divider line.
+
+### PO PDF notes
+- **Background color:** white (#ffffff). Constant PAGE_BG in build-po-pdf.tsx.
+- **Sales Order # field** renders only when vendor.name === 'MPH United / Alliance
+  Container -- Hillsboro, TX' (strict equality). Alliance Hillsboro is the only
+  vendor that requires it.
+- PO PDF has no signature lines.
+
+### product_weights naming convention
+- product_name values must exactly match the text returned by bolDescription() from
+  order_split_loads.description. Use "Gal" (not "Gallon"), no apostrophe-s, following
+  ORDER_TYPES naming. Example: "275 Gal Rebottle IBC" not "275 Gallon Rebottle IBC's".
+- Seeded with 17 products. If a BOL weight shows "--", the extracted description does
+  not match any product_weights row — check Vercel logs for the exact queried string.
 
 ### Weekly Schedules
 Two types, both generated as PDFs from the schedules page:
@@ -750,6 +772,11 @@ When Harding National is onboarded as a second tenant:
 | Blind Shipment on New Order form | Toggle is in the Customer & Vendor section, second row under Vendor dropdown. |
 | Split load date pre-fill | Removed as a separate concept. Load 2+ date fields are read-only displays of the order-level Ship Date / Wanted Date. No pre-fill logic needed. |
 | Color picker in settings | Input type="color" is used directly as the visible swatch. The hidden input + ref click pattern was removed — it did not reliably fire onChange across browsers. |
+| PO PDF background | White (#ffffff). Constant PAGE_BG in build-po-pdf.tsx. |
+| Sales Order # on PO | Only rendered when vendor.name === 'MPH United / Alliance Container -- Hillsboro, TX'. Strict equality. |
+| BOL product_weights naming | product_name must match bolDescription() output exactly. Use Gal not Gallon, no apostrophe-s. If weight shows --, check that the extracted description matches a row in product_weights. Check Vercel logs for "[BOL PDF] keys going into inArray:" to see the exact string being queried. |
+| BOL Contact Information & Delivery Notes | Renders below Ship To box. Pulls phone_office, phone_cell, email, email2, shipping_notes from ship_to JSONB. Each field on its own line. Legacy phone fallback supported. Hidden when all fields empty. Ship To box shows name and address only. |
+| BOL email address | bol@mphunited.com. Hardcoded in build-bol-pdf.tsx. Right-aligned, bold, separated from contact fields by a divider line inside the Contact Information & Delivery Notes section. |
 ---
 
 ## 22. What the Current Prototype Is NOT
