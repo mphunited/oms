@@ -38,7 +38,7 @@ export async function GET(
     const uniqueNames = [...new Set(
       splitLoads.map(l => bolDescription(l.description)).filter(Boolean)
     )]
-    console.log('[BOL PDF] extracted description keys being queried:', uniqueNames)
+    console.log('[BOL PDF] keys going into inArray:', JSON.stringify(uniqueNames))
     const weightMap: Record<string, number> = {}
     if (uniqueNames.length > 0) {
       const rows = await db
