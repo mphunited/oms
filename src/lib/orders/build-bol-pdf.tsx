@@ -136,15 +136,10 @@ export function BillOfLadingPDF({order,splitLoads,vendor,companySetting,weightMa
         </View>
 
         {/* Contact Information & Delivery Notes */}
-        {!!(st.phone_office||st.phone_cell||(!st.phone_office&&!st.phone_cell&&st.phone)||st.email||st.email2||st.shipping_notes)&&(
+        {!!st.shipping_notes&&(
           <View style={{borderWidth:1,borderColor:BORDER,borderStyle:'solid',borderTopWidth:0,padding:8}}>
             <Text style={S.lbl}>CONTACT INFORMATION & DELIVERY NOTES</Text>
-            {!!st.phone_office&&<Text style={S.val}>{st.phone_office}</Text>}
-            {!!st.phone_cell&&<Text style={S.val}>{st.phone_cell}</Text>}
-            {!st.phone_office&&!st.phone_cell&&!!st.phone&&<Text style={S.val}>{st.phone}</Text>}
-            {!!st.email&&<Text style={S.val}>{st.email}</Text>}
-            {!!st.email2&&<Text style={S.val}>{st.email2}</Text>}
-            {!!st.shipping_notes&&<Text style={S.val}>{st.shipping_notes}</Text>}
+            <Text style={S.val}>{st.shipping_notes}</Text>
             <View style={{borderBottomWidth:1,borderBottomColor:BORDER,borderBottomStyle:'solid',marginVertical:6}}/>
             <Text style={{fontSize:8,color:NAVY,textAlign:'right',fontFamily:'Helvetica-Bold'}}>PLEASE email completed BOL to: bol@mphunited.com</Text>
           </View>
