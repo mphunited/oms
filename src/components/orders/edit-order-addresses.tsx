@@ -102,14 +102,16 @@ type EditOrderAddressesProps = {
   shipTo: AddressValue | null
   billTo: AddressValue | null
   customerContacts: CustomerContact[]
+  billToContacts: CustomerContact[]
   onShipToChange: (v: AddressValue) => void
   onBillToChange: (v: AddressValue) => void
   onContactsChange: (v: CustomerContact[]) => void
+  onBillToContactsChange: (v: CustomerContact[]) => void
 }
 
 export function EditOrderAddresses({
-  shipTo, billTo, customerContacts,
-  onShipToChange, onBillToChange, onContactsChange,
+  shipTo, billTo, customerContacts, billToContacts,
+  onShipToChange, onBillToChange, onContactsChange, onBillToContactsChange,
 }: EditOrderAddressesProps) {
   return (
     <>
@@ -117,7 +119,44 @@ export function EditOrderAddresses({
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Addresses & Contacts</h2>
         <div className="grid grid-cols-2 gap-6">
           <AddressBlock label="Ship To" value={shipTo} onChange={onShipToChange} notesLabel="Ship To Notes" />
-          <AddressBlock label="Bill To" value={billTo} onChange={onBillToChange} notesLabel="Bill To Notes" />
+          <div className="space-y-3">
+            <AddressBlock label="Bill To" value={billTo} onChange={onBillToChange} notesLabel="Bill To Notes" />
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <Label>Bill To Contacts</Label>
+                <Button type="button" variant="outline" size="sm"
+                  onClick={() => onBillToContactsChange([...billToContacts, { id: crypto.randomUUID(), name: '', email: '' }])}>
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />Add Contact
+                </Button>
+              </div>
+              {billToContacts.length === 0 && (
+                <p className="text-xs text-muted-foreground">No billing contacts added.</p>
+              )}
+              {billToContacts.map((contact, index) => (
+                <div key={contact.id ?? `btc-${index}`} className="grid grid-cols-5 gap-2 rounded-md border p-3">
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Name</Label>
+                    <Input value={contact.name}
+                      onChange={e => onBillToContactsChange(billToContacts.map((c, i) => i === index ? { ...c, name: e.target.value } : c))}
+                      placeholder="Full name" />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Email</Label>
+                    <Input type="email" value={contact.email}
+                      onChange={e => onBillToContactsChange(billToContacts.map((c, i) => i === index ? { ...c, email: e.target.value } : c))}
+                      placeholder="email@company.com" />
+                  </div>
+                  <div className="flex items-end">
+                    <Button type="button" variant="ghost" size="icon"
+                      className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => onBillToContactsChange(billToContacts.filter((_, i) => i !== index))}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

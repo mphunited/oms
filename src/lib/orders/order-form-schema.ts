@@ -101,6 +101,7 @@ export const orderFormSchema = z.object({
   bill_to: addressSchema.optional(),
 
   customer_contacts: z.array(contactSchema).default([]),
+  bill_to_contacts: z.array(contactSchema).default([]),
 
   po_notes:              z.string().optional(),
   freight_invoice_notes: z.string().optional(),

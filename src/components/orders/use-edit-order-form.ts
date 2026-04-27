@@ -45,6 +45,7 @@ export type OrderDetail = {
   ship_to: AddressValue | null
   bill_to: AddressValue | null
   customer_contacts: CustomerContact[] | null
+  bill_to_contacts: CustomerContact[] | null
   checklist: ChecklistItem[] | null
   split_loads: SplitLoadValue[]
   sales_order_number: string | null
@@ -97,6 +98,7 @@ export function useEditOrderForm(orderId: string) {
   const [shipTo, setShipTo] = useState<AddressValue | null>(null)
   const [billTo, setBillTo] = useState<AddressValue | null>(null)
   const [customerContacts, setCustomerContacts] = useState<CustomerContact[]>([])
+  const [billToContacts, setBillToContacts] = useState<CustomerContact[]>([])
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
   const [splitLoads, setSplitLoads] = useState<SplitLoadValue[]>([])
   const [customerId, setCustomerId] = useState('')
@@ -162,6 +164,7 @@ export function useEditOrderForm(orderId: string) {
         setShipTo(data.ship_to)
         setBillTo(data.bill_to)
         setCustomerContacts((data.customer_contacts as CustomerContact[]) ?? [])
+        setBillToContacts((data.bill_to_contacts as CustomerContact[]) ?? [])
         setChecklist((data.checklist as ChecklistItem[]) ?? [])
         setSplitLoads(data.split_loads.map(l => ({
           id: l.id,
@@ -233,6 +236,7 @@ export function useEditOrderForm(orderId: string) {
           ship_to: shipTo,
           bill_to: billTo,
           customer_contacts: customerContacts,
+          bill_to_contacts: billToContacts,
           split_loads: loadsToSend,
         }),
       })
@@ -325,6 +329,7 @@ export function useEditOrderForm(orderId: string) {
     shipTo, setShipTo,
     billTo, setBillTo,
     customerContacts, setCustomerContacts,
+    billToContacts, setBillToContacts,
     checklist, setChecklist,
     isAdmin,
     handleSave,

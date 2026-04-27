@@ -59,6 +59,7 @@ export function useNewOrderForm() {
       is_revised:        false,
       additional_costs:  0,
       customer_contacts: [],
+      bill_to_contacts:  [],
       split_loads:       [{ qty: undefined, buy: undefined, sell: undefined,
                             bottle_cost: undefined, bottle_qty: undefined,
                             mph_freight_bottles: undefined }],
