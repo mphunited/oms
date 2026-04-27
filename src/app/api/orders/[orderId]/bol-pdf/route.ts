@@ -47,7 +47,7 @@ export async function GET(
       for (const r of rows) weightMap[r.product_name] = parseFloat(r.weight_lbs)
     }
 
-    console.log('[BOL PDF] lookup keys (from bolDescription):', uniqueNames)
+    console.log('[BOL PDF] extracted description keys:', uniqueNames)
     console.log('[BOL PDF] weightMap (matched product_weights rows):', weightMap)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
