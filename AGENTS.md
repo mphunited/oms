@@ -113,14 +113,35 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     src/lib/orders/build-bol-pdf.tsx. Strips "SPLIT LOAD n — " prefix, takes
     text before first "|". CSR convention: always use "|" to separate product
     specs in description field.
+    The BOL PDF renders a **Contact Information & Delivery Notes** section below
+    the Ship To box. It pulls from ship_to.phone_office, ship_to.phone_cell,
+    ship_to.email, ship_to.email2, and ship_to.shipping_notes — each field on
+    its own line. Legacy phone key is the fallback when phone_office and
+    phone_cell are both absent. The section is hidden when all fields are empty.
+    The Ship To box renders name and address only — no contact fields.
 
 19. **product_weights table** stores canonical BOL product names and weights.
     Seeded with 17 products. Do not hardcode weights anywhere — always query
-    this table.
+    this table. **product_name values must exactly match the text returned by
+    bolDescription()** from order descriptions. Use the abbreviation "Gal" (not
+    "Gallon"), no apostrophe-s, following the ORDER_TYPES naming convention.
+    Example: "275 Gal Rebottle IBC" not "275 Gallon Rebottle IBC's". If a BOL
+    weight shows "--", the extracted description does not match any row in
+    product_weights — check the exact string in Vercel logs under
+    "[BOL PDF] keys going into inArray:".
 
 20. **PO PDF logic lives in src/lib/orders/build-po-pdf.tsx**
     **BOL PDF logic lives in src/lib/orders/build-bol-pdf.tsx**
     Route files handle data fetching only. PDF components handle rendering only.
+    - PO PDF background color is #ffffff (white). Constant: PAGE_BG in build-po-pdf.tsx.
+    - Sales Order # on PO PDF renders only when vendor.name === 'MPH United / Alliance
+      Container -- Hillsboro, TX' (strict equality). This is intentional — Alliance
+      Hillsboro is the only vendor that requires it.
+    - BOL signature boxes: Shipper and Carrier boxes each have a spacer <Text> element
+      between the "Signature:" label and the signing underline. Consignee box has no
+      signing line.
+    - BOL return email is bol@mphunited.com. Hardcoded in build-bol-pdf.tsx. Rendered
+      right-aligned and bold inside the Contact Information & Delivery Notes section.
 
 21. **invoice_paid_date and commission_paid_date are date columns on orders.**
     invoice_paid_date = when customer paid. Set by Accounting on the order edit form.
