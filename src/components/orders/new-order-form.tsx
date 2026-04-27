@@ -230,6 +230,7 @@ export function NewOrderForm() {
             orderWantedDate={form.watch('wanted_date') ?? ''}
             terms={form.watch('terms') ?? ''}
             csrInitials={csrInitials}
+            isManualMode={isManualMode}
             onTermsChange={v => form.setValue('terms', v)}
             onChange={setLoads}
           />
