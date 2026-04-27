@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ORDER_TYPES } from '@/lib/db/schema'
 import type { SplitLoadValue } from '@/lib/orders/order-form-schema'
 import { BOTTLE_KEYWORDS } from '@/lib/orders/commission-eligibility'
+import { matchOrderType } from '@/lib/orders/description-type-map'
 
 const TERMS_VALUES = ['PPD', 'PPA', 'FOB'] as const
 
@@ -100,8 +101,21 @@ export function SplitLoadRow({
       <div className="grid grid-cols-6 gap-3">
         <div className="col-span-4 space-y-1.5">
           <Label className="text-xs">Description</Label>
-          <Input value={load.description} onChange={e => set('description', e.target.value)}
-            placeholder="Product description" />
+          <Input
+            value={load.description}
+            onChange={e => {
+              const val = e.target.value
+              if (index > 0) {
+                const matched = matchOrderType(val)
+                const updated = { ...load, description: val }
+                if (matched) updated.order_type = matched
+                onChange(updated)
+              } else {
+                set('description', val)
+              }
+            }}
+            placeholder="Product description"
+          />
         </div>
         <div className="col-span-2 space-y-1.5">
           <Label className="text-xs">Part #</Label>
