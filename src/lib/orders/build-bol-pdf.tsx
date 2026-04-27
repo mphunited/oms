@@ -145,18 +145,18 @@ export function BillOfLadingPDF({order,splitLoads,vendor,companySetting,weightMa
             {!!st.email&&<Text style={S.val}>{st.email}</Text>}
             {!!st.email2&&<Text style={S.val}>{st.email2}</Text>}
             {!!st.shipping_notes&&<Text style={S.val}>{st.shipping_notes}</Text>}
+            <View style={{borderBottomWidth:1,borderBottomColor:BORDER,borderBottomStyle:'solid',marginVertical:6}}/>
+            <Text style={{fontSize:8,color:NAVY}}>PLEASE email completed BOL to: bol@mphunited.com</Text>
           </View>
         )}
 
         {/* Contact / Notes Row */}
         <View style={S.noteRow}>
           <View style={S.noteL}>
-            {!!(st.shipping_notes||order.appointment_notes)&&
-              <Text style={S.val}>{st.shipping_notes||order.appointment_notes}</Text>}
+            {!!order.appointment_notes&&
+              <Text style={S.val}>{order.appointment_notes}</Text>}
           </View>
-          <View style={S.noteR}>
-            <Text style={{fontSize:8,color:NAVY}}>PLEASE email completed BOL to: bol@mphunited.com</Text>
-          </View>
+          <View style={S.noteR}/>
         </View>
 
         {/* Customer Order Information */}
