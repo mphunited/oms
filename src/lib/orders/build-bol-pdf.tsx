@@ -5,7 +5,7 @@ import type { Order, OrderSplitLoad, Vendor, CompanySettings } from '@/lib/db/sc
 const NAVY = '#00205B', GOLD = '#B88A44', WHITE = '#FFFFFF'
 const LIGHT_GRAY = '#F5F5F5', BORDER = '#CCCCCC'
 
-type Addr = { name?:string; street?:string; city?:string; state?:string; zip?:string; phone?:string; shipping_notes?:string }
+type Addr = { name?:string; street?:string; street2?:string; city?:string; state?:string; zip?:string; phone?:string; phone_office?:string; phone_cell?:string; email?:string; email2?:string; shipping_notes?:string }
 type Props = { order:Order; splitLoads:OrderSplitLoad[]; vendor:Vendor|null; companySetting:CompanySettings|null; weightMap:Record<string,number> }
 
 export function bolDescription(description: string | null): string {
@@ -119,9 +119,8 @@ export function BillOfLadingPDF({order,splitLoads,vendor,companySetting,weightMa
             <Text style={S.lbl}>SHIP TO</Text>
             <Text style={S.vBold}>{st.name??'—'}</Text>
             {!!st.street&&<Text style={S.val}>{st.street}</Text>}
+            {!!st.street2&&<Text style={S.val}>{st.street2}</Text>}
             {!!(st.city||st.state||st.zip)&&<Text style={S.val}>{addrLine(st)}</Text>}
-            {!!st.phone&&<Text style={S.val}>{st.phone}</Text>}
-            {!!st.shipping_notes&&<Text style={S.val}>{st.shipping_notes}</Text>}
           </View>
           <View style={S.cR2}>
             <View style={S.sub}>
@@ -136,6 +135,19 @@ export function BillOfLadingPDF({order,splitLoads,vendor,companySetting,weightMa
           </View>
         </View>
 
+        {/* Contact Information & Delivery Notes */}
+        {!!(st.phone_office||st.phone_cell||(!st.phone_office&&!st.phone_cell&&st.phone)||st.email||st.email2||st.shipping_notes)&&(
+          <View style={{borderWidth:1,borderColor:BORDER,borderStyle:'solid',borderTopWidth:0,padding:8}}>
+            <Text style={S.lbl}>CONTACT INFORMATION & DELIVERY NOTES</Text>
+            {!!st.phone_office&&<Text style={S.val}>{st.phone_office}</Text>}
+            {!!st.phone_cell&&<Text style={S.val}>{st.phone_cell}</Text>}
+            {!st.phone_office&&!st.phone_cell&&!!st.phone&&<Text style={S.val}>{st.phone}</Text>}
+            {!!st.email&&<Text style={S.val}>{st.email}</Text>}
+            {!!st.email2&&<Text style={S.val}>{st.email2}</Text>}
+            {!!st.shipping_notes&&<Text style={S.val}>{st.shipping_notes}</Text>}
+          </View>
+        )}
+
         {/* Contact / Notes Row */}
         <View style={S.noteRow}>
           <View style={S.noteL}>
@@ -143,7 +155,7 @@ export function BillOfLadingPDF({order,splitLoads,vendor,companySetting,weightMa
               <Text style={S.val}>{st.shipping_notes||order.appointment_notes}</Text>}
           </View>
           <View style={S.noteR}>
-            <Text style={{fontSize:8,color:NAVY}}>PLEASE email completed BOL to: peter@mphunited.com</Text>
+            <Text style={{fontSize:8,color:NAVY}}>PLEASE email completed BOL to: bol@mphunited.com</Text>
           </View>
         </View>
 
