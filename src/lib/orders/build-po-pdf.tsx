@@ -5,7 +5,7 @@ import type { Order, OrderSplitLoad, Vendor, CompanySettings } from '@/lib/db/sc
 const NAVY = '#00205B'
 const GOLD = '#B88A44'
 const WHITE = '#FFFFFF'
-const PAGE_BG = '#F5F0E8'
+const PAGE_BG = '#ffffff'
 const RED = '#CC0000'
 
 type Address = {
@@ -177,13 +177,15 @@ export function PurchaseOrderPDF({ order, splitLoads, vendor, companySetting }: 
             </View>
           </View>
 
-          {/* Row 4: Sales Order # (full width) */}
-          <View style={S.rowBorder}>
-            <View style={S.cell}>
-              <Text style={S.lbl}>SALES ORDER #</Text>
-              <Text style={S.val}>{order.sales_order_number ?? '--'}</Text>
+          {/* Row 4: Sales Order # (Alliance Hillsboro only) */}
+          {vendor?.name === 'MPH United / Alliance Container -- Hillsboro, TX' && (
+            <View style={S.rowBorder}>
+              <View style={S.cell}>
+                <Text style={S.lbl}>SALES ORDER #</Text>
+                <Text style={S.val}>{order.sales_order_number ?? '--'}</Text>
+              </View>
             </View>
-          </View>
+          )}
 
         </View>
 

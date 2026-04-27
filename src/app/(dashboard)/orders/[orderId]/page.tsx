@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, FileText, Truck, Copy, Mail, Trash2 } from 'lucide-react'
+import { ChevronLeft, FileText, Truck, Copy, Mail, Trash2, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -115,12 +115,18 @@ export default function OrderDetailPage() {
           <a href={`/api/orders/${orderId}/po-pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
             <FileText className="h-3.5 w-3.5" /> Download PO
           </a>
+          <button onClick={() => window.open(`/api/orders/${orderId}/po-pdf`, '_blank')} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
+            <Eye className="h-3.5 w-3.5" /> Preview PO
+          </button>
           <button onClick={handleEmailPoClick} disabled={emailingPo} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
             <Mail className="h-3.5 w-3.5" /> {emailingPo ? 'Creating…' : 'Email PO'}
           </button>
           <a href={`/api/orders/${orderId}/bol-pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
             <Truck className="h-3.5 w-3.5" /> Download BOL
           </a>
+          <button onClick={() => window.open(`/api/orders/${orderId}/bol-pdf`, '_blank')} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
+            <Eye className="h-3.5 w-3.5" /> Preview BOL
+          </button>
           <button onClick={handleEmailBolClick} disabled={emailingBol} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
             <Mail className="h-3.5 w-3.5" /> {emailingBol ? 'Creating…' : 'Email BOL'}
           </button>
