@@ -24,11 +24,13 @@ type SplitLoadRowProps = {
   onRemove: () => void
   onAssignPo: () => Promise<void>
   assigningPo: boolean
+  isManualMode?: boolean
 }
 
 export function SplitLoadRow({
   load, index, orderPo, orderCustomerPo, orderShipDate, orderWantedDate,
   terms, onTermsChange, onChange, onRemove, onAssignPo, assigningPo,
+  isManualMode = false,
 }: SplitLoadRowProps) {
   const set = (field: keyof SplitLoadValue, value: string | boolean) =>
     onChange({ ...load, [field]: value })
@@ -63,6 +65,16 @@ export function SplitLoadRow({
         <Hash className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         {index === 0 ? (
           <span className="text-muted-foreground font-mono">MPH PO: {mphPoDisplay}</span>
+        ) : isManualMode ? (
+          <div className="flex items-center gap-2 flex-1">
+            <Label className="text-xs shrink-0">MPH PO Number</Label>
+            <Input
+              value={load.order_number_override}
+              onChange={e => set('order_number_override', e.target.value)}
+              placeholder="Optional — leave blank to inherit order PO"
+              className="h-7 text-xs"
+            />
+          </div>
         ) : mphPoDisplay ? (
           <span className="font-mono text-foreground">{mphPoDisplay}</span>
         ) : (

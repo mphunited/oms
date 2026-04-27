@@ -13,13 +13,14 @@ type Props = {
   orderWantedDate: string
   terms: string
   csrInitials: string
+  isManualMode?: boolean
   onTermsChange: (v: string) => void
   onChange: (loads: SplitLoadValue[]) => void
 }
 
 export function OrderSplitLoadsEditor({
   loads, orderPo, orderCustomerPo, orderShipDate, orderWantedDate,
-  terms, csrInitials, onTermsChange, onChange,
+  terms, csrInitials, isManualMode = false, onTermsChange, onChange,
 }: Props) {
   const [assigningPoIndex, setAssigningPoIndex] = useState<number | null>(null)
 
@@ -72,6 +73,7 @@ export function OrderSplitLoadsEditor({
           onRemove={() => remove(index)}
           onAssignPo={() => handleAssignPo(index)}
           assigningPo={assigningPoIndex === index}
+          isManualMode={isManualMode}
         />
       ))}
     </div>
