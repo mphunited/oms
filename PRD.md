@@ -475,18 +475,21 @@ Ready To Invoice | Complete | Canceled
 
 Default visible columns (in order):
 Flag | MPH PO | Status | Sales/CSR | Customer | Customer PO | Description | Qty |
-Ship Date | Wanted Date | Vendor | Buy | Sell | Carrier | Actions
+Ship Date | Wanted Date | Vendor | Buy | Sell | Ship To | Carrier | Actions
 
 Rules:
 - Flag column shows flag icon; clickable to toggle; lucide Flag icon, gold filled when true, gray outline when false.
 - **MPH PO number cell is a button** — clicking it opens the Order Summary Drawer (Sheet, right side). It does NOT navigate to the edit page. The Edit link is inside the drawer header.
+- **Actions cell hover pencil** — hovering any order row reveals a Pencil icon in the Actions cell (opacity-0 → opacity-100 on group-hover; `group` class on `<tr>`). Clicking it navigates directly to /orders/[orderId]. The drawer open behavior on MPH PO click is unchanged.
 - **Status** renders as a colored pill badge (color from dropdown_configs.meta for ORDER_STATUS).
   Non-SALES roles see an inline-editable Select; SALES role sees a read-only badge.
   The status select element renders with its badge color as inline background and text color styles, using getBadgeColor() and getBadgeTextColor() from src/lib/orders/badge-colors.ts.
 - **Carrier** renders as a colored pill badge (color from dropdown_configs.meta for CARRIER).
   Dash if freight_carrier is null.
 - Sales/CSR column shows "FirstName / FirstName" format; two CSRs shown as "First / First2".
-- Actions column: Edit (pencil icon), Duplicate (copy icon).
+- **Customer PO cell** shows a small badge below the Customer PO value: "Wash & Return" (gold: bg-[#B88A44]/15 text-[#B88A44]) when any split load's order_type contains "Wash & Return"; "Split Load" (muted) when there are 2+ split loads and none are Wash & Return; nothing otherwise. Derived from the split_loads array already returned by GET /api/orders.
+- **Ship To cell** shows ship_to.name on the first line and city, state on the second line in text-xs text-muted-foreground. Renders — when ship_to is null.
+- Actions column: Pencil icon (hover-revealed via group-hover, navigates to /orders/[orderId]), Duplicate copy icon (always visible).
 - Table supports multi-select for bulk Email POs / Email BOLs actions.
 - **Each order row is expandable** via a chevron icon. Expanded view renders a single
   colSpan cell containing one card per split load. Card style: bg-muted/40 rounded-md p-3
