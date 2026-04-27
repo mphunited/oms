@@ -20,6 +20,7 @@ import { OrderMarginCard } from '@/components/orders/order-margin-card'
 import { OrderCombobox } from '@/components/orders/order-combobox'
 import { OrderAddressFields } from '@/components/orders/order-address-fields'
 import { OrderContactFields } from '@/components/orders/order-contact-fields'
+import { BillToContactFields } from '@/components/orders/bill-to-contact-fields'
 import { useNewOrderForm } from '@/components/orders/use-new-order-form'
 import { matchOrderType } from '@/lib/orders/description-type-map'
 import { emptyLoad } from '@/lib/orders/order-form-schema'
@@ -264,7 +265,11 @@ export function NewOrderForm() {
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Addresses & Contacts</h2>
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-3"><p className="text-sm font-medium">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /></div>
-            <div className="space-y-3"><p className="text-sm font-medium">Bill To</p><OrderAddressFields prefix="bill_to" register={form.register} notesLabel="Bill To Notes" /></div>
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Bill To</p>
+              <OrderAddressFields prefix="bill_to" register={form.register} notesLabel="Bill To Notes" />
+              <BillToContactFields control={form.control} register={form.register} />
+            </div>
             <OrderContactFields control={form.control} register={form.register} />
           </div>
         </section>

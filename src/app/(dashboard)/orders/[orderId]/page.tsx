@@ -56,6 +56,7 @@ export default function OrderDetailPage() {
     shipTo, setShipTo,
     billTo, setBillTo,
     customerContacts, setCustomerContacts,
+    billToContacts, setBillToContacts,
     checklist, setChecklist,
     isAdmin,
     handleSave, handleDuplicate,
@@ -290,9 +291,11 @@ export default function OrderDetailPage() {
         shipTo={shipTo}
         billTo={billTo}
         customerContacts={customerContacts}
+        billToContacts={billToContacts}
         onShipToChange={setShipTo}
         onBillToChange={setBillTo}
         onContactsChange={setCustomerContacts}
+        onBillToContactsChange={setBillToContacts}
       />
 
       <Separator />
