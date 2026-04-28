@@ -63,7 +63,7 @@ export function EditOrderIdentitySection({
         </div>
       </div>
       <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <Label>Salesperson</Label>
           <OrderCombobox
             options={salespersonOptions}
@@ -72,19 +72,19 @@ export function EditOrderIdentitySection({
             placeholder="Choose salesperson"
           />
         </div>
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <Label>CSR</Label>
           <Select value={csrId} onValueChange={v => onCsrChange(v ?? '')}>
-            <SelectTrigger><SelectValue placeholder="Select CSR">
+            <SelectTrigger className="w-full"><SelectValue placeholder="Select CSR">
               {csrId ? (csrUserOptions.find(u => u.id === csrId)?.name ?? csrId) : 'Select CSR'}
             </SelectValue></SelectTrigger>
             <SelectContent>{csrUserOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <Label>CSR 2 (optional)</Label>
           <Select value={csr2Id ?? 'none'} onValueChange={v => onCsr2Change(v === 'none' ? null : (v ?? null))}>
-            <SelectTrigger><SelectValue placeholder="None">
+            <SelectTrigger className="w-full"><SelectValue placeholder="None">
               {csr2Id && csr2Id !== 'none' ? (csrUserOptions.find(u => u.id === csr2Id)?.name ?? csr2Id) : 'None'}
             </SelectValue></SelectTrigger>
             <SelectContent>
