@@ -136,9 +136,8 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     **BOL PDF logic lives in src/lib/orders/build-bol-pdf.tsx**
     Route files handle data fetching only. PDF components handle rendering only.
     - PO PDF background color is #ffffff (white). Constant: PAGE_BG in build-po-pdf.tsx.
-    - Sales Order # on PO PDF renders only when vendor.name === 'MPH United / Alliance
-      Container -- Hillsboro, TX' (strict equality). This is intentional — Alliance
-      Hillsboro is the only vendor that requires it.
+    - Sales Order # field removed from PO PDF and all order forms as of 2026-04-28.
+      Column retained in schema for historical data only.
     - BOL signature boxes: Shipper and Carrier boxes each have a spacer <Text> element
       between the "Signature:" label and the signing underline. Consignee box has no
       signing line.
@@ -308,9 +307,15 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     ChecklistPopup in order-row.tsx). Do not add checklist back to the edit page handleSave
     body in use-edit-order-form.ts.
 
-49. **customer_contacts JSONB shape on orders** | `[{name, email, is_primary: boolean}]` — `is_primary=true` → To recipient, `false` → Cc recipient for confirmation emails. Default first contact to `true`, rest to `false`. Treat missing `is_primary` as `true` for backward compatibility.
+49. **customer_contacts JSONB shape on orders** | `[{name, email, is_primary: boolean}]` — `is_primary=true` → To recipient, `false` → Cc recipient for confirmation emails. Default first contact to `true`, rest to `false`. Treat missing `is_primary` as `true` for backward compatibility. Stored on the orders table, not the customers table.
 
-    **Email Customer Confirmation** | `POST /api/orders/confirmation-email`. Accepts `orderIds[]`. Returns `{ subject, bodyHtml, to, cc }` — does NOT call Graph API server-side (MSAL is client-only). Client acquires MSAL token via `sendConfirmationEmail()` in `src/lib/orders/email-draft-helpers.ts`, calls `createDraft`/`openDraft` from `graph-mail.ts`. Guards against multi-customer selection (400). CPU detection: `freight_carrier` contains "CPU" (case-insensitive). HTML email styled with `#00205B` header. CPU orders include vendor address, dock_info, and TONU verbiage. Non-CPU orders include closing line only.
+    **Email Customer Confirmation** | `POST /api/orders/confirmation-email`. Accepts `orderIds[]`. Guards against multi-customer selection (400). CPU detection: `freight_carrier` contains "CPU" (case-insensitive). Opens Graph API draft via `createDraft`/`openDraft` — does not auto-send. HTML email uses Outlook-safe nested table layout (not div-based). Table columns: MPH PO | Customer PO | Description | Qty | Price | Ship Date | ETA Delivery Date. Below table: Ship Via, Payment Terms, Ship To block. CPU orders append vendor address, dock_info, and TONU verbiage. Non-CPU orders append closing line only. `orders@mphunited.com` is NOT added to confirmation email Cc — it belongs to PO emails only. Greeting uses first names of all `is_primary=true` contacts.
+
+    **PO email duplicate recipient fix** | `graph-mail.ts` `parseEmailAddress()` splits RFC 5322 "Name \<email\>" strings into separate name and address fields for the Graph API recipient object. Previously the full string was passed as address causing duplicate display in Outlook.
+
+    **Sales Order # field** | Removed from PO PDF, Edit Order form, New Order form, and use-new-order-form.ts vendor handler as of April 28, 2026. Column retained in schema for historical data only. Do not re-add to any UI or PDF.
+
+    **Ship To section on Edit Order** | Phone fields (Office, Ext, Cell) removed from Ship To only. Bill To retains all phone fields. These are rendered separately — not a shared component.
 ---
 
 ## TECHNOLOGY STACK
