@@ -160,6 +160,8 @@ export function NewOrderForm() {
                 <SelectContent>{statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label>Salesperson *</Label>
               <OrderCombobox options={salespersonOptions} value={watchedValues.salesperson_id ?? ''} onChange={v => form.setValue('salesperson_id', v, { shouldValidate: true })} placeholder="Choose salesperson" />
@@ -185,7 +187,7 @@ export function NewOrderForm() {
           </div>
         </section>
 
-        <Separator />
+        <Separator className="bg-[#B88A44]" />
 
         {/* Customer & Vendor */}
         <section className="space-y-4">
@@ -200,11 +202,6 @@ export function NewOrderForm() {
               <Label>Vendor</Label>
               <OrderCombobox options={vendors} value={watchedValues.vendor_id ?? ''} onChange={v => form.setValue('vendor_id', v)} placeholder="Choose vendor" />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="customer_po">Customer PO *</Label>
-              <Input id="customer_po" placeholder="PO number" {...form.register('customer_po')} />
-              {form.formState.errors.customer_po && <p className="text-xs text-destructive">{form.formState.errors.customer_po.message}</p>}
-            </div>
             {vendors.find(v => v.id === watchedValues.vendor_id)?.name === 'MPH United / Alliance Container -- Hillsboro, TX' && (
               <div className="space-y-1.5">
                 <Label htmlFor="sales_order_number">Sales Order #</Label>
@@ -218,14 +215,14 @@ export function NewOrderForm() {
           </div>
         </section>
 
-        <Separator />
+        <Separator className="bg-[#B88A44]" />
 
         {/* Line Items */}
         <section>
           <OrderSplitLoadsEditor
             loads={loads}
             orderPo={savedOrderNumber}
-            orderCustomerPo={form.watch('customer_po') ?? ''}
+            orderCustomerPo={loads[0]?.customer_po ?? ''}
             orderShipDate={form.watch('ship_date') ?? ''}
             orderWantedDate={form.watch('wanted_date') ?? ''}
             terms={form.watch('terms') ?? ''}
@@ -236,7 +233,7 @@ export function NewOrderForm() {
           />
         </section>
 
-        <Separator />
+        <Separator className="bg-[#B88A44]" />
 
         {/* Freight & Logistics */}
         <section className="space-y-4">
@@ -259,18 +256,18 @@ export function NewOrderForm() {
           </div>
         </section>
 
-        <Separator />
+        <Separator className="bg-[#B88A44]" />
 
         {/* Addresses & Contacts */}
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Addresses & Contacts</h2>
           <div className="grid grid-cols-2 gap-6">
-            <div><p className="text-sm font-medium mb-3">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /><hr className="border-border my-6" /><OrderContactFields control={form.control} register={form.register} setValue={form.setValue} /></div>
+            <div><p className="text-sm font-medium mb-3">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /><hr className="border-[#B88A44] my-6" /><OrderContactFields control={form.control} register={form.register} setValue={form.setValue} /></div>
             <div className="space-y-3"><p className="text-sm font-medium">Bill To</p><OrderAddressFields prefix="bill_to" register={form.register} notesLabel="Bill To Notes" hideEmailFields /><BillToContactFields control={form.control} register={form.register} /></div>
           </div>
         </section>
 
-        <Separator />
+        <Separator className="bg-[#B88A44]" />
 
         {/* Notes */}
         <Collapsible open={notesOpen} onOpenChange={setNotesOpen}>

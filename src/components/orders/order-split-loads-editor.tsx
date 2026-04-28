@@ -51,13 +51,7 @@ export function OrderSplitLoadsEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Line Items</h3>
-        <button type="button" onClick={add}
-          className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
-          <Plus className="h-3.5 w-3.5" /> Add Split Load
-        </button>
-      </div>
+      <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Line Items</h3>
       {loads.map((load, index) => (
         <SplitLoadRow
           key={index}
@@ -76,6 +70,10 @@ export function OrderSplitLoadsEditor({
           isManualMode={isManualMode}
         />
       ))}
+      <button type="button" onClick={add}
+        className="inline-flex items-center gap-1.5 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors">
+        <Plus className="h-3.5 w-3.5" /> Add Split Load
+      </button>
     </div>
   )
 }

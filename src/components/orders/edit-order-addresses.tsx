@@ -129,12 +129,13 @@ export function EditOrderAddresses({
       <div className="grid grid-cols-2 gap-6">
         {/* Left column: Ship To + Customer Contacts */}
         <div>
-          <AddressBlock label="Ship To" value={shipTo} onChange={onShipToChange} notesLabel="Ship To Notes" hideEmailFields />
-          <hr className="border-border my-6" />
+          <AddressBlock label="Ship To" value={shipTo} onChange={onShipToChange} notesLabel="Ship To Notes" hideContactFields />
+          <hr className="border-[#B88A44] my-6" />
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Customer Contacts For Order Confirmations</Label>
-              <Button type="button" variant="outline" size="sm"
+              <Button type="button" size="sm"
+                className="bg-[#00205B] text-white hover:bg-[#00205B]/90"
                 onClick={() => {
                   const isPrimary = customerContacts.length === 0
                   onContactsChange([...customerContacts, { id: crypto.randomUUID(), name: '', email: '', is_primary: isPrimary }])
@@ -195,7 +196,8 @@ export function EditOrderAddresses({
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <Label>Bill To Contacts</Label>
-              <Button type="button" variant="outline" size="sm"
+              <Button type="button" size="sm"
+                className="bg-[#00205B] text-white hover:bg-[#00205B]/90"
                 onClick={() => onBillToContactsChange([...billToContacts, { id: crypto.randomUUID(), name: '', email: '' }])}>
                 <Plus className="mr-1.5 h-3.5 w-3.5" />Add Contact
               </Button>
