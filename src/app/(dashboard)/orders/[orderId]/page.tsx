@@ -143,6 +143,8 @@ export default function OrderDetailPage() {
               <SelectContent>{statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
           </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
           <div className="space-y-1.5">
             <Label>Salesperson</Label>
             <OrderCombobox
@@ -173,14 +175,10 @@ export default function OrderDetailPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <Label>Customer PO</Label>
-            <Input value={customerPo} onChange={e => setCustomerPo(e.target.value)} placeholder="PO number" />
-          </div>
-          <div className="col-span-2 flex items-center gap-2">
-            <Switch id="is_blind" checked={isBlind} onCheckedChange={setIsBlind} />
-            <Label htmlFor="is_blind" className="cursor-pointer">Blind Shipment</Label>
-          </div>
+        </div>
+        <div className="flex items-center gap-2 pt-2">
+          <Switch id="is_blind" checked={isBlind} onCheckedChange={setIsBlind} />
+          <Label htmlFor="is_blind" className="cursor-pointer">Blind Shipment</Label>
         </div>
       </section>
 
@@ -265,14 +263,6 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>Ship Date</Label>
-            <Input type="date" value={shipDate} onChange={e => setShipDate(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Wanted Date</Label>
-            <Input type="date" value={wantedDate} onChange={e => setWantedDate(e.target.value)} />
-          </div>
           <div className="space-y-1.5">
             <Label>Appointment Time</Label>
             <Input value={appointmentTime} onChange={e => setAppointmentTime(e.target.value)} placeholder="e.g. 9:00 AM – 10:00 AM" />

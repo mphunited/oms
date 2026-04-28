@@ -265,7 +265,7 @@ export function NewOrderForm() {
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Addresses & Contacts</h2>
           <div className="grid grid-cols-2 gap-6">
-            <div><p className="text-sm font-medium mb-3">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /><hr className="border-border my-6" /><OrderContactFields control={form.control} register={form.register} /></div>
+            <div><p className="text-sm font-medium mb-3">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /><hr className="border-border my-6" /><OrderContactFields control={form.control} register={form.register} setValue={form.setValue} /></div>
             <div className="space-y-3"><p className="text-sm font-medium">Bill To</p><OrderAddressFields prefix="bill_to" register={form.register} notesLabel="Bill To Notes" hideEmailFields /><BillToContactFields control={form.control} register={form.register} /></div>
           </div>
         </section>

@@ -51,8 +51,9 @@ const numericField = z
   .optional()
 
 const contactSchema = z.object({
-  name:  z.string().optional(),
-  email: z.string().optional(),
+  name:       z.string().optional(),
+  email:      z.string().optional(),
+  is_primary: z.boolean().optional(),
 })
 
 const splitLoadSchema = z.object({

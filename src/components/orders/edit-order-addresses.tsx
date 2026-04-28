@@ -21,7 +21,7 @@ export type AddressValue = {
   shipping_notes: string
 }
 
-export type CustomerContact = { id?: string; name: string; email: string }
+export type CustomerContact = { id?: string; name: string; email: string; is_primary?: boolean }
 
 function emptyAddress(): AddressValue {
   return {
@@ -129,42 +129,63 @@ export function EditOrderAddresses({
       <div className="grid grid-cols-2 gap-6">
         {/* Left column: Ship To + Customer Contacts */}
         <div>
-          <AddressBlock label="Ship To" value={shipTo} onChange={onShipToChange} notesLabel="Ship To Notes" />
+          <AddressBlock label="Ship To" value={shipTo} onChange={onShipToChange} notesLabel="Ship To Notes" hideEmailFields />
           <hr className="border-border my-6" />
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Customer Contacts For Order Confirmations</Label>
               <Button type="button" variant="outline" size="sm"
-                onClick={() => onContactsChange([...customerContacts, { id: crypto.randomUUID(), name: '', email: '' }])}>
+                onClick={() => {
+                  const isPrimary = customerContacts.length === 0
+                  onContactsChange([...customerContacts, { id: crypto.randomUUID(), name: '', email: '', is_primary: isPrimary }])
+                }}>
                 <Plus className="mr-1.5 h-3.5 w-3.5" />Add Contact
               </Button>
             </div>
             {customerContacts.length === 0 && (
               <p className="text-xs text-muted-foreground">No contacts added.</p>
             )}
-            {customerContacts.map((contact, index) => (
-              <div key={contact.id ?? `contact-${index}`} className="grid grid-cols-5 gap-2 rounded-md border p-3">
-                <div className="col-span-2 space-y-1">
-                  <Label className="text-xs text-muted-foreground">Name</Label>
-                  <Input value={contact.name}
-                    onChange={e => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, name: e.target.value } : c))}
-                    placeholder="Full name" />
+            {customerContacts.map((contact, index) => {
+              const isPrimary = contact.is_primary !== false
+              return (
+                <div key={contact.id ?? `contact-${index}`} className="grid grid-cols-6 gap-2 rounded-md border p-3">
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Name</Label>
+                    <Input value={contact.name}
+                      onChange={e => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, name: e.target.value } : c))}
+                      placeholder="Full name" />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Email</Label>
+                    <Input type="email" value={contact.email}
+                      onChange={e => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, email: e.target.value } : c))}
+                      placeholder="email@company.com" />
+                  </div>
+                  <div className="col-span-1 flex flex-col justify-end gap-1">
+                    <Label className="text-xs text-muted-foreground">Role</Label>
+                    <div className="flex rounded-md border overflow-hidden h-9 text-xs">
+                      <button
+                        type="button"
+                        className={`flex-1 px-2 transition-colors ${isPrimary ? 'bg-[#00205B] text-white' : 'bg-background text-muted-foreground hover:bg-accent'}`}
+                        onClick={() => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, is_primary: true } : c))}
+                      >To</button>
+                      <button
+                        type="button"
+                        className={`flex-1 px-2 transition-colors ${!isPrimary ? 'bg-[#00205B] text-white' : 'bg-background text-muted-foreground hover:bg-accent'}`}
+                        onClick={() => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, is_primary: false } : c))}
+                      >Cc</button>
+                    </div>
+                  </div>
+                  <div className="flex items-end">
+                    <Button type="button" variant="ghost" size="icon"
+                      className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => onContactsChange(customerContacts.filter((_, i) => i !== index))}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="col-span-2 space-y-1">
-                  <Label className="text-xs text-muted-foreground">Email</Label>
-                  <Input type="email" value={contact.email}
-                    onChange={e => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, email: e.target.value } : c))}
-                    placeholder="email@company.com" />
-                </div>
-                <div className="flex items-end">
-                  <Button type="button" variant="ghost" size="icon"
-                    className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => onContactsChange(customerContacts.filter((_, i) => i !== index))}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
