@@ -38,6 +38,15 @@ export type ConfirmationOrder = {
   customer_contacts: Array<{ name?: string; email?: string; is_primary?: boolean }> | null
 }
 
+function escapeHtml(s: string | null | undefined): string {
+  if (!s) return ''
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 function isCpu(carrier: string | null): boolean {
   return !!carrier && carrier.toLowerCase().includes('cpu')
 }
@@ -59,10 +68,10 @@ function firstNames(contacts: Array<{ name?: string }>): string {
 
 function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustomerPo: string | null): string {
   const rows = loads.map(l => {
-    const mphPo = l.order_number_override ?? orderNumber
-    const custPo = l.customer_po ?? orderCustomerPo ?? '—'
-    const desc = l.description ?? '—'
-    const qty = l.qty ?? '—'
+    const mphPo = escapeHtml(l.order_number_override ?? orderNumber)
+    const custPo = escapeHtml(l.customer_po ?? orderCustomerPo ?? '—')
+    const desc = escapeHtml(l.description ?? '—')
+    const qty = escapeHtml(l.qty ?? '—')
     const price = l.sell ? `$${Number(l.sell).toFixed(2)}` : '—'
     const shipDate = formatDate(l.ship_date)
     return `
@@ -98,6 +107,10 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
   to: string[]
   cc: string[]
 } {
+  if (orders.length === 0) {
+    return { subject: '', bodyHtml: '', to: [], cc: [] }
+  }
+
   const first = orders[0]
   const contacts = first.customer_contacts ?? []
 
@@ -130,16 +143,16 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
   const firstLoad = orders[0].split_loads[0]
   const shipDateDisplay = formatDate(firstLoad?.ship_date)
   const etaDisplay = formatDate(orders[0].wanted_date)
-  const shipVia = orders[0].freight_carrier ?? '—'
-  const paymentTerms = orders[0].payment_terms ?? '—'
+  const shipVia = escapeHtml(orders[0].freight_carrier ?? '—')
+  const paymentTerms = escapeHtml(orders[0].payment_terms ?? '—')
 
   const shipTo = orders[0].ship_to
   const shipToLines = shipTo
     ? [
-        shipTo.name,
-        shipTo.street,
-        shipTo.street2,
-        [shipTo.city, shipTo.state, shipTo.zip].filter(Boolean).join(', '),
+        escapeHtml(shipTo.name),
+        escapeHtml(shipTo.street),
+        escapeHtml(shipTo.street2),
+        [escapeHtml(shipTo.city), escapeHtml(shipTo.state), escapeHtml(shipTo.zip)].filter(Boolean).join(', '),
       ].filter(Boolean).join('<br>')
     : '—'
 
@@ -149,10 +162,10 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
       <p style="font-family:Arial,sans-serif;font-size:14px;margin:20px 0 8px;">For picking up, please contact the shipping area at the following plant below to schedule your appointment prior to going on for it. Though it's not common, we may have unforeseen issues that happen overnight that could negatively impact the timely shipment of your load. We ask that you have the carrier contact the plant the morning of the scheduled pick up to make sure it is still ready to go to avoid TONU charges.</p>
       <p style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;margin:8px 0;">***HAVE MPH PO # FOR PICK UP REFERENCE***</p>
       <p style="font-family:Arial,sans-serif;font-size:14px;margin:8px 0;">
-        ${cpuOrder.vendor_name ?? ''}<br>
-        ${cpuOrder.vendor_address?.street ?? ''}<br>
-        ${[cpuOrder.vendor_address?.city, cpuOrder.vendor_address?.state, cpuOrder.vendor_address?.zip].filter(Boolean).join(', ')}<br>
-        ${cpuOrder.vendor_dock_info ?? ''}
+        ${escapeHtml(cpuOrder.vendor_name ?? '')}<br>
+        ${escapeHtml(cpuOrder.vendor_address?.street ?? '')}<br>
+        ${[escapeHtml(cpuOrder.vendor_address?.city), escapeHtml(cpuOrder.vendor_address?.state), escapeHtml(cpuOrder.vendor_address?.zip)].filter(Boolean).join(', ')}<br>
+        ${escapeHtml(cpuOrder.vendor_dock_info ?? '')}
       </p>`
     : `<p style="font-family:Arial,sans-serif;font-size:14px;margin:20px 0 0;">Please do not hesitate to reach out with any questions.</p>`
 
@@ -160,7 +173,7 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
 
   const bodyHtml = `
     <div style="max-width:700px;margin:0 auto;font-family:Arial,sans-serif;color:#1f2937;">
-      <p style="font-size:14px;margin:0 0 16px;">${greetingLine}</p>
+      <p style="font-size:14px;margin:0 0 16px;">${escapeHtml(greetingLine)}</p>
       <p style="font-size:14px;margin:0 0 16px;">Please see your order confirmation below.</p>
 
       ${tablesHtml}
