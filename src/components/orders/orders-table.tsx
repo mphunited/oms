@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { OrdersFilterBar, DEFAULT_FILTERS, type FilterState } from './orders-filter-bar'
 import { OrdersPagination } from './orders-pagination'
 import { useOrderEmailActions } from './use-order-email-actions'
+import { sendConfirmationEmail } from '@/lib/orders/email-draft-helpers'
 import { OrderTableRow, type OrderRow } from './order-row'
 import { OrderSummaryDrawer } from './order-summary-drawer'
 
@@ -151,42 +152,8 @@ export function OrdersTable() {
     setSelectedIds(allSelected ? new Set() : new Set(orderRows.map(r => r.id)))
   }
 
-  async function handleEmailConfirmationClick() {
-    setEmailingConfirmation(true)
-    try {
-      const res = await fetch('/api/orders/confirmation-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderIds: [...selectedIds] }),
-      })
-      if (!res.ok) {
-        const data = await res.json() as { error?: string }
-        throw new Error(data.error ?? `${res.status}`)
-      }
-      const emailData = await res.json() as { subject: string; bodyHtml: string; to: string[]; cc: string[] }
-      const { getMailToken } = await import('@/lib/email/msal-client')
-      const { createDraft, openDraft } = await import('@/lib/email/graph-mail')
-      const { getUserSignature } = await import('@/lib/email/get-user-signature')
-      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
-      const draft = await createDraft(token, {
-        to: emailData.to,
-        cc: emailData.cc,
-        subject: emailData.subject,
-        bodyHtml: emailData.bodyHtml,
-        signature,
-      })
-      openDraft(draft.webLink)
-      toast.success('Draft email opened in Outlook')
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to create email draft'
-      if (msg.includes('multiple customers')) {
-        toast.error('Selected orders belong to multiple customers. Please select orders for one customer only.')
-      } else {
-        toast.error(msg)
-      }
-    } finally {
-      setEmailingConfirmation(false)
-    }
+  function handleEmailConfirmationClick() {
+    void sendConfirmationEmail([...selectedIds], setEmailingConfirmation)
   }
 
   return (

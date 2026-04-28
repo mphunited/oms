@@ -142,3 +142,37 @@ export async function sendBolEmail(
     setEmailing(false)
   }
 }
+
+export async function sendConfirmationEmail(
+  orderIds: string[],
+  setEmailing: (v: boolean) => void,
+) {
+  setEmailing(true)
+  const toastId = toast.loading('Creating draft…')
+  try {
+    const res = await fetch('/api/orders/confirmation-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderIds }),
+    })
+    if (!res.ok) {
+      const data = await res.json() as { error?: string }
+      throw new Error(data.error ?? `${res.status}`)
+    }
+    const emailData = await res.json() as { subject: string; bodyHtml: string; to: string[]; cc: string[] }
+    const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+    const draft = await createDraft(token, {
+      to: emailData.to,
+      cc: emailData.cc,
+      subject: emailData.subject,
+      bodyHtml: emailData.bodyHtml,
+      signature,
+    })
+    openDraft(draft.webLink)
+    toast.success('Draft created — opening Outlook', { id: toastId })
+  } catch (err) {
+    toast.error('Failed to create draft: ' + (err instanceof Error ? err.message : String(err)), { id: toastId })
+  } finally {
+    setEmailing(false)
+  }
+}
