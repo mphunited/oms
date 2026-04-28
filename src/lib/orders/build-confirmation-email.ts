@@ -66,13 +66,15 @@ function firstNames(contacts: Array<{ name?: string }>): string {
   return names.join(', ')
 }
 
-function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustomerPo: string | null): string {
+function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustomerPo: string | null, wantedDate: string | null): string {
   const rows = loads.map(l => {
     const mphPo = escapeHtml(l.order_number_override ?? orderNumber)
     const custPo = escapeHtml(l.customer_po ?? orderCustomerPo ?? '—')
     const desc = escapeHtml(l.description ?? '—')
     const qty = escapeHtml(l.qty ?? '—')
     const price = l.sell ? `$${Number(l.sell).toFixed(2)}` : '—'
+    const shipDate = formatDate(l.ship_date)
+    const eta = formatDate(wantedDate)
     return `
       <tr>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${mphPo}</td>
@@ -80,6 +82,8 @@ function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustome
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${desc}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;text-align:right;">${qty}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;text-align:right;">${price}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${shipDate}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${eta}</td>
       </tr>`
   }).join('')
 
@@ -92,6 +96,8 @@ function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustome
           <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Description</th>
           <th style="padding:10px 12px;text-align:right;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Qty</th>
           <th style="padding:10px 12px;text-align:right;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Price</th>
+          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Ship Date</th>
+          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">ETA Delivery Date</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -136,11 +142,8 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
     ? `Order Confirmation — ${first.customer_name} | PO: ${custPo} | MPH: ${uniqueMphPos.join(', ')}`
     : `Order Confirmation — ${first.customer_name} | MPH: ${uniqueMphPos.join(', ')}`
 
-  const tablesHtml = orders.map(o => buildTable(o.split_loads, o.order_number, o.customer_po)).join('')
+  const tablesHtml = orders.map(o => buildTable(o.split_loads, o.order_number, o.customer_po, o.wanted_date)).join('')
 
-  const firstLoad = orders[0].split_loads[0]
-  const shipDateDisplay = formatDate(firstLoad?.ship_date)
-  const etaDisplay = formatDate(orders[0].wanted_date)
   const shipVia = escapeHtml(orders[0].freight_carrier ?? '—')
   const paymentTerms = escapeHtml(orders[0].payment_terms ?? '—')
 
@@ -183,14 +186,6 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
 
                 <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                   <tr>
-                    <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Ship Date:</td>
-                    <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${shipDateDisplay}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">ETA Delivery Date:</td>
-                    <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${etaDisplay}</td>
-                  </tr>
-                  <tr>
                     <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Ship Via:</td>
                     <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${shipVia}</td>
                   </tr>
@@ -211,6 +206,5 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
       </tr>
     </table>`
 
-  const filteredCc = ccEmails.filter(e => e.toLowerCase() !== 'orders@mphunited.com')
-  return { subject, bodyHtml, to: toEmails, cc: [...filteredCc, 'orders@mphunited.com'] }
+  return { subject, bodyHtml, to: toEmails, cc: ccEmails }
 }
