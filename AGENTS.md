@@ -117,6 +117,9 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     the Ship To box. It pulls from ship_to.shipping_notes only. Rendered as a
     free-text block. Section is hidden when shipping_notes is empty or absent.
     The Ship To box renders name and address only — no contact fields.
+    Both ship_to and bill_to JSONB keys phone_office, phone_ext, phone_cell,
+    email, email2 are legacy — no longer rendered on the order form. Retained
+    in schema for historical data only.
 
 19. **product_weights table** stores canonical BOL product names and weights.
     Seeded with 17 products. Do not hardcode weights anywhere — always query

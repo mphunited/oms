@@ -124,6 +124,7 @@ salesperson_id, csr_id, csr2_id, status, customer_po, freight_cost, freight_to_c
 additional_costs, freight_carrier (text — populated from dropdown_configs CARRIER type),
 ship_date, wanted_date, ship_to (jsonb), bill_to (jsonb),
 customer_contacts (jsonb — [{name, email}], extract emails directly for Graph API drafts),
+bill_to_contacts (jsonb — [{name, email}], addable list of billing contacts on the order form),
 terms, appointment_time, appointment_notes, po_notes, freight_invoice_notes, shipper_notes,
 misc_notes, flag, is_blind_shipment, is_revised, invoice_payment_status, commission_status,
 qb_invoice_number, invoice_paid_date (date), commission_paid_date (date),
@@ -368,7 +369,7 @@ Hide customer name, Customer PO column, Ship To, and Sales Order # from both sub
   Pulls ship_to.shipping_notes only. Rendered as a free-text block. Section is
   hidden when shipping_notes is empty or absent.
 - **BOL return email:** bol@mphunited.com. Hardcoded in build-bol-pdf.tsx.
-  Rendered right-aligned and bold, separated from contact fields by a divider line.
+  Rendered right-aligned and bold, separated from the shipping notes text by a divider line.
 
 ### PO PDF notes
 - **Background color:** white (#ffffff). Constant PAGE_BG in build-po-pdf.tsx.
@@ -700,6 +701,8 @@ When Harding National is onboarded as a second tenant:
 | Issue | Decision |
 |-------|----------|
 | customer_contacts on orders | jsonb [{name, email}]. Extract emails directly from array for Outlook deeplinks. NOT free text. |
+| bill_to_contacts on orders | jsonb [{name, email}]. Addable list of billing contacts stored on orders table. Rendered in right column below Bill To Notes on both New Order and Edit Order forms. |
+| Customer/Bill To Contacts column positions | Customer Contacts for Order Confirmations renders in the left column below Ship To Notes. Bill To Contacts renders in the right column below Bill To Notes. Both forms (New Order and Edit Order) use this two-column layout. |
 | Order number format | [Initials]-MPH[Number]. Uses Postgres sequence, not MAX()+1. |
 | Vendor email contacts | Three separate jsonb arrays: po_contacts, bol_contacts, invoice_contacts. |
 | BOL CC rule | orders@mphunited.com is NOT CC'd on BOLs. Only on PO and invoice emails. |
