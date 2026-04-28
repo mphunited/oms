@@ -31,7 +31,7 @@ export default function OrderDetailPage() {
     vendorId, setVendorId,
     salesOrderNumber, setSalesOrderNumber,
     customerOptions, vendorOptions,
-    emailingPo, emailingBol,
+    emailingPo, emailingBol, emailingConfirmation,
     orderDate, setOrderDate,
     status, setStatus,
     customerPo, setCustomerPo,
@@ -58,7 +58,7 @@ export default function OrderDetailPage() {
     checklist, setChecklist,
     isAdmin,
     handleSave, handleDuplicate,
-    handleEmailPoClick, handleEmailBolClick,
+    handleEmailPoClick, handleEmailBolClick, handleEmailConfirmationClick,
     csrInitials,
   } = useEditOrderForm(orderId)
 
@@ -105,6 +105,9 @@ export default function OrderDetailPage() {
           </a>
           <button onClick={handleEmailBolClick} disabled={emailingBol} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
             <Mail className="h-3.5 w-3.5" /> {emailingBol ? 'Creating…' : 'Email BOL'}
+          </button>
+          <button onClick={handleEmailConfirmationClick} disabled={emailingConfirmation} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
+            <Mail className="h-3.5 w-3.5" /> {emailingConfirmation ? 'Creating…' : 'Email Confirmation'}
           </button>
         </div>
       </div>

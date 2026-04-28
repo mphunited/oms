@@ -30,6 +30,7 @@ export function useEditOrderForm(orderId: string) {
   const [salespersonId, setSalespersonId] = useState('')
   const [emailingPo, setEmailingPo] = useState(false)
   const [emailingBol, setEmailingBol] = useState(false)
+  const [emailingConfirmation, setEmailingConfirmation] = useState(false)
   const [orderDate, setOrderDate] = useState('')
   const [orderType, setOrderType] = useState('')
   const [status, setStatus] = useState('')
@@ -244,6 +245,39 @@ export function useEditOrderForm(orderId: string) {
     )
   }
 
+  async function handleEmailConfirmationClick() {
+    setEmailingConfirmation(true)
+    try {
+      const res = await fetch('/api/orders/confirmation-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: [orderId] }),
+      })
+      if (!res.ok) {
+        const data = await res.json() as { error?: string }
+        throw new Error(data.error ?? `${res.status}`)
+      }
+      const emailData = await res.json() as { subject: string; bodyHtml: string; to: string[]; cc: string[] }
+      const { getMailToken } = await import('@/lib/email/msal-client')
+      const { createDraft, openDraft } = await import('@/lib/email/graph-mail')
+      const { getUserSignature } = await import('@/lib/email/get-user-signature')
+      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+      const draft = await createDraft(token, {
+        to: emailData.to,
+        cc: emailData.cc,
+        subject: emailData.subject,
+        bodyHtml: emailData.bodyHtml,
+        signature,
+      })
+      openDraft(draft.webLink)
+      toast.success('Draft email opened in Outlook')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create email draft')
+    } finally {
+      setEmailingConfirmation(false)
+    }
+  }
+
   const csrInitials = deriveInitials(order?.csr_name)
 
   return {
@@ -260,7 +294,7 @@ export function useEditOrderForm(orderId: string) {
     salesOrderNumber, setSalesOrderNumber,
     customerOptions, vendorOptions,
     setOrderTypeManuallySet,
-    emailingPo, emailingBol,
+    emailingPo, emailingBol, emailingConfirmation,
     orderDate, setOrderDate,
     orderType, setOrderType,
     status, setStatus,
@@ -293,6 +327,7 @@ export function useEditOrderForm(orderId: string) {
     handleDuplicate,
     handleEmailPoClick,
     handleEmailBolClick,
+    handleEmailConfirmationClick,
     csrInitials,
   }
 }
