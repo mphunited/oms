@@ -3,29 +3,30 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 
 export type VendorContact = {
   name: string
   email: string
   phone: string
-  is_primary: boolean
+  role: 'to' | 'cc'
 }
 
 function emptyContact(): VendorContact {
-  return { name: '', email: '', phone: '', is_primary: false }
+  return { name: '', email: '', phone: '', role: 'cc' }
 }
 
 export function VendorContactEditor({
   title,
   contacts,
   onChange,
+  error,
 }: {
   title: string
   contacts: VendorContact[]
   onChange: (contacts: VendorContact[]) => void
+  error?: string
 }) {
-  function update(index: number, field: keyof VendorContact, value: string | boolean) {
+  function update(index: number, field: keyof VendorContact, value: string) {
     onChange(contacts.map((c, i) => i === index ? { ...c, [field]: value } : c))
   }
 
@@ -51,6 +52,8 @@ export function VendorContactEditor({
         </button>
       </div>
 
+      {error && <p className="text-xs text-destructive">{error}</p>}
+
       {contacts.length === 0 && (
         <p className="text-sm text-muted-foreground">No contacts yet.</p>
       )}
@@ -59,12 +62,15 @@ export function VendorContactEditor({
         <div key={index} className="rounded-lg border p-3 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Switch
-                id={`${title}-primary-${index}`}
-                checked={contact.is_primary}
-                onCheckedChange={v => update(index, 'is_primary', v)}
-              />
-              <Label htmlFor={`${title}-primary-${index}`} className="text-xs cursor-pointer">Primary</Label>
+              <Label className="text-xs text-muted-foreground">Role</Label>
+              <select
+                value={contact.role}
+                onChange={e => update(index, 'role', e.target.value)}
+                className="rounded-md border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#00205B]"
+              >
+                <option value="to">To</option>
+                <option value="cc">CC</option>
+              </select>
             </div>
             <button
               type="button"

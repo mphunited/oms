@@ -164,13 +164,13 @@ export const vendors = pgTable("vendors", {
   lead_contact: text("lead_contact"),
   dock_info: text("dock_info"),
   po_contacts: jsonb("po_contacts"),
-  // [{ name, email, is_primary }]
+  // [{ name, email, phone, role: "to"|"cc" }] — role replaces is_primary; fallback: is_primary===true → "to"
   bol_contacts: jsonb("bol_contacts"),
-  // [{ name, email, is_primary }]
+  // [{ name, email, phone, role: "to"|"cc" }] — role replaces is_primary; fallback: is_primary===true → "to"
   invoice_contacts: jsonb("invoice_contacts"),
-  // [{ name, email, is_primary }] — Phase 2 usage, schema added now
+  // [{ name, email, phone, role: "to"|"cc" }] — Phase 2 usage, schema added now
   schedule_contacts: jsonb("schedule_contacts"),
-  // [{ name, email, is_primary }] — recipients for vendor schedule email
+  // [{ name, email, phone, role: "to"|"cc" }] — recipients for vendor schedule email
   checklist_template: jsonb("checklist_template"),
   // [{ label, done }]
   default_bottle_cost: numeric("default_bottle_cost", {
