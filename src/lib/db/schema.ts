@@ -240,13 +240,14 @@ export const orders = pgTable(
     ship_to: jsonb("ship_to"),
     // { name, street, street2, city, state, zip, phone_office, phone_ext, phone_cell, email, email2, shipping_notes }
     // legacy: phone key present on old rows — fall back to phone when phone_office/phone_cell absent
+    // legacy: phone_office, phone_ext, phone_cell, email, email2 — no longer rendered on order form; retained for historical data only
     bill_to: jsonb("bill_to"),
     // { name, street, street2, city, state, zip, phone_office, phone_ext, phone_cell, email, email2, shipping_notes }
     // legacy: phone_office, phone_ext, phone_cell, email, email2 — no longer rendered on order form; retained for historical data only
     customer_contacts: jsonb("customer_contacts"),
     // [{ name, email }] — extract emails directly for Outlook deeplinks
     bill_to_contacts: jsonb("bill_to_contacts"),
-    // [{ name, email }] — billing contacts added to orders
+    // [{ name, email }] — bill to contacts, mirrors customer_contacts shape
 
     terms: text("terms"),
     // See TERMS_VALUES constant above.
