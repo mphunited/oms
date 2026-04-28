@@ -243,7 +243,8 @@ export const orders = pgTable(
     // legacy: phone_office, phone_ext, phone_cell, email, email2 — no longer rendered on order form; retained for historical data only
     bill_to: jsonb("bill_to"),
     // { name, street, street2, city, state, zip, phone_office, phone_ext, phone_cell, email, email2, shipping_notes }
-    // legacy: phone_office, phone_ext, phone_cell, email, email2 — no longer rendered on order form; retained for historical data only
+    // active on form: phone_office, phone_ext, phone_cell (still rendered on Bill To section)
+    // legacy: email, email2 — no longer rendered on order form; retained for historical data only
     customer_contacts: jsonb("customer_contacts"),
     // [{ name, email }] — extract emails directly for Outlook deeplinks
     bill_to_contacts: jsonb("bill_to_contacts"),

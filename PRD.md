@@ -196,7 +196,8 @@ nulls it when meta is absent from the request body.
 - `email` — location-specific contact email (e.g. dock scheduler, receiving); distinct from customer_contacts order confirmation emails
 - `email2` — second location-specific email
 - `shipping_notes` — free text for dock hours, contact titles, appointment instructions, etc.
-- `phone_office`, `phone_ext`, `phone_cell`, `email`, `email2` — **Legacy fields.** No longer rendered on the order form or BOL PDF. Retained in the JSONB schema for historical data only. Do not add new form inputs for these keys.
+- **ship_to legacy fields:** `phone_office`, `phone_ext`, `phone_cell`, `email`, `email2` — not rendered on the order form or BOL PDF. Retained in JSONB for historical data only. Do not add new form inputs for these keys.
+- **bill_to legacy fields:** `email`, `email2` — not rendered on the order form. Retained in JSONB for historical data only. `phone_office`, `phone_ext`, `phone_cell` are still rendered on the Bill To section of the order form.
 
 **Legacy records:** older rows may have a `phone` key instead of `phone_office`/`phone_cell`. Display code must fall back to showing `phone` when both `phone_office` and `phone_cell` are absent.
 
@@ -702,7 +703,7 @@ When Harding National is onboarded as a second tenant:
 |-------|----------|
 | customer_contacts on orders | jsonb [{name, email}]. Extract emails directly from array for Outlook deeplinks. NOT free text. |
 | bill_to_contacts on orders | jsonb [{name, email}]. Addable list of billing contacts stored on orders table. Rendered in right column below Bill To Notes on both New Order and Edit Order forms. |
-| Customer/Bill To Contacts column positions | Customer Contacts for Order Confirmations renders in the left column below Ship To Notes. Bill To Contacts renders in the right column below Bill To Notes. Both forms (New Order and Edit Order) use this two-column layout. |
+| Customer/Bill To Contacts column positions | Customer Contacts for Order Confirmations renders in the left column below Ship To Notes, separated by a visible `<hr>` divider with spacing above it. Bill To Contacts renders in the right column below Bill To Notes. Both forms (New Order and Edit Order) use this two-column layout. |
 | Order number format | [Initials]-MPH[Number]. Uses Postgres sequence, not MAX()+1. |
 | Vendor email contacts | Three separate jsonb arrays: po_contacts, bol_contacts, invoice_contacts. |
 | BOL CC rule | orders@mphunited.com is NOT CC'd on BOLs. Only on PO and invoice emails. |
