@@ -32,13 +32,14 @@ function emptyAddress(): AddressValue {
 }
 
 function AddressBlock({
-  label, value, onChange, notesLabel, hideContactFields = false,
+  label, value, onChange, notesLabel, hideContactFields = false, hideEmailFields = false,
 }: {
   label: string
   value: AddressValue | null | undefined
   onChange: (v: AddressValue) => void
   notesLabel: string
   hideContactFields?: boolean
+  hideEmailFields?: boolean
 }) {
   const addr = value ?? emptyAddress()
   const u = (field: keyof AddressValue, val: string) => onChange({ ...addr, [field]: val })
@@ -84,14 +85,18 @@ function AddressBlock({
               <Label className="text-xs">Cell</Label>
               <Input value={addr.phone_cell} onChange={e => u('phone_cell', e.target.value)} placeholder="Cell phone" />
             </div>
-            <div className="col-span-3 space-y-1.5">
-              <Label className="text-xs">Email 1</Label>
-              <Input type="email" value={addr.email} onChange={e => u('email', e.target.value)} placeholder="email@company.com" />
-            </div>
-            <div className="col-span-3 space-y-1.5">
-              <Label className="text-xs">Email 2</Label>
-              <Input type="email" value={addr.email2} onChange={e => u('email2', e.target.value)} placeholder="email@company.com" />
-            </div>
+            {!hideEmailFields && (
+              <>
+                <div className="col-span-3 space-y-1.5">
+                  <Label className="text-xs">Email 1</Label>
+                  <Input type="email" value={addr.email} onChange={e => u('email', e.target.value)} placeholder="email@company.com" />
+                </div>
+                <div className="col-span-3 space-y-1.5">
+                  <Label className="text-xs">Email 2</Label>
+                  <Input type="email" value={addr.email2} onChange={e => u('email2', e.target.value)} placeholder="email@company.com" />
+                </div>
+              </>
+            )}
           </>
         )}
         <div className="col-span-6 space-y-1.5">
@@ -164,7 +169,7 @@ export function EditOrderAddresses({
 
         {/* Right column: Bill To + Bill To Contacts */}
         <div className="space-y-3">
-          <AddressBlock label="Bill To" value={billTo} onChange={onBillToChange} notesLabel="Bill To Notes" hideContactFields />
+          <AddressBlock label="Bill To" value={billTo} onChange={onBillToChange} notesLabel="Bill To Notes" hideEmailFields />
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <Label>Bill To Contacts</Label>

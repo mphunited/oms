@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { OrderFormValues } from '@/lib/orders/order-form-schema'
 
-export function OrderAddressFields({ prefix, register, notesLabel, hideContactFields = false, notesPlaceholder = 'Optional' }: {
+export function OrderAddressFields({ prefix, register, notesLabel, hideContactFields = false, hideEmailFields = false, notesPlaceholder = 'Optional' }: {
   prefix: 'ship_to' | 'bill_to'
   register: ReturnType<typeof useForm<OrderFormValues>>['register']
   notesLabel: string
   hideContactFields?: boolean
+  hideEmailFields?: boolean
   notesPlaceholder?: string
 }) {
   return (
@@ -25,8 +26,12 @@ export function OrderAddressFields({ prefix, register, notesLabel, hideContactFi
           <div className="col-span-3 space-y-1.5"><Label>Office Phone</Label><Input placeholder="Office phone" {...register(`${prefix}.phone_office`)} /></div>
           <div className="col-span-1 space-y-1.5"><Label>Ext</Label><Input placeholder="Ext" {...register(`${prefix}.phone_ext`)} /></div>
           <div className="col-span-2 space-y-1.5"><Label>Cell</Label><Input placeholder="Cell phone" {...register(`${prefix}.phone_cell`)} /></div>
-          <div className="col-span-3 space-y-1.5"><Label>Email 1</Label><Input type="email" placeholder="email@company.com" {...register(`${prefix}.email`)} /></div>
-          <div className="col-span-3 space-y-1.5"><Label>Email 2</Label><Input type="email" placeholder="email@company.com" {...register(`${prefix}.email2`)} /></div>
+          {!hideEmailFields && (
+            <>
+              <div className="col-span-3 space-y-1.5"><Label>Email 1</Label><Input type="email" placeholder="email@company.com" {...register(`${prefix}.email`)} /></div>
+              <div className="col-span-3 space-y-1.5"><Label>Email 2</Label><Input type="email" placeholder="email@company.com" {...register(`${prefix}.email2`)} /></div>
+            </>
+          )}
         </>
       )}
       <div className="col-span-6 space-y-1.5"><Label>{notesLabel}</Label><Input placeholder={notesPlaceholder} {...register(`${prefix}.shipping_notes`)} /></div>
