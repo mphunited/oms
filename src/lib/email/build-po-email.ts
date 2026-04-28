@@ -79,7 +79,7 @@ export function buildPoEmail(
   const others = contacts.filter(c => c !== primary)
   const to: string[] = primary?.email ? [primary.email] : []
   const cc: string[] = [
-    ...others.map(c => c.email).filter((e): e is string => Boolean(e)),
+    ...others.map(c => c.email).filter((e): e is string => Boolean(e) && e.toLowerCase() !== 'orders@mphunited.com'),
     'orders@mphunited.com',
   ]
 

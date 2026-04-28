@@ -16,6 +16,11 @@ async function assertOk(res: Response, context: string): Promise<void> {
   }
 }
 
+function parseEmailAddress(e: string): { name?: string; address: string } {
+  const m = /^(.+?)\s*<([^>]+)>$/.exec(e.trim())
+  return m ? { name: m[1].trim(), address: m[2].trim() } : { address: e.trim() }
+}
+
 export async function createDraft(
   token: string,
   draft: { to: string[]; cc?: string[]; subject: string; bodyHtml: string; signature?: string | null }
@@ -27,8 +32,8 @@ export async function createDraft(
     body: JSON.stringify({
       subject: draft.subject,
       body: { contentType: "HTML", content: body },
-      toRecipients: draft.to.map((e) => ({ emailAddress: { address: e } })),
-      ccRecipients: (draft.cc ?? []).map((e) => ({ emailAddress: { address: e } })),
+      toRecipients: draft.to.map((e) => ({ emailAddress: parseEmailAddress(e) })),
+      ccRecipients: (draft.cc ?? []).map((e) => ({ emailAddress: parseEmailAddress(e) })),
     }),
   });
   await assertOk(res, "createDraft");

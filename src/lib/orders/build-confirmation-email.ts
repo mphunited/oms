@@ -73,7 +73,6 @@ function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustome
     const desc = escapeHtml(l.description ?? '—')
     const qty = escapeHtml(l.qty ?? '—')
     const price = l.sell ? `$${Number(l.sell).toFixed(2)}` : '—'
-    const shipDate = formatDate(l.ship_date)
     return `
       <tr>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${mphPo}</td>
@@ -81,7 +80,6 @@ function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustome
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${desc}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;text-align:right;">${qty}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;text-align:right;">${price}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${shipDate}</td>
       </tr>`
   }).join('')
 
@@ -94,7 +92,6 @@ function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustome
           <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Description</th>
           <th style="padding:10px 12px;text-align:right;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Qty</th>
           <th style="padding:10px 12px;text-align:right;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Price</th>
-          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Ship Date</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -125,7 +122,8 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
     .map(c => c.email?.trim())
     .filter((e): e is string => !!e)
 
-  const greetingContacts = toContacts.length > 0 ? toContacts : contacts
+  const primaryContacts = contacts.filter(c => c.is_primary === true)
+  const greetingContacts = primaryContacts.length > 0 ? primaryContacts : toContacts.length > 0 ? toContacts : contacts
   const greeting = firstNames(greetingContacts)
 
   const allMphPos = orders.flatMap(o =>
@@ -172,36 +170,47 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
   const greetingLine = greeting ? `Hello ${greeting},` : 'Hello,'
 
   const bodyHtml = `
-    <div style="max-width:700px;margin:0 auto;font-family:Arial,sans-serif;color:#1f2937;">
-      <p style="font-size:14px;margin:0 0 16px;">${escapeHtml(greetingLine)}</p>
-      <p style="font-size:14px;margin:0 0 16px;">Please see your order confirmation below.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td align="left" valign="top">
+          <table width="700" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;color:#1f2937;text-align:left;">
+            <tr>
+              <td style="padding:0;">
+                <p style="font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">${escapeHtml(greetingLine)}</p>
+                <p style="font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">Please see your order confirmation below.</p>
 
-      ${tablesHtml}
+                ${tablesHtml}
 
-      <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
-        <tr>
-          <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Ship Date:</td>
-          <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${shipDateDisplay}</td>
-        </tr>
-        <tr>
-          <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">ETA Delivery Date:</td>
-          <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${etaDisplay}</td>
-        </tr>
-        <tr>
-          <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Ship Via:</td>
-          <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${shipVia}</td>
-        </tr>
-        <tr>
-          <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Payment Terms:</td>
-          <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${paymentTerms}</td>
-        </tr>
-      </table>
+                <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+                  <tr>
+                    <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Ship Date:</td>
+                    <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${shipDateDisplay}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">ETA Delivery Date:</td>
+                    <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${etaDisplay}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Ship Via:</td>
+                    <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${shipVia}</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Payment Terms:</td>
+                    <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${paymentTerms}</td>
+                  </tr>
+                </table>
 
-      <p style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;margin:0 0 4px;color:#00205B;">Ship To:</p>
-      <p style="font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">${shipToLines}</p>
+                <p style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;margin:0 0 4px;color:#00205B;">Ship To:</p>
+                <p style="font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">${shipToLines}</p>
 
-      ${vendorBlock}
-    </div>`
+                ${vendorBlock}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`
 
-  return { subject, bodyHtml, to: toEmails, cc: ccEmails }
+  const filteredCc = ccEmails.filter(e => e.toLowerCase() !== 'orders@mphunited.com')
+  return { subject, bodyHtml, to: toEmails, cc: [...filteredCc, 'orders@mphunited.com'] }
 }
