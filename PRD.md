@@ -783,6 +783,11 @@ When Harding National is onboarded as a second tenant:
 | BOL product_weights naming | product_name must match bolDescription() output exactly. Use Gal not Gallon, no apostrophe-s. If weight shows --, check that the extracted description matches a row in product_weights. Check Vercel logs for "[BOL PDF] keys going into inArray:" to see the exact string being queried. |
 | BOL Contact Information & Delivery Notes | Renders below Ship To box. Pulls ship_to.shipping_notes only. Free-text block. Hidden when shipping_notes is empty or absent. Ship To box shows name and address only. |
 | BOL email address | bol@mphunited.com. Hardcoded in build-bol-pdf.tsx. Right-aligned, bold, separated from contact fields by a divider line inside the Contact Information & Delivery Notes section. |
+| Email Customer Confirmation button | On Edit Order page (top button bar) and Orders list page (bulk action toolbar). POST /api/orders/confirmation-email. CPU detection via freight_carrier contains "CPU". Draft only — never auto-sends. Multi-customer guard returns 400. |
+| Confirmation email recipient rules | customer_contacts [{name, email, is_primary}] on orders. is_primary=true → To, false → Cc. Greeting uses first names of To recipients. orders@mphunited.com not included. |
+| Confirmation email table columns | MPH PO, Customer PO, Description, Qty, Price, Ship Date, ETA Delivery Date. Ship Via and Payment Terms appear as labeled fields below the table. Ship To block below that. |
+| Sales Order # | Removed from all UI and PDFs April 28 2026. Schema column retained for historical data only. |
+| Ship To phone fields | Office Phone, Ext, Cell removed from Ship To section on Edit Order page. Retained in Bill To. |
 ---
 
 ## 22. What the Current Prototype Is NOT
