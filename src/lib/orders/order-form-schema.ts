@@ -82,7 +82,7 @@ export const orderFormSchema = z.object({
 
   customer_id:     z.string().min(1, 'Required'),
   vendor_id:       z.string().optional(),
-  customer_po:     z.string().min(1, 'Required'),
+  customer_po:     z.string().optional(),
   freight_carrier: z.string().optional(),
 
   ship_date:   z.string().optional(),

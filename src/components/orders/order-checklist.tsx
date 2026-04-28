@@ -40,7 +40,7 @@ export function OrderChecklist({
         <button
           type="button"
           onClick={add}
-          className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           Add Step

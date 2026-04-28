@@ -91,22 +91,22 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleDuplicate} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
+          <button onClick={handleDuplicate} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors">
             <Copy className="h-3.5 w-3.5" /> Duplicate
           </button>
-          <a href={`/api/orders/${orderId}/po-pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
+          <a href={`/api/orders/${orderId}/po-pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors">
             <FileText className="h-3.5 w-3.5" /> Download PO
           </a>
-          <button onClick={handleEmailPoClick} disabled={emailingPo} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
+          <button onClick={handleEmailPoClick} disabled={emailingPo} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors disabled:opacity-50">
             <Mail className="h-3.5 w-3.5" /> {emailingPo ? 'Creating…' : 'Email PO'}
           </button>
-          <a href={`/api/orders/${orderId}/bol-pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
+          <a href={`/api/orders/${orderId}/bol-pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors">
             <Truck className="h-3.5 w-3.5" /> Download BOL
           </a>
-          <button onClick={handleEmailBolClick} disabled={emailingBol} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
+          <button onClick={handleEmailBolClick} disabled={emailingBol} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors disabled:opacity-50">
             <Mail className="h-3.5 w-3.5" /> {emailingBol ? 'Creating…' : 'Email BOL'}
           </button>
-          <button onClick={handleEmailConfirmationClick} disabled={emailingConfirmation} className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
+          <button onClick={handleEmailConfirmationClick} disabled={emailingConfirmation} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors disabled:opacity-50">
             <Mail className="h-3.5 w-3.5" /> {emailingConfirmation ? 'Creating…' : 'Email Confirmation'}
           </button>
         </div>
@@ -131,7 +131,7 @@ export default function OrderDetailPage() {
         onIsBlindChange={setIsBlind}
       />
 
-      <Separator />
+      <Separator className="bg-[#B88A44]" />
 
       <section className="space-y-4">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Customer & Vendor</h2>
@@ -168,7 +168,7 @@ export default function OrderDetailPage() {
         </div>
       </section>
 
-      <Separator />
+      <Separator className="bg-[#B88A44]" />
 
       {/* Line Items */}
       <section>
@@ -185,7 +185,7 @@ export default function OrderDetailPage() {
         />
       </section>
 
-      <Separator />
+      <Separator className="bg-[#B88A44]" />
 
       {/* Freight & Logistics */}
       <EditOrderFreightSection
@@ -204,7 +204,7 @@ export default function OrderDetailPage() {
         onAppointmentNotesChange={setAppointmentNotes}
       />
 
-      <Separator />
+      <Separator className="bg-[#B88A44]" />
 
       {/* Addresses & Contacts */}
       <EditOrderAddresses
@@ -218,7 +218,7 @@ export default function OrderDetailPage() {
         onBillToContactsChange={setBillToContacts}
       />
 
-      <Separator />
+      <Separator className="bg-[#B88A44]" />
 
       {/* Notes */}
       <section className="space-y-4">
@@ -239,7 +239,7 @@ export default function OrderDetailPage() {
         </div>
       </section>
 
-      <Separator />
+      <Separator className="bg-[#B88A44]" />
 
       {/* Checklist */}
       <section className="space-y-3">
@@ -249,7 +249,7 @@ export default function OrderDetailPage() {
 
       {isAdmin && (
         <section className="space-y-3 pt-4">
-          <Separator />
+          <Separator className="bg-[#B88A44]" />
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
