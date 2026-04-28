@@ -5,7 +5,7 @@ import { matchOrderType } from '@/lib/orders/description-type-map'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { deriveInitials } from '@/lib/orders/commission-eligibility'
-import { sendPoEmail, sendBolEmail } from '@/lib/orders/email-draft-helpers'
+import { sendPoEmail, sendBolEmail, sendConfirmationEmail } from '@/lib/orders/email-draft-helpers'
 import type { AddressValue, CustomerContact } from '@/components/orders/edit-order-addresses'
 import type { OrderDetail } from '@/components/orders/edit-order-types'
 import type { ChecklistItem } from '@/components/orders/order-checklist'
@@ -245,37 +245,8 @@ export function useEditOrderForm(orderId: string) {
     )
   }
 
-  async function handleEmailConfirmationClick() {
-    setEmailingConfirmation(true)
-    try {
-      const res = await fetch('/api/orders/confirmation-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderIds: [orderId] }),
-      })
-      if (!res.ok) {
-        const data = await res.json() as { error?: string }
-        throw new Error(data.error ?? `${res.status}`)
-      }
-      const emailData = await res.json() as { subject: string; bodyHtml: string; to: string[]; cc: string[] }
-      const { getMailToken } = await import('@/lib/email/msal-client')
-      const { createDraft, openDraft } = await import('@/lib/email/graph-mail')
-      const { getUserSignature } = await import('@/lib/email/get-user-signature')
-      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
-      const draft = await createDraft(token, {
-        to: emailData.to,
-        cc: emailData.cc,
-        subject: emailData.subject,
-        bodyHtml: emailData.bodyHtml,
-        signature,
-      })
-      openDraft(draft.webLink)
-      toast.success('Draft email opened in Outlook')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create email draft')
-    } finally {
-      setEmailingConfirmation(false)
-    }
+  function handleEmailConfirmationClick() {
+    void sendConfirmationEmail([orderId], setEmailingConfirmation)
   }
 
   const csrInitials = deriveInitials(order?.csr_name)
