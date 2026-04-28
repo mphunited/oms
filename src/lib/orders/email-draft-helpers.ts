@@ -58,8 +58,8 @@ export async function sendPoEmail(
       const res = await fetch(`/api/vendors/${order.vendor_id}`)
       if (res.ok) vendor = await res.json() as VendorRow
     }
-    const poContacts = (vendor?.po_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
-    const primary = poContacts.find(c => c.is_primary) ?? poContacts[0] ?? null
+    const poContacts = (vendor?.po_contacts ?? []) as Array<{ name: string; email: string; role?: 'to' | 'cc'; is_primary?: boolean }>
+    const primary = poContacts.find(c => (c.role === 'to' || c.role === 'cc') ? c.role === 'to' : c.is_primary === true) ?? poContacts[0] ?? null
     const greetingName = primary ? (primary.name.split(' ')[0] ?? primary.name) : (vendor?.name ?? '')
     const vendorAddress = vendor?.address as { city?: string; state?: string } | null
     const orderData: OrderWithRelations = {
@@ -111,8 +111,8 @@ export async function sendBolEmail(
       const res = await fetch(`/api/vendors/${order.vendor_id}`)
       if (res.ok) vendor = await res.json() as VendorRow
     }
-    const contacts = (vendor?.bol_contacts ?? []) as Array<{ name: string; email: string; is_primary?: boolean }>
-    const primary = contacts.find(c => c.is_primary) ?? contacts[0] ?? null
+    const contacts = (vendor?.bol_contacts ?? []) as Array<{ name: string; email: string; role?: 'to' | 'cc'; is_primary?: boolean }>
+    const primary = contacts.find(c => (c.role === 'to' || c.role === 'cc') ? c.role === 'to' : c.is_primary === true) ?? contacts[0] ?? null
     const others = contacts.filter(c => c !== primary)
     const to = primary?.email ? [primary.email] : []
     const cc = others.map(c => c.email).filter((e): e is string => Boolean(e))

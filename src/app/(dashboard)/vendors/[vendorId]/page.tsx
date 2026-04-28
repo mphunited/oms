@@ -11,6 +11,22 @@ import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { VendorContactEditor, type VendorContact } from '@/components/vendors/vendor-contact-editor'
 
+function normalizeContacts(raw: unknown[]): VendorContact[] {
+  return raw.map((c: unknown) => {
+    const contact = c as Record<string, unknown>
+    const role: 'to' | 'cc' =
+      contact.role === 'to' || contact.role === 'cc'
+        ? contact.role
+        : contact.is_primary === true ? 'to' : 'cc'
+    return {
+      name: String(contact.name ?? ''),
+      email: String(contact.email ?? ''),
+      phone: String(contact.phone ?? ''),
+      role,
+    }
+  })
+}
+
 type AddressValue = {
   street: string
   city: string
@@ -91,6 +107,8 @@ export default function VendorDetailPage() {
   const [error, setError]     = useState<string | null>(null)
   const [saving, setSaving]   = useState(false)
   const [saved, setSaved]     = useState(false)
+  const [poContactError, setPoContactError]   = useState<string | undefined>()
+  const [bolContactError, setBolContactError] = useState<string | undefined>()
 
   const [name, setName]               = useState('')
   const [isActive, setIsActive]       = useState(true)
@@ -119,9 +137,9 @@ export default function VendorDetailPage() {
         setDockInfo(data.dock_info ?? '')
         setNotes(data.notes ?? '')
         setAddress(data.address)
-        setContacts((data.contacts as VendorContact[]) ?? [])
-        setPoContacts((data.po_contacts as VendorContact[]) ?? [])
-        setBolContacts((data.bol_contacts as VendorContact[]) ?? [])
+        setContacts(normalizeContacts((data.contacts as unknown[]) ?? []))
+        setPoContacts(normalizeContacts((data.po_contacts as unknown[]) ?? []))
+        setBolContacts(normalizeContacts((data.bol_contacts as unknown[]) ?? []))
         setChecklistTemplate((data.checklist_template as ChecklistItem[]) ?? [])
         setDefaultBottleCost(data.default_bottle_cost ?? '')
         setDefaultBottleQty(data.default_bottle_qty ?? '')
@@ -132,6 +150,18 @@ export default function VendorDetailPage() {
   }, [vendorId])
 
   async function handleSave() {
+    setPoContactError(undefined)
+    setBolContactError(undefined)
+    let hasError = false
+    if (poContacts.length > 0 && !poContacts.some(c => c.role === 'to')) {
+      setPoContactError('At least one PO contact must be set to "To".')
+      hasError = true
+    }
+    if (bolContacts.length > 0 && !bolContacts.some(c => c.role === 'to')) {
+      setBolContactError('At least one BOL contact must be set to "To".')
+      hasError = true
+    }
+    if (hasError) return
     setSaving(true)
     setSaved(false)
     try {
@@ -253,8 +283,8 @@ export default function VendorDetailPage() {
       <section className="space-y-6">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Contacts</h2>
         <VendorContactEditor title="General Contacts" contacts={contacts} onChange={setContacts} />
-        <VendorContactEditor title="PO Contacts" contacts={poContacts} onChange={setPoContacts} />
-        <VendorContactEditor title="BOL Contacts" contacts={bolContacts} onChange={setBolContacts} />
+        <VendorContactEditor title="PO Contacts" contacts={poContacts} onChange={setPoContacts} error={poContactError} />
+        <VendorContactEditor title="BOL Contacts" contacts={bolContacts} onChange={setBolContacts} error={bolContactError} />
       </section>
 
       <Separator />

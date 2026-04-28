@@ -4,7 +4,12 @@ import { formatDate } from '@/lib/utils/format-date'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type PoContact = { name: string; email: string; is_primary?: boolean }
+type PoContact = { name: string; email: string; role?: 'to' | 'cc'; is_primary?: boolean }
+
+function isToRecipient(c: PoContact): boolean {
+  if (c.role === 'to' || c.role === 'cc') return c.role === 'to'
+  return c.is_primary === true
+}
 
 type VendorForEmail = {
   name: string
@@ -75,7 +80,7 @@ export function buildPoEmail(
 
   // ── Recipients ───────────────────────────────────────────────────────────────
   const contacts: PoContact[] = (vendor?.po_contacts ?? []) as PoContact[]
-  const primary = contacts.find(c => c.is_primary) ?? contacts[0] ?? null
+  const primary = contacts.find(c => isToRecipient(c)) ?? contacts[0] ?? null
   const others = contacts.filter(c => c !== primary)
   const to: string[] = primary?.email ? [primary.email] : []
   const cc: string[] = [
