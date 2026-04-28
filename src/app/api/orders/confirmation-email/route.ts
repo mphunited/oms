@@ -36,6 +36,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Orders not found' }, { status: 404 })
   }
 
+  if (rows.length !== orderIds.length) {
+    return NextResponse.json({ error: 'One or more orders not found' }, { status: 404 })
+  }
+
   const uniqueCustomers = new Set(rows.map(r => r.order.customer_id))
   if (uniqueCustomers.size > 1) {
     return NextResponse.json(
