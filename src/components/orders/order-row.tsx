@@ -416,7 +416,21 @@ export function OrderTableRow({
 }: Props) {
   const [checklistOpen, setChecklistOpen] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
+  const [duplicating, setDuplicating] = useState(false)
   const router = useRouter()
+
+  async function handleDuplicate() {
+    setDuplicating(true)
+    try {
+      const res = await fetch(`/api/orders/duplicate/${order.id}`, { method: 'POST' })
+      if (!res.ok) throw new Error(`${res.status}`)
+      const data = await res.json() as { id: string }
+      router.push(`/orders/${data.id}`)
+    } catch {
+      alert('Failed to duplicate order')
+      setDuplicating(false)
+    }
+  }
 
   const showLoadLabels = order.split_loads.length > 1
   const statusColor = getBadgeColor(statusMeta, order.status)
@@ -597,10 +611,15 @@ export function OrderTableRow({
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
-            <Link href={`/orders/${order.id}?duplicate=1`}
-              className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
-              <Copy className="h-3.5 w-3.5" />
-            </Link>
+            <button
+              type="button"
+              onClick={handleDuplicate}
+              disabled={duplicating}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              aria-label="Duplicate order"
+            >
+              {duplicating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
           </div>
         </td>
       </tr>
