@@ -128,9 +128,10 @@ export function EditOrderAddresses({
       <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Addresses & Contacts</h2>
       <div className="grid grid-cols-2 gap-6">
         {/* Left column: Ship To + Customer Contacts */}
-        <div className="space-y-3">
+        <div>
           <AddressBlock label="Ship To" value={shipTo} onChange={onShipToChange} notesLabel="Ship To Notes" />
-          <div className="space-y-3 pt-2">
+          <hr className="border-border my-6" />
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Customer Contacts For Order Confirmations</Label>
               <Button type="button" variant="outline" size="sm"
