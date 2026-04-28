@@ -307,6 +307,10 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     It is only written when the PATCH body contains checklist as the sole field (sent by
     ChecklistPopup in order-row.tsx). Do not add checklist back to the edit page handleSave
     body in use-edit-order-form.ts.
+
+49. **customer_contacts JSONB shape on orders** | `[{name, email, is_primary: boolean}]` — `is_primary=true` → To recipient, `false` → Cc recipient for confirmation emails. Default first contact to `true`, rest to `false`. Treat missing `is_primary` as `true` for backward compatibility.
+
+    **Email Customer Confirmation** | `POST /api/orders/confirmation-email`. Accepts `orderIds[]`. Returns `{ subject, bodyHtml, to, cc }` — does NOT call Graph API server-side (MSAL is client-only). Client acquires MSAL token via `sendConfirmationEmail()` in `src/lib/orders/email-draft-helpers.ts`, calls `createDraft`/`openDraft` from `graph-mail.ts`. Guards against multi-customer selection (400). CPU detection: `freight_carrier` contains "CPU" (case-insensitive). HTML email styled with `#00205B` header. CPU orders include vendor address, dock_info, and TONU verbiage. Non-CPU orders include closing line only.
 ---
 
 ## TECHNOLOGY STACK
