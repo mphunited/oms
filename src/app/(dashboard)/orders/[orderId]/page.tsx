@@ -1,23 +1,21 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, FileText, Truck, Copy, Mail, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
 import { OrderChecklist } from '@/components/orders/order-checklist'
 import { OrderSplitLoadsEditor } from '@/components/orders/order-split-loads-editor'
 import { OrderCombobox } from '@/components/orders/order-combobox'
 import { EditOrderSidebar } from '@/components/orders/edit-order-sidebar'
 import { EditOrderAddresses } from '@/components/orders/edit-order-addresses'
+import { EditOrderFreightSection } from '@/components/orders/edit-order-freight-section'
+import { EditOrderIdentitySection } from '@/components/orders/edit-order-identity-section'
+import { EditOrderDeleteModal } from '@/components/orders/edit-order-delete-modal'
 import { useEditOrderForm } from '@/components/orders/use-edit-order-form'
 
 export default function OrderDetailPage() {
@@ -64,24 +62,7 @@ export default function OrderDetailPage() {
     csrInitials,
   } = useEditOrderForm(orderId)
 
-  const router = useRouter()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteInput, setDeleteInput] = useState('')
-  const [deleting, setDeleting] = useState(false)
-
-  async function handleDelete() {
-    if (deleteInput !== 'DELETE') return
-    setDeleting(true)
-    try {
-      const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error(`${res.status}`)
-      toast.success('Order deleted')
-      router.push('/orders')
-    } catch (err) {
-      toast.error('Delete failed: ' + (err instanceof Error ? err.message : String(err)))
-      setDeleting(false)
-    }
-  }
 
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
@@ -129,58 +110,23 @@ export default function OrderDetailPage() {
       </div>
 
       {/* Order Identity */}
-      <section className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Order Identity</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>Order Date</Label>
-            <Input type="date" value={orderDate} onChange={e => setOrderDate(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Status</Label>
-            <Select value={status} onValueChange={v => { if (v) setStatus(v) }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <Label>Salesperson</Label>
-            <OrderCombobox
-              options={salespersonOptions}
-              value={salespersonId}
-              onChange={v => setSalespersonId(v)}
-              placeholder="Choose salesperson"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>CSR</Label>
-            <Select value={csrId} onValueChange={v => setCsrId(v ?? '')}>
-              <SelectTrigger><SelectValue placeholder="Select CSR">
-                {csrId ? (csrUserOptions.find(u => u.id === csrId)?.name ?? csrId) : 'Select CSR'}
-              </SelectValue></SelectTrigger>
-              <SelectContent>{csrUserOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>CSR 2 (optional)</Label>
-            <Select value={csr2Id ?? 'none'} onValueChange={v => setCsr2Id(v === 'none' ? null : (v ?? null))}>
-              <SelectTrigger><SelectValue placeholder="None">
-                {csr2Id && csr2Id !== 'none' ? (csrUserOptions.find(u => u.id === csr2Id)?.name ?? csr2Id) : 'None'}
-              </SelectValue></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {csrUserOptions.map(u => <SelectItem key={u.id} value={u.id}>{u.name ?? u.id}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 pt-2">
-          <Switch id="is_blind" checked={isBlind} onCheckedChange={setIsBlind} />
-          <Label htmlFor="is_blind" className="cursor-pointer">Blind Shipment</Label>
-        </div>
-      </section>
+      <EditOrderIdentitySection
+        orderDate={orderDate}
+        status={status}
+        statusOptions={statusOptions}
+        salespersonId={salespersonId}
+        salespersonOptions={salespersonOptions}
+        csrId={csrId}
+        csr2Id={csr2Id}
+        csrUserOptions={csrUserOptions}
+        isBlind={isBlind}
+        onOrderDateChange={setOrderDate}
+        onStatusChange={setStatus}
+        onSalespersonChange={setSalespersonId}
+        onCsrChange={setCsrId}
+        onCsr2Change={setCsr2Id}
+        onIsBlindChange={setIsBlind}
+      />
 
       <Separator />
 
@@ -239,40 +185,21 @@ export default function OrderDetailPage() {
       <Separator />
 
       {/* Freight & Logistics */}
-      <section className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Freight & Logistics</h2>
-        <div className="grid grid-cols-4 gap-4">
-          <div className="space-y-1.5">
-            <Label>Freight Carrier</Label>
-            <Select value={freightCarrier} onValueChange={v => { if (v) setFreightCarrier(v) }}>
-              <SelectTrigger className="h-9"><SelectValue placeholder="Select carrier" /></SelectTrigger>
-              <SelectContent>{carriers.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>MPH Freight Cost</Label>
-            <Input type="number" min="0" step="0.01" value={freightCost} onChange={e => setFreightCost(e.target.value)} placeholder="0.00" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Customer Freight Cost</Label>
-            <Input type="number" min="0" step="0.01" value={freightToCustomer} onChange={e => setFreightToCustomer(e.target.value)} placeholder="0.00" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Additional Costs</Label>
-            <Input type="number" min="0" step="0.01" value={additionalCosts} onChange={e => setAdditionalCosts(e.target.value)} placeholder="0.00" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label>Appointment Time</Label>
-            <Input value={appointmentTime} onChange={e => setAppointmentTime(e.target.value)} placeholder="e.g. 9:00 AM – 10:00 AM" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Appointment Notes</Label>
-            <Input value={appointmentNotes} onChange={e => setAppointmentNotes(e.target.value)} placeholder="Optional" />
-          </div>
-        </div>
-      </section>
+      <EditOrderFreightSection
+        carriers={carriers}
+        freightCarrier={freightCarrier}
+        freightCost={freightCost}
+        freightToCustomer={freightToCustomer}
+        additionalCosts={additionalCosts}
+        appointmentTime={appointmentTime}
+        appointmentNotes={appointmentNotes}
+        onFreightCarrierChange={setFreightCarrier}
+        onFreightCostChange={setFreightCost}
+        onFreightToCustomerChange={setFreightToCustomer}
+        onAdditionalCostsChange={setAdditionalCosts}
+        onAppointmentTimeChange={setAppointmentTime}
+        onAppointmentNotesChange={setAppointmentNotes}
+      />
 
       <Separator />
 
@@ -355,40 +282,11 @@ export default function OrderDetailPage() {
       </div>
 
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg border bg-card p-6 shadow-lg space-y-4">
-            <h2 className="text-lg font-semibold">Delete Order</h2>
-            <p className="text-sm text-muted-foreground">
-              This will permanently delete order <span className="font-mono font-medium">{order.order_number}</span> and all its split loads. This cannot be undone.
-            </p>
-            <p className="text-sm">Type <span className="font-mono font-semibold">DELETE</span> to confirm:</p>
-            <input
-              type="text"
-              value={deleteInput}
-              onChange={e => setDeleteInput(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-destructive"
-              placeholder="Type DELETE"
-              autoFocus
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => { setShowDeleteModal(false); setDeleteInput('') }}
-                className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleteInput !== 'DELETE' || deleting}
-                className="rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
-              >
-                {deleting ? 'Deleting…' : 'Delete Order'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditOrderDeleteModal
+          orderId={orderId}
+          orderNumber={order.order_number}
+          onClose={() => setShowDeleteModal(false)}
+        />
       )}
     </div>
   )
