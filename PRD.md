@@ -179,10 +179,13 @@ nulls it when meta is absent from the request body.
 { "name": "Isabel Martinez", "email": "isabel@acme.com", "phone_office": "832-721-3423", "phone_cell": "832-555-0101", "role": "Purchasing", "is_primary": true, "notes": "" }
 ```
 
-**Vendor contacts** (simplified shape — po_contacts, bol_contacts, invoice_contacts, general contacts):
+**Vendor contacts** (po_contacts, bol_contacts, invoice_contacts, schedule_contacts — current shape):
 ```json
-{ "name": "Isabel Martinez", "email": "isabel@vendor.com", "phone": "832-721-3423", "is_primary": true }
+{ "name": "Isabel Martinez", "email": "isabel@vendor.com", "phone": "832-721-3423", "role": "to" }
 ```
+`role: "to"` = primary/To recipient; `role: "cc"` = CC recipient. Replaces the old `is_primary` boolean.
+Backward-compat: normalizeContacts() treats `is_primary=true` as `role="to"`, `false` as `role="cc"` for old records.
+Validation: save blocked if po_contacts or bol_contacts have entries but none with `role="to"`.
 
 ### Address JSONB shape (ship_to, bill_to on orders)
 ```json
@@ -536,16 +539,23 @@ A "Duplicate Order" button on the order detail page and orders table (per-row ac
 
 **What carries over:**
 Customer, vendor, ship-to, bill-to, customer_contacts, freight_carrier, terms,
-additional_costs, order_type, salesperson_id, csr_id, all split_loads (description,
-part_number, bottle_cost, bottle_qty, mph_freight_bottles — but NOT buy/sell prices
-since pricing may have changed), po_notes, freight_invoice_notes, shipper_notes,
+additional_costs, order_type, salesperson_id, csr_id, csr2_id, all split_loads (description,
+part_number, order_type per load, bottle_cost, bottle_qty, mph_freight_bottles — but NOT
+buy/sell prices since pricing may have changed), po_notes, freight_invoice_notes, shipper_notes,
 misc_notes, is_blind_shipment.
 
 **What resets:**
 order_date (today), order_number (new auto-generated), status (Pending), ship_date,
 wanted_date, appointment_time, appointment_notes, customer_po, flag (false),
-is_revised (false), invoice_payment_status (Not Invoiced), commission_status (auto),
-qb_invoice_number, checklist (fresh copy from vendor template), buy/sell prices on lines.
+is_revised (false), invoice_payment_status (Not Invoiced), commission_status (derived from
+copied split load order_types), qb_invoice_number, checklist (fresh copy from vendor template),
+buy/sell prices on lines. Per-load: order_number_override, customer_po, ship_date, wanted_date
+reset to null on each copied load.
+
+**Implementation (as of pre-launch review):**
+Duplicate button in order-row.tsx calls POST /api/orders/duplicate/[orderId] with a spinner
+(no longer a broken Link). Duplicate API route carries over csr2_id, copies per-load order_type,
+derives commission_status from copied order_types, and resets per-load overrides to null.
 
 This is the primary mechanism for repeat customer orders where most info stays the same.
 
@@ -556,7 +566,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | Route | Page | Phase |
 |-------|------|-------|
 | /auth/callback | OAuth callback handler | Microsoft Entra SSO sign in | 1 — Done |
-| /dashboard | Hero stats, status distribution, weekly chart | 1 |
+| /dashboard | Hero stats, four stat cards, pure CSS horizontal bar chart, recent 10 orders table | 1 — Done |
 | /orders | Ongoing orders table with full server-side filtering + pagination | 1 — Done |
 | /orders/new | New order form | 1 — Done |
 | /orders/[orderId] | Order detail, edit, PO, BOL, checklist, duplicate | 1 — Done |
@@ -568,10 +578,10 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | /vendors | Vendor list | 1 — Done |
 | /vendors/[vendorId] | Vendor detail, contacts, checklist template | 1 — Done |
 | /schedules | Weekly schedule generation | 1 — Done (Graph API email, auto-attached PDF) |
-| /commission | Commission report rebuilt around order_split_loads. One row per eligible split load. Filters: salesperson (commission_eligible only, auto-selects Renee), commission status (unpaid/paid/all), invoice payment status, ship date range, commission paid date range. Columns: Vendor, Customer, Sales/CSR, MPH PO (clickable link), Customer PO, Description, Ship Date, Qty, Invoice Status, Invoice Paid Date, Comm Paid Date. Footer: total selected qty + commission amount (qty × $3). Mark Commission Paid stamps split load rows. | 1 — Done |
-| /settings | Admin settings | 1 |
+| /commission | Commission report rebuilt around order_split_loads. One row per eligible split load. Filters: salesperson (commission_eligible only, auto-selects Renee), commission status (unpaid/paid/all), invoice payment status, ship date range, commission paid date range. Columns: Vendor, Customer, Sales/CSR, MPH PO (clickable link), Customer PO, Description, Ship Date, Qty, Invoice Status, Invoice Paid Date, Comm Paid Date. Footer: total selected qty + commission amount (qty × $3). Mark Commission Paid stamps split load rows. Server-side route guard: SALES users with can_view_commission=false are redirected to /dashboard. | 1 — Done |
+| /settings | Admin settings — Carriers, Order Statuses, Company Settings (name/address/contact/logo via PUT /api/company-settings), Order Number preview | 1 — Done |
 | /team | User management — ADMIN only, manages title/phone/email_signature/role/can_view_commission/permissions | 1 — Done |
-| /api/orders | GET orders with server-side filtering + pagination; POST new order | 1 — Done |
+| /api/orders | GET orders with server-side filtering + pagination; POST new order. SALES role: salesperson_id filter unconditionally enforced server-side before query param processing. | 1 — Done |
 | /api/orders/[orderId] | GET order detail | 1 — Done |
 | /api/orders/[orderId]/po-pdf | GET PO PDF | 1 — Done |
 | /api/orders/[orderId]/bol-pdf | GET BOL PDF | 1 — Done |
@@ -587,6 +597,8 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | /api/schedules/vendor-pdf | POST vendor/Frontline schedule PDF | 1 — Done |
 | /api/commission | GET commission data, role-filtered | 1 — Done |
 | /api/commission/mark-paid | POST bulk mark commission paid | 1 — Done |
+| /api/auth/signout | POST — calls supabase.auth.signOut() server-side, clears auth cookies, redirects to /login. Triggered by native form POST from user-nav.tsx sign-out button. | 1 — Done |
+| /api/company-settings | GET company_settings singleton row; PUT updates name/legal_name/address/email/phone/logo_url (ADMIN only; preserves existing logo_url if submitted value is blank) | 1 — Done |
 
 ---
 
@@ -617,8 +629,8 @@ This is the primary mechanism for repeat customer orders where most info stays t
 ### Reports and admin
 13. ✅ COMPLETE — Commission report page — rebuilt around order_split_loads. Per-load commission tracking, mark-paid workflow, salesperson filter (commission_eligible only), status/invoice/date filters.
 14. Invoicing queue
-15. ✅ COMPLETE (partial) — Admin/settings page — Carriers section (CARRIER type in dropdown_configs) and Order Statuses section (ORDER_STATUS type) built and working. Company settings / order number sequence management not yet built. Both sections include inline color swatches per item: clicking a swatch opens a native color picker; color changes update the swatch in real time; a "Save Colors" button appears only when colors are dirty and calls PUT /api/dropdown-configs with the updated meta. New items default to #6b7280; deleted items are removed from meta.
-16. Dashboard (hero stats, status distribution, weekly chart)
+15. ✅ COMPLETE — Admin/settings page — Carriers section (CARRIER type in dropdown_configs) and Order Statuses section (ORDER_STATUS type) built and working. Company Settings section (name, legal_name, address, email, phone, logo_url via PUT /api/company-settings; preserves logo_url if blank submitted). Order Number section (read-only preview using next-po-preview endpoint). Both dropdown sections include inline color swatches per item: clicking a swatch opens a native color picker; color changes update the swatch in real time; a "Save Colors" button appears only when colors are dirty and calls PUT /api/dropdown-configs with the updated meta. New items default to #6b7280; deleted items are removed from meta.
+16. ✅ COMPLETE — Dashboard (hero stat cards, pure CSS/HTML horizontal bar chart — Recharts not used, not installed — recent 10 orders table)
 17. Financial snapshot (admin only)
 
 ### Data migration
@@ -663,6 +675,9 @@ Direct public/anon access to all tables is blocked at the database level.
 Supabase security advisor: zero critical errors. One warning (leaked password protection)
 is not applicable — the app uses Microsoft SSO only, no email/password auth.
 
+**Pre-launch RLS verification (April 28, 2026):** All 11 tables confirmed RLS-enabled with
+"Service role full access" policy. No new unprotected tables found. Status: clean.
+
 ### Future Requirement: Multi-Tenant (MPH + Harding National)
 
 When Harding National is onboarded as a second tenant:
@@ -701,7 +716,7 @@ When Harding National is onboarded as a second tenant:
 
 | Issue | Decision |
 |-------|----------|
-| customer_contacts on orders | jsonb [{name, email}]. Extract emails directly from array for Outlook deeplinks. NOT free text. |
+| customer_contacts on orders | jsonb [{name, email, is_primary}]. is_primary=true → To, false → Cc for Graph API drafts. Extract emails directly from array. NOT free text. |
 | bill_to_contacts on orders | jsonb [{name, email}]. Addable list of billing contacts stored on orders table. Rendered in right column below Bill To Notes on both New Order and Edit Order forms. |
 | Customer/Bill To Contacts column positions | Customer Contacts for Order Confirmations renders in the left column below Ship To Notes, separated by a visible `<hr>` divider with spacing above it. Bill To Contacts renders in the right column below Bill To Notes. Both forms (New Order and Edit Order) use this two-column layout. |
 | Order number format | [Initials]-MPH[Number]. Uses Postgres sequence, not MAX()+1. |
@@ -720,7 +735,7 @@ When Harding National is onboarded as a second tenant:
 | Bottle fields (bottle_cost, bottle_qty, mph_freight_bottles) on order_split_loads autofill from vendor defaults when the CSR expands the bottle section on a line item. Fields remain editable for exceptions. Vendor record stores three new fields: default_bottle_cost, default_bottle_qty, default_mph_freight_bottles. These are set and updated on the vendor detail page. The margin calculation in the OMS is a secondary accountability check — primary pricing is handled in the quote tool. |
 | order_number_seq | Sequence set to 12127 per PRD. First test order was JS-MPH12129 due to two failed attempts during initial testing consuming 12127 and 12128. Sequence is working correctly. |
 | .env vs .env.local | drizzle.config.ts loads .env.local explicitly via dotenv. Never put real credentials in .env — it is a blank template only. Real values go in .env.local which is gitignored. |
-| Duplicate order button | Redirects to /orders/new without pre-fill. Full duplicate logic per Section 16 is a follow-up task. |
+| Duplicate order button | Fully implemented. order-row.tsx duplicate button calls POST /api/orders/duplicate/[orderId] with spinner. Carries over csr2_id, copies per-load order_type, derives commission_status, resets per-load overrides (order_number_override, customer_po, ship_date, wanted_date) to null. See Section 16 for full spec. |
 | LF/CRLF line endings | Git warns on src/app/api/orders/route.ts. Harmless on Windows. Do not run git config --global core.autocrlf to fix — leave as is. |
 | BOL ship-from | Always vendor → customer (standard). Reverse BOLs (customer → vendor) 
   are rare and handled by manually editing the downloaded PDF. No toggle built. |
@@ -749,10 +764,8 @@ When Harding National is onboarded as a second tenant:
   paid the invoice. Triggers commission payout eligibility. |
 | Date display format | MM/DD/YYYY throughout the UI. Database stores YYYY-MM-DD. 
   Display formatting only — never change the stored value. |
-| /register route | Public register route exists and should be removed — 
-  single-tenant app, user management is admin-only via /team. Phase 1 cleanup item. |
-| schedule_contacts on vendors | jsonb array [{name, email, is_primary}]. Must be 
-  seeded per vendor in Supabase Studio before schedule emails pre-populate correctly. |
+| /register route | Confirmed removed. No register route or references exist in the codebase. User management is admin-only via /team. |
+| schedule_contacts on vendors | jsonb array [{name, email, role: "to"\|"cc"}]. Must be seeded per vendor in Supabase Studio before schedule emails pre-populate correctly. |
 | frontline_schedule_contacts and admin_schedule_recipients | jsonb arrays on 
   company_settings. Must be seeded in Supabase Studio before use. |
 | Outlook draft signatures | Graph API cannot read Outlook signatures. Signatures stored in users.email_signature, managed on /team page, appended automatically to all drafts via createDraft() signature parameter. |
@@ -763,9 +776,10 @@ When Harding National is onboarded as a second tenant:
 | Vendor naming convention | All vendor names use format: "MPH United / [Vendor Name] -- [City, State]". 32 vendors seeded. |
 | dropdown_configs CARRIER type | freight_carrier field on orders is a Select populated from dropdown_configs where type='CARRIER'. Values are a jsonb string[] on the single CARRIER row. Seeded with 34 freight carriers in Supabase Studio. API: GET /api/dropdown-configs?type=CARRIER. |
 | Auth trigger on_auth_user_created | Fires AFTER INSERT on auth.users. Inserts into public.users with correct UUID, email, name (priority: full_name → given_name+family_name from custom_claims → email), role=CSR, is_active=true. Applied via Supabase MCP (pooler lacks auth schema DDL permission). Tracked in drizzle/0010_auth_user_sync_trigger.sql. Do NOT re-apply via drizzle-kit. |
+| proxy.ts (Next.js 16 middleware) | Confirmed working as of pre-launch review (April 28, 2026). Unauthenticated users correctly redirected to /login. Do not rename to middleware.ts — Next.js 16 uses proxy.ts with a `proxy` export. Creating middleware.ts will conflict and break the build. |
 | Entra SSO token name fields | Require profile scope in signInWithOAuth call. full_name at top level of raw_user_meta_data. given_name and family_name nested under raw_user_meta_data->'custom_claims'. |
 | inviteMember function | src/actions/team.ts uses supabase.auth.admin.inviteUserByEmail() (requires SUPABASE_SERVICE_ROLE_KEY). Direct insert into public.users removed — the on_auth_user_created trigger handles sync on first login. |
-| Sign-out bug in development | Sign-out does not work reliably on localhost. Use incognito window as workaround. Not yet fixed. |
+| Sign-out | Fixed. POST /api/auth/signout calls supabase.auth.signOut() server-side, clears all auth cookies, redirects to /login. user-nav.tsx sign-out button is a native `<form method="POST">` — works without JavaScript on both localhost and Vercel. |
 | Per-load commission_status | commission_status and commission_paid_date live on order_split_loads. Order-level commission_status is derived (any eligible load → Eligible; all paid → Commission Paid; else Not Eligible) and kept for backward compatibility and orders table filtering. |
 | Split load MPH PO | order_split_loads.order_number_override stores per-load PO. Auto-generated via nextval() on save only. Preview uses pg_sequence_last_value without consuming sequence (GET /api/orders/next-po-preview). |
 | Split load Ship Date / Wanted Date | Ship Date and Wanted Date are order-level fields. All split loads share the same dates — loads never ship on different dates. Dates are saved at the order level (from the order form's Ship Date / Wanted Date fields) and stamped onto every order_split_loads row at save time. On the New Order and Edit Order forms, Load 1 shows editable date inputs. Load 2+ show read-only displays of the order-level dates — no separate inputs. The order-split-loads-editor.add() function initializes new loads with orderShipDate / orderWantedDate from order-level props, not from Load 1's local state. |
