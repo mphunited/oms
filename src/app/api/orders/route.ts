@@ -19,6 +19,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const [dbUser] = await db
+      .select({ id: users.id, role: users.role })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1)
+
     const { searchParams } = new URL(req.url)
 
     const search          = searchParams.get('search')?.trim() || null
@@ -41,6 +47,11 @@ export async function GET(req: Request) {
     const csr2User = alias(users, 'csr2_user')
 
     const conditions = []
+
+    // SALES users may only see their own orders — not overridable by query params
+    if (dbUser?.role === 'SALES') {
+      conditions.push(eq(orders.salesperson_id, dbUser.id))
+    }
 
     if (search) {
       const descSubquery = db
