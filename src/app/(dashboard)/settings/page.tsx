@@ -5,6 +5,8 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { CarriersSection } from "@/components/settings/carriers-section";
 import { OrderStatusesSection } from "@/components/settings/order-statuses-section";
+import { CompanySettingsSection } from "@/components/settings/company-settings-section";
+import { OrderNumberSection } from "@/components/settings/order-number-section";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -27,6 +29,8 @@ export default async function SettingsPage() {
           Admin configuration for MPH United OMS.
         </p>
       </div>
+      <CompanySettingsSection />
+      <OrderNumberSection />
       <CarriersSection />
       <OrderStatusesSection />
     </div>
