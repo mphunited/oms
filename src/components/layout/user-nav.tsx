@@ -59,9 +59,9 @@ export function UserNav({ user }: { user: CurrentUser }) {
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem className="p-0">
               <form action="/api/auth/signout" method="POST" className="w-full">
-                <button type="submit" className="flex w-full items-center text-destructive">
+                <button type="submit" className="flex w-full items-center px-2 py-1.5 text-destructive">
                   <LogOut className="size-4 mr-2" />
                   Sign out
                 </button>
