@@ -8,7 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
 } from 'recharts'
 
 type StatusCount = { status: string; count: number }
@@ -46,11 +45,7 @@ export function StatusBarChart({ data }: { data: StatusCount[] }) {
           contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid #e5e7eb' }}
           formatter={(v: number) => [v, 'Orders']}
         />
-        <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={28}>
-          {data.map((_, i) => (
-            <Cell key={i} fill={i === 0 ? '#00205B' : '#B88A44'} opacity={1 - i * 0.06} />
-          ))}
-        </Bar>
+        <Bar dataKey="count" fill="#B88A44" radius={[0, 4, 4, 0]} maxBarSize={28} />
       </BarChart>
     </ResponsiveContainer>
   )
