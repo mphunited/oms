@@ -27,6 +27,77 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url)
 
+    // ── Invoicing queue view — separate, non-paginated path ──────────────────
+    if (searchParams.get('view') === 'invoicing') {
+      const today = new Date().toISOString().slice(0, 10)
+
+      const salesUser = alias(users, 'sales_user')
+      const csrAlias  = alias(users, 'csr_alias')
+      const csr2Alias = alias(users, 'csr2_alias')
+
+      const invoicingRows = await db
+        .select({
+          id:                         orders.id,
+          order_number:               orders.order_number,
+          order_date:                 orders.order_date,
+          status:                     orders.status,
+          customer_po:                orders.customer_po,
+          ship_date:                  orders.ship_date,
+          invoice_payment_status:     orders.invoice_payment_status,
+          qb_invoice_number:          orders.qb_invoice_number,
+          invoice_paid_date:          orders.invoice_paid_date,
+          customer_id:                orders.customer_id,
+          customer_name:              customers.name,
+          salesperson_id:             orders.salesperson_id,
+          salesperson_name:           salesUser.name,
+          salesperson_commission_eligible: salesUser.is_commission_eligible,
+          csr_name:                   csrAlias.name,
+          csr2_name:                  csr2Alias.name,
+        })
+        .from(orders)
+        .leftJoin(customers, eq(orders.customer_id, customers.id))
+        .leftJoin(salesUser, eq(orders.salesperson_id, salesUser.id))
+        .leftJoin(csrAlias,  eq(orders.csr_id,        csrAlias.id))
+        .leftJoin(csr2Alias, eq(orders.csr2_id,       csr2Alias.id))
+        .where(and(
+          sql`${orders.invoice_payment_status} != 'Paid'`,
+          or(
+            eq(orders.status, 'Ready To Invoice'),
+            sql`${orders.ship_date} < ${today}`,
+          ),
+          notInArray(orders.status, ['Cancelled', 'Canceled']),
+        ))
+        .orderBy(orders.ship_date)
+
+      const orderIds = invoicingRows.map(r => r.id)
+
+      const splitsByOrder: Record<string, { order_type: string | null; customer_po: string | null; order_number_override: string | null }[]> = {}
+      if (orderIds.length > 0) {
+        const splits = await db
+          .select({
+            order_id:              order_split_loads.order_id,
+            order_type:            order_split_loads.order_type,
+            customer_po:           order_split_loads.customer_po,
+            order_number_override: order_split_loads.order_number_override,
+          })
+          .from(order_split_loads)
+          .where(inArray(order_split_loads.order_id, orderIds))
+
+        for (const s of splits) {
+          if (!splitsByOrder[s.order_id]) splitsByOrder[s.order_id] = []
+          splitsByOrder[s.order_id].push(s)
+        }
+      }
+
+      const result = invoicingRows.map(row => ({
+        ...row,
+        split_loads: splitsByOrder[row.id] ?? [],
+      }))
+
+      return NextResponse.json(result)
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const search          = searchParams.get('search')?.trim() || null
     const lifecycle       = searchParams.get('lifecycle') || 'all'
     const flagParam       = searchParams.get('flag')
