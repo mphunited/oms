@@ -8,6 +8,7 @@ import {
   CalendarDays,
   DollarSign,
   UsersRound,
+  Receipt,
   Settings,
 } from "lucide-react";
 
@@ -58,6 +59,12 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/commission",
     icon: DollarSign,
     requiresCommission: true,
+  },
+  {
+    title: "Invoicing",
+    href: "/invoicing",
+    icon: Receipt,
+    roles: ["ADMIN", "ACCOUNTING"],
   },
   {
     title: "Settings",
