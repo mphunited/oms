@@ -1,15 +1,3 @@
-'use client'
-
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
-
 type StatusCount = { status: string; count: number }
 
 export function StatusBarChart({ data }: { data: StatusCount[] }) {
@@ -17,36 +5,26 @@ export function StatusBarChart({ data }: { data: StatusCount[] }) {
     return <p className="text-sm text-muted-foreground py-6 text-center">No active orders.</p>
   }
 
+  const max = Math.max(...data.map(d => d.count), 1)
+
   return (
-    <ResponsiveContainer width="100%" height={Math.max(200, data.length * 44)}>
-      <BarChart
-        data={data}
-        layout="vertical"
-        margin={{ top: 0, right: 24, bottom: 0, left: 8 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
-        <XAxis
-          type="number"
-          allowDecimals={false}
-          tick={{ fontSize: 12, fill: '#6b7280' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          type="category"
-          dataKey="status"
-          width={190}
-          tick={{ fontSize: 12, fill: '#374151' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <Tooltip
-          cursor={{ fill: '#f3f4f6' }}
-          contentStyle={{ borderRadius: 8, fontSize: 13, border: '1px solid #e5e7eb' }}
-          formatter={(v: number) => [v, 'Orders']}
-        />
-        <Bar dataKey="count" fill="#B88A44" radius={[0, 4, 4, 0]} maxBarSize={28} />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="space-y-2">
+      {data.map(({ status, count }) => (
+        <div key={status} className="flex items-center gap-3 text-sm">
+          <span className="w-48 shrink-0 text-right text-muted-foreground truncate" title={status}>
+            {status}
+          </span>
+          <div className="flex-1 h-5 bg-muted rounded-sm overflow-hidden">
+            <div
+              className="h-full rounded-sm transition-all"
+              style={{ width: `${(count / max) * 100}%`, backgroundColor: '#B88A44' }}
+            />
+          </div>
+          <span className="w-6 shrink-0 text-right font-medium tabular-nums text-foreground">
+            {count}
+          </span>
+        </div>
+      ))}
+    </div>
   )
 }
