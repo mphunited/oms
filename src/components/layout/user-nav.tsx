@@ -59,9 +59,13 @@ export function UserNav({ user }: { user: CurrentUser }) {
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              <LogOut className="size-4 mr-2" />
-              Sign out
+            <DropdownMenuItem asChild>
+              <form action="/api/auth/signout" method="POST" className="w-full">
+                <button type="submit" className="flex w-full items-center text-destructive">
+                  <LogOut className="size-4 mr-2" />
+                  Sign out
+                </button>
+              </form>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
