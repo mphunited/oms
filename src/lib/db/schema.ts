@@ -246,7 +246,7 @@ export const orders = pgTable(
     // active on form: phone_office, phone_ext, phone_cell (still rendered on Bill To section)
     // legacy: email, email2 — no longer rendered on order form; retained for historical data only
     customer_contacts: jsonb("customer_contacts"),
-    // [{ name, email }] — extract emails directly for Outlook deeplinks
+    // [{ name, email, is_primary }] — is_primary=true → To, false → Cc for Graph API drafts
     bill_to_contacts: jsonb("bill_to_contacts"),
     // [{ name, email }] — bill to contacts, mirrors customer_contacts shape
 
