@@ -117,6 +117,7 @@ export function CreditMemosTab() {
                     <div className="flex items-center gap-2">
                       {memo.status === 'Draft' && (
                         <button
+                          type="button"
                           onClick={() => openEdit(memo.id)}
                           className="text-muted-foreground hover:text-foreground transition-colors"
                           title="Edit"
@@ -137,6 +138,7 @@ export function CreditMemosTab() {
                       )}
                       {canDelete(memo) && (
                         <button
+                          type="button"
                           onClick={() => handleDelete(memo.id)}
                           disabled={deleting === memo.id}
                           className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-40"
