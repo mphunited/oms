@@ -138,7 +138,7 @@ customer_po (text, nullable — per-load Customer PO, overrides order-level when
 order_type (text, nullable — per-load Order Type, drives commission eligibility for this load),
 ship_date (date, nullable — per-load Ship Date),
 wanted_date (date, nullable — per-load Wanted Date),
-commission_status (text, default 'Not Eligible' — computed per load from order_type keyword matching),
+commission_status (text, default 'Not Eligible' — set per load based on order_type_configs.is_commission_eligible lookup),
 commission_paid_date (date, nullable — stamped when commission paid for this load),
 created_at, updated_at
 
@@ -241,9 +241,9 @@ Margin % = Profit ÷ (SUM(sell × qty) + freight_to_customer)
 Red threshold: Margin % < 8%
 ```
 
-Commission deduction applies to order types whose name contains any of these keywords:
-`New IBC`, `Bottle`, `Rebottle`, `Washout`, `Wash & Return`.
-Match is keyword-based (substring), not an exact type list.
+Commission eligibility is determined by looking up order_split_loads.order_type against
+order_type_configs.is_commission_eligible. Do NOT use keyword matching. Commission
+eligibility is only for one salesperson: Renee (not Mike, Larry, or Jennifer).
 
 ---
 
@@ -257,13 +257,24 @@ Ready To Ship | Ready To Invoice | Complete | Cancelled
 
 ## 9. Order Types
 
-135 Gal New IBC | 275 Gal Bottle | 275 Gal New IBC | 275 Gal Rebottle IBC |
-275 Gal Washout IBC | 275 Gal Wash & Return Program | 330 Gal Bottle |
-330 Gal New IBC | 330 Gal Rebottle IBC | 330 Gal Wash & Return Program |
-330 Gal Washout IBC | 55 Gal Drums | Other — Parts & Supplies
+135 Gal New IBC | 275 Gal New IBC | 330 Gal New IBC |
+135 Gal Rebottle IBC | 275 Gal Rebottle IBC | 330 Gal Rebottle IBC |
+275 Gal Bottle | 330 Gal Bottle |
+135 Gal Washout IBC | 275 Gal Washout IBC | 330 Gal Washout IBC |
+275 Gal IBC Wash & Return Program | 330 Gal IBC Wash & Return Program |
+275 Gal Empty Washable Bottle |
+55 Gal New OH Poly Drum | 55 Gal New TH Poly Drum |
+55 Gal Washout OH Poly Drum | 55 Gal Washout TH Poly Drum |
+55 Gal New OH Steel Drum | 55 Gal New TH Steel Drum |
+20 Liters (5 gal) Jerrycans/Carboys |
+Other — Parts & Supplies
 
-Commission eligibility is keyword-based: any type containing `New IBC`, `Bottle`,
-`Rebottle`, `Washout`, or `Wash & Return` is eligible. Commission eligibility is only for one salesperson and that is Renee (not Mike, Larry, or Jennifer).
+Canonical list managed in order_type_configs table. ORDER_TYPES constant in schema.ts
+is TypeScript type safety only. Runtime dropdown values fetched from GET /api/order-type-configs.
+
+Commission eligibility is determined by looking up order_split_loads.order_type against
+order_type_configs.is_commission_eligible. Do NOT use keyword matching. Commission
+eligibility is only for one salesperson: Renee (not Mike, Larry, or Jennifer).
 
 **order_type now lives per split load on order_split_loads** in addition to the order-level
 field on orders. Commission eligibility is evaluated per split load based on its own
@@ -579,7 +590,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | /vendors/[vendorId] | Vendor detail, contacts, checklist template | 1 — Done |
 | /schedules | Weekly schedule generation | 1 — Done (Graph API email, auto-attached PDF) |
 | /commission | Commission report rebuilt around order_split_loads. One row per eligible split load. Filters: salesperson (commission_eligible only, auto-selects Renee), commission status (unpaid/paid/all), invoice payment status, ship date range, commission paid date range. Columns: Vendor, Customer, Sales/CSR, MPH PO (clickable link), Customer PO, Description, Ship Date, Qty, Invoice Status, Invoice Paid Date, Comm Paid Date. Footer: total selected qty + commission amount (qty × $3). Mark Commission Paid stamps split load rows. Server-side route guard: SALES users with can_view_commission=false are redirected to /dashboard. | 1 — Done |
-| /settings | Admin settings — Carriers, Order Statuses, Company Settings (name/address/contact/logo via PUT /api/company-settings), Order Number preview | 1 — Done |
+| /settings | Admin settings — Carriers, Order Statuses, Company Settings (name/address/contact/logo via PUT /api/company-settings), Order Number preview, Order Types (order_type_configs CRUD with commission eligibility toggle), Product Weights (product_weights CRUD) | 1 — Done |
 | /team | User management — ADMIN only, manages title/phone/email_signature/role/can_view_commission/permissions | 1 — Done |
 | /api/orders | GET orders with server-side filtering + pagination; POST new order. SALES role: salesperson_id filter unconditionally enforced server-side before query param processing. | 1 — Done |
 | /api/orders/[orderId] | GET order detail | 1 — Done |
@@ -665,9 +676,9 @@ This is the primary mechanism for repeat customer orders where most info stays t
 using the Supabase service role key via Drizzle ORM. No direct client-side database access.
 The only client-side Supabase usage is authentication (`login/page.tsx` and `auth/callback/route.ts`).
 
-**Row Level Security:** Enabled on all 11 public tables:
+**Row Level Security:** Enabled on all 13 public tables:
 `users`, `orders`, `customers`, `vendors`, `bills_of_lading`, `recycling_orders`,
-`order_split_loads`, `audit_logs`, `company_settings`, `dropdown_configs`, `product_weights`.
+`order_split_loads`, `audit_logs`, `company_settings`, `dropdown_configs`, `product_weights`, `order_type_configs`.
 
 All tables have a "Service role full access" policy scoped to `service_role` only.
 Direct public/anon access to all tables is blocked at the database level.
@@ -748,8 +759,7 @@ When Harding National is onboarded as a second tenant:
   migrate to this approach. |
 | Sales order number | sales_order_number text column added to orders. Shown on PO as 
   "SALES ORDER #". Required by at least one vendor. |
-| Product weights | product_weights table seeded with 17 canonical BOL product names 
-  and weights. Editable via future admin UI. |
+| Product weights | product_weights table seeded with canonical BOL product names (count reflects current order type list — managed via /settings Product Weights section) |
 | BOL DB record | No bills_of_lading record created on BOL generation. Generated on 
   demand only, same pattern as PO. bills_of_lading table remains in schema for 
   future use. |
