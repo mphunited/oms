@@ -58,7 +58,7 @@ export async function GET(
     const creditLabel = memo.credit_number ? `-${memo.credit_number}` : ''
     const filename = `credit-memo${creditLabel}.pdf`
 
-    return new NextResponse(buf, {
+    return new Response(new Uint8Array(buf), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="${filename}"`,
