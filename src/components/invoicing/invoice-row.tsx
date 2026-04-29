@@ -5,6 +5,11 @@ import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils/format-date'
 import { STATUS_OPTIONS } from './invoice-filters'
 
+function firstName(full: string | null | undefined): string {
+  if (!full) return '—'
+  return full.trim().split(' ')[0]
+}
+
 export type InvoiceQueueRow = {
   id: string
   order_number: string
@@ -97,9 +102,11 @@ export function InvoiceRow({ row, onOpenDrawer, onSaved }: Props) {
   const displayCustPo = firstLoad?.customer_po || row.customer_po
   const orderType = firstLoad?.order_type ?? '—'
 
-  const spParts = [row.salesperson_name, row.csr_name]
-  if (row.csr2_name) spParts.push(row.csr2_name)
-  const spCsr = spParts.filter(Boolean).join(' / ')
+  const spCsr = `${firstName(row.salesperson_name)} / ${
+    row.csr2_name
+      ? `${firstName(row.csr_name)} / ${firstName(row.csr2_name)}`
+      : firstName(row.csr_name)
+  }`
 
   return (
     <>
@@ -133,7 +140,7 @@ export function InvoiceRow({ row, onOpenDrawer, onSaved }: Props) {
             )}
           </div>
         </td>
-        <td className="px-3 py-2 text-sm text-muted-foreground">{spCsr || '—'}</td>
+        <td className="px-3 py-2 text-sm text-muted-foreground">{spCsr}</td>
         <td className="px-3 py-2">
           <select
             value={status}
