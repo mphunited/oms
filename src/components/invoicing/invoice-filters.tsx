@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
+export const STATUS_OPTIONS = ['Not Invoiced', 'Invoiced', 'Paid'] as const
+
 export type InvoiceFilters = {
   customerId: string
   invoiceStatus: string[]
@@ -29,13 +31,8 @@ export function InvoiceFilters({ filters, onChange }: Props) {
   useEffect(() => {
     fetch('/api/customers?limit=500')
       .then(r => r.json())
-      .then((data: unknown) => {
-        // Handle both { customers: [] } and plain array responses
-        const arr = Array.isArray(data) ? data
-          : Array.isArray((data as { customers?: unknown[] }).customers) ? (data as { customers: CustomerOption[] }).customers
-          : Array.isArray((data as { rows?: unknown[] }).rows) ? (data as { rows: CustomerOption[] }).rows
-          : []
-        setCustomers(arr as CustomerOption[])
+      .then((data: { customers?: CustomerOption[] }) => {
+        setCustomers(data.customers ?? [])
       })
       .catch(() => setCustomers([]))
   }, [])
@@ -46,8 +43,6 @@ export function InvoiceFilters({ filters, onChange }: Props) {
       : [...filters.invoiceStatus, val]
     onChange({ invoiceStatus: next })
   }
-
-  const STATUS_OPTIONS = ['Not Invoiced', 'Invoiced', 'Paid'] as const
 
   return (
     <div className="flex flex-wrap items-end gap-3 rounded-md border bg-muted/30 px-4 py-3">
