@@ -595,3 +595,48 @@ export const audit_logs = pgTable(
 
 export type AuditLog = typeof audit_logs.$inferSelect;
 export type NewAuditLog = typeof audit_logs.$inferInsert;
+
+// ─── credit_memos ─────────────────────────────────────────────────────────────
+
+export const credit_memos = pgTable("credit_memos", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  credit_number: text("credit_number"),
+  credit_date: date("credit_date").notNull(),
+  customer_id: uuid("customer_id")
+    .notNull()
+    .references(() => customers.id, { onDelete: "restrict" }),
+  notes: text("notes"),
+  status: text("status").notNull().default("Draft"),
+  // 'Draft' | 'Final'
+  created_by: uuid("created_by").references(() => users.id),
+  created_at: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updated_at: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type CreditMemo = typeof credit_memos.$inferSelect;
+export type NewCreditMemo = typeof credit_memos.$inferInsert;
+
+// ─── credit_memo_line_items ───────────────────────────────────────────────────
+
+export const credit_memo_line_items = pgTable("credit_memo_line_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  credit_memo_id: uuid("credit_memo_id")
+    .notNull()
+    .references(() => credit_memos.id, { onDelete: "cascade" }),
+  activity_type: text("activity_type"),
+  description: text("description"),
+  qty: numeric("qty", { precision: 10, scale: 2 }),
+  rate: numeric("rate", { precision: 10, scale: 2 }),
+  amount: numeric("amount", { precision: 10, scale: 2 }),
+  sort_order: integer("sort_order").notNull().default(0),
+  created_at: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type CreditMemoLineItem = typeof credit_memo_line_items.$inferSelect;
+export type NewCreditMemoLineItem = typeof credit_memo_line_items.$inferInsert;
