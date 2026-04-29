@@ -9,6 +9,7 @@ import {
   numeric,
   jsonb,
   index,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", [
@@ -69,11 +70,11 @@ export const ORDER_TYPES = [
   "275 Gal New IBC",
   "275 Gal Rebottle IBC",
   "275 Gal Washout IBC",
-  "275 Gal Wash & Return Program",
+  "275 Gal IBC Wash & Return Program",
   "330 Gal Bottle",
   "330 Gal New IBC",
   "330 Gal Rebottle IBC",
-  "330 Gal Wash & Return Program",
+  "330 Gal IBC Wash & Return Program",
   "330 Gal Washout IBC",
   "55 Gal Drums",
   "Other — Parts & Supplies",
@@ -318,6 +319,22 @@ export const product_weights = pgTable("product_weights", {
 
 export type ProductWeight = typeof product_weights.$inferSelect;
 export type NewProductWeight = typeof product_weights.$inferInsert;
+
+// ─── order_type_configs ───────────────────────────────────────────────────────
+// Configurable list of order types with commission eligibility settings.
+// Runtime source of truth for order type dropdowns — ORDER_TYPES constant is
+// TypeScript type-safety only.
+
+export const order_type_configs = pgTable("order_type_configs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  order_type: text("order_type").notNull().unique(),
+  is_commission_eligible: boolean("is_commission_eligible").notNull().default(false),
+  sort_order: integer("sort_order").notNull().default(0),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type OrderTypeConfig = typeof order_type_configs.$inferSelect;
+export type NewOrderTypeConfig = typeof order_type_configs.$inferInsert;
 
 // ─── order_split_loads ────────────────────────────────────────────────────────
 // Every order has at least one split load row. Use multiple rows for split-load

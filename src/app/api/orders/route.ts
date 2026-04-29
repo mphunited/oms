@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { orders, order_split_loads, users, vendors, customers, type NewOrderSplitLoad } from '@/lib/db/schema'
+import { orders, order_split_loads, users, vendors, customers, order_type_configs, type NewOrderSplitLoad } from '@/lib/db/schema'
 import { eq, sql, desc, and, or, ilike, inArray, notInArray, gte, lte, count } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { createClient } from '@/lib/supabase/server'
@@ -244,6 +244,9 @@ export async function POST(req: Request) {
       }
     }
 
+    const allConfigs = await db.select({ order_type: order_type_configs.order_type, is_commission_eligible: order_type_configs.is_commission_eligible }).from(order_type_configs)
+    const configMap = new Map(allConfigs.map(c => [c.order_type, c.is_commission_eligible]))
+
     const result = await db.transaction(async (tx) => {
       // Insert order without commission_status first
       const [newOrder] = await tx
@@ -257,7 +260,7 @@ export async function POST(req: Request) {
         const loadValues: Record<string, unknown>[] = split_loads.map((load: Record<string, unknown>) => ({
           ...load,
           order_id: newOrder.id,
-          commission_status: deriveLoadCommissionStatus(load.order_type as string),
+          commission_status: deriveLoadCommissionStatus(load.order_type as string, configMap),
         }))
 
         // For loads with separate_po = true, consume nextval and set order_number_override

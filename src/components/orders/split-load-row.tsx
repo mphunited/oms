@@ -1,14 +1,29 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Trash2, Hash } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ORDER_TYPES } from '@/lib/db/schema'
 import type { SplitLoadValue } from '@/lib/orders/order-form-schema'
 import { BOTTLE_KEYWORDS } from '@/lib/orders/commission-eligibility'
 import { matchOrderType } from '@/lib/orders/description-type-map'
+
+// Module-level cache to avoid re-fetching per SplitLoadRow instance
+let _orderTypesCache: string[] | null = null
+async function fetchOrderTypes(): Promise<string[]> {
+  if (_orderTypesCache) return _orderTypesCache
+  try {
+    const res = await fetch('/api/order-type-configs')
+    if (!res.ok) throw new Error('Failed to fetch')
+    const data: { order_type: string }[] = await res.json()
+    _orderTypesCache = data.map(d => d.order_type)
+  } catch {
+    _orderTypesCache = []
+  }
+  return _orderTypesCache!
+}
 
 const TERMS_VALUES = ['PPD', 'PPA', 'FOB'] as const
 
@@ -33,6 +48,12 @@ export function SplitLoadRow({
   terms, onTermsChange, onChange, onRemove, onAssignPo, assigningPo,
   isManualMode = false,
 }: SplitLoadRowProps) {
+  const [orderTypes, setOrderTypes] = useState<string[]>([])
+
+  useEffect(() => {
+    fetchOrderTypes().then(setOrderTypes)
+  }, [])
+
   const set = (field: keyof SplitLoadValue, value: string | boolean) =>
     onChange({ ...load, [field]: value })
 
@@ -152,7 +173,7 @@ export function SplitLoadRow({
           <Select value={load.order_type} onValueChange={v => { if (v !== null) set('order_type', v) }}>
             <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
-              {ORDER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              {orderTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
