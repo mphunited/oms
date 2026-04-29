@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { formatDate } from '@/lib/utils/format-date'
+import { STATUS_OPTIONS } from './invoice-filters'
 
 export type InvoiceQueueRow = {
   id: string
@@ -27,8 +28,6 @@ type Props = {
   onOpenDrawer: (orderId: string) => void
   onSaved: () => void
 }
-
-const STATUS_OPTIONS = ['Not Invoiced', 'Invoiced', 'Paid'] as const
 
 export function InvoiceRow({ row, onOpenDrawer, onSaved }: Props) {
   const hasRSuffix = !!row.salesperson_commission_eligible
@@ -126,6 +125,7 @@ export function InvoiceRow({ row, onOpenDrawer, onSaved }: Props) {
               value={invoiceNum}
               onChange={e => setInvoiceNum(e.target.value)}
               placeholder="—"
+              aria-label="Invoice number"
               className="h-7 w-24 rounded border border-border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#00205B]"
             />
             {hasRSuffix && (
