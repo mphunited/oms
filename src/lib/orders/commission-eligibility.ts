@@ -4,8 +4,14 @@ export const COMMISSION_KEYWORDS = ['New IBC', 'Bottle', 'Rebottle', 'Washout', 
 // Keywords that show bottle cost fields (New IBC does NOT use bottle fields)
 export const BOTTLE_KEYWORDS = ['Bottle', 'Rebottle', 'Washout', 'Wash & Return'] as const
 
-export function deriveLoadCommissionStatus(orderType: string | null | undefined): string {
+export function deriveLoadCommissionStatus(
+  orderType: string | null | undefined,
+  configMap?: Map<string, boolean>
+): string {
   if (!orderType) return 'Not Eligible'
+  if (configMap) {
+    return configMap.get(orderType) ? 'Eligible' : 'Not Eligible'
+  }
   return COMMISSION_KEYWORDS.some(kw => orderType.includes(kw)) ? 'Eligible' : 'Not Eligible'
 }
 

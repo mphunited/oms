@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { orders, order_split_loads, customers, vendors, users, type NewOrderSplitLoad } from '@/lib/db/schema'
+import { orders, order_split_loads, customers, vendors, users, order_type_configs, type NewOrderSplitLoad } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { eq, sql } from 'drizzle-orm'
 import { deriveLoadCommissionStatus, deriveOrderCommissionStatus, deriveInitials } from '@/lib/orders/commission-eligibility'
@@ -86,6 +86,9 @@ export async function PATCH(
     orderFields.updated_at = new Date()
     delete orderFields.commission_status
 
+    const allConfigs = await db.select({ order_type: order_type_configs.order_type, is_commission_eligible: order_type_configs.is_commission_eligible }).from(order_type_configs)
+    const configMap = new Map(allConfigs.map(c => [c.order_type, c.is_commission_eligible]))
+
     const NUMERIC_FIELDS = ['qty', 'buy', 'sell', 'bottle_cost', 'bottle_qty', 'mph_freight_bottles']
 
     await db.transaction(async (tx) => {
@@ -107,7 +110,7 @@ export async function PATCH(
             for (const field of NUMERIC_FIELDS) {
               if (clean[field] === '' || clean[field] === undefined) clean[field] = null
             }
-            clean.commission_status = deriveLoadCommissionStatus(clean.order_type as string)
+            clean.commission_status = deriveLoadCommissionStatus(clean.order_type as string, configMap)
             return clean
           })
 

@@ -1,14 +1,28 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useWatch } from 'react-hook-form'
 import type { Control } from 'react-hook-form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import type { OrderFormValues, SplitLoadValue } from '@/lib/orders/order-form-schema'
-import { COMMISSION_KEYWORDS } from '@/lib/orders/commission-eligibility'
 
-function computeMargin(loads: SplitLoadValue[], values: Partial<OrderFormValues>) {
+let _configCache: Map<string, boolean> | null = null
+async function fetchConfigMap(): Promise<Map<string, boolean>> {
+  if (_configCache) return _configCache
+  try {
+    const res = await fetch('/api/order-type-configs')
+    if (!res.ok) throw new Error('Failed to fetch')
+    const data: { order_type: string; is_commission_eligible: boolean }[] = await res.json()
+    _configCache = new Map(data.map(d => [d.order_type, d.is_commission_eligible]))
+  } catch {
+    _configCache = new Map()
+  }
+  return _configCache!
+}
+
+function computeMargin(loads: SplitLoadValue[], values: Partial<OrderFormValues>, configMap: Map<string, boolean>) {
   const totalRevenue = loads.reduce((sum, l) => sum + (Number(l.sell) || 0) * (Number(l.qty) || 0), 0)
   const totalCOGS = loads.reduce((sum, l) => sum + (Number(l.buy) || 0) * (Number(l.qty) || 0), 0)
   const totalBottleCost = loads.reduce((sum, l) => {
@@ -20,7 +34,7 @@ function computeMargin(loads: SplitLoadValue[], values: Partial<OrderFormValues>
   const freightCost = Number(values.freight_cost) || 0
   const additionalCosts = Number(values.additional_costs) || 0
   const commissionQty = loads.reduce((sum, l) => {
-    const eligible = COMMISSION_KEYWORDS.some(kw => (l.order_type || '').includes(kw))
+    const eligible = configMap.get(l.order_type || '') ?? false
     return sum + (eligible ? (Number(l.qty) || 0) : 0)
   }, 0)
   const commissionDeduction = commissionQty * 3
@@ -34,8 +48,14 @@ function computeMargin(loads: SplitLoadValue[], values: Partial<OrderFormValues>
 }
 
 export function OrderMarginCard({ control, loads }: { control: Control<OrderFormValues>; loads: SplitLoadValue[] }) {
+  const [configMap, setConfigMap] = useState<Map<string, boolean>>(new Map())
+
+  useEffect(() => {
+    fetchConfigMap().then(setConfigMap)
+  }, [])
+
   const values = useWatch({ control })
-  const m = computeMargin(loads, values)
+  const m = computeMargin(loads, values, configMap)
   const isLow = m.marginPct !== null && m.marginPct < 8
   return (
     <Card className={cn('sticky top-4 transition-colors', isLow && 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950')}>
