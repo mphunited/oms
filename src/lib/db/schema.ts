@@ -66,17 +66,26 @@ export type RecyclingStatus = (typeof RECYCLING_STATUSES)[number];
 
 export const ORDER_TYPES = [
   "135 Gal New IBC",
-  "275 Gal Bottle",
   "275 Gal New IBC",
-  "275 Gal Rebottle IBC",
-  "275 Gal Washout IBC",
-  "275 Gal IBC Wash & Return Program",
-  "330 Gal Bottle",
   "330 Gal New IBC",
+  "135 Gal Rebottle IBC",
+  "275 Gal Rebottle IBC",
   "330 Gal Rebottle IBC",
-  "330 Gal IBC Wash & Return Program",
+  "275 Gal Bottle",
+  "330 Gal Bottle",
+  "135 Gal Washout IBC",
+  "275 Gal Washout IBC",
   "330 Gal Washout IBC",
-  "55 Gal Drums",
+  "275 Gal IBC Wash & Return Program",
+  "330 Gal IBC Wash & Return Program",
+  "275 Gal Empty Washable Bottle",
+  "55 Gal New OH Poly Drum",
+  "55 Gal New TH Poly Drum",
+  "55 Gal Washout OH Poly Drum",
+  "55 Gal Washout TH Poly Drum",
+  "55 Gal New OH Steel Drum",
+  "55 Gal New TH Steel Drum",
+  "20 Liters (5 gal) Jerrycans/Carboys",
   "Other — Parts & Supplies",
 ] as const;
 export type OrderType = (typeof ORDER_TYPES)[number];
@@ -207,7 +216,7 @@ export const orders = pgTable(
     order_number: text("order_number").notNull().unique(),
     order_date: date("order_date"),
     order_type: text("order_type"),
-    // See ORDER_TYPES constant above. Commission eligibility is keyword-based.
+    // See ORDER_TYPES constant above. Commission eligibility determined by order_type_configs.is_commission_eligible — NOT keyword-based.
 
     customer_id: uuid("customer_id")
       .notNull()
@@ -331,6 +340,7 @@ export const order_type_configs = pgTable("order_type_configs", {
   is_commission_eligible: boolean("is_commission_eligible").notNull().default(false),
   sort_order: integer("sort_order").notNull().default(0),
   created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export type OrderTypeConfig = typeof order_type_configs.$inferSelect;
@@ -366,7 +376,7 @@ export const order_split_loads = pgTable(
     customer_po: text("customer_po"),
     // Per-load Customer PO — overrides order-level customer_po when set
     order_type: text("order_type"),
-    // Per-load Order Type — drives commission eligibility per load (see ORDER_TYPES)
+    // Per-load Order Type — commission eligibility determined by order_type_configs.is_commission_eligible lookup, not keyword matching
     ship_date: date("ship_date"),
     wanted_date: date("wanted_date"),
     commission_status: text("commission_status").default("Not Eligible"),

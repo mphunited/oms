@@ -49,7 +49,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 1. **NO company_id columns anywhere.** No companies table. No company_members table.
    If you are about to add company_id to anything, stop and re-read PRD.md.
 
-2. **RLS is enabled on all 11 public tables** with service_role-only policies (April 22, 2026).
+2. **RLS is enabled on all 13 public tables** with service_role-only policies (April 22, 2026).
    Direct public/anon access is blocked at the database level. All business data queries
    run server-side through Drizzle via DATABASE_URL (postgres superuser — bypasses RLS).
    Do not add anon or authenticated-role policies. See the ## Security section.
@@ -226,9 +226,10 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Applied via Supabase MCP (not drizzle-kit — pooler lacks auth schema DDL permission).
     Do NOT attempt to re-apply via npm run db:migrate — use Supabase MCP apply_migration.
 
-35. **Commission eligibility is determined per split load** based on
-    order_split_loads.order_type using keyword matching (New IBC, Bottle, Rebottle,
-    Washout, Wash & Return). commission_status and commission_paid_date live on
+35. **Commission eligibility is determined per split load** by looking up
+    order_split_loads.order_type against the order_type_configs table
+    (is_commission_eligible column). Do NOT use keyword matching — it has been
+    replaced by a DB lookup. commission_status and commission_paid_date live on
     order_split_loads. The order-level commission_status on orders is derived from
     split load statuses and kept for backward compatibility only.
 
@@ -321,6 +322,23 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     **Sales Order # field** | Removed from PO PDF, Edit Order form, New Order form, and use-new-order-form.ts vendor handler as of April 28, 2026. Column retained in schema for historical data only. Do not re-add to any UI or PDF.
 
     **Ship To section on Edit Order** | Phone fields (Office, Ext, Cell) removed from Ship To only. Bill To retains all phone fields. These are rendered separately — not a shared component.
+
+50. **order_type_configs is the runtime source of truth for order types and commission eligibility.**
+    - Do NOT use keyword matching to determine commission eligibility anywhere in the codebase.
+    - Always join or query order_type_configs to get is_commission_eligible for a given order_type.
+    - The ORDER_TYPES constant in schema.ts exists for TypeScript type safety only — it must be
+      kept in sync with order_type_configs rows manually when types are added/removed.
+    - ADMIN can add, remove, and toggle commission eligibility on types via /settings (Order Types section).
+    - API route: GET /api/order-type-configs (auth required, all roles). POST adds entry, PUT replaces full list, DELETE /api/order-type-configs/[id] removes one (ADMIN only for writes).
+    - Component: src/components/settings/order-types-section.tsx
+
+51. **product_weights table is managed via /settings (Product Weights section).**
+    - ADMIN only. CRUD on product_name / weight_lbs rows.
+    - product_name values must exactly match the text returned by bolDescription() from
+      order descriptions (text before first "|"). See rule 19.
+    - API route: GET /api/product-weights (all roles). POST, PUT /api/product-weights/[id],
+      DELETE /api/product-weights/[id] are ADMIN only.
+    - Component: src/components/settings/product-weights-section.tsx
 ---
 
 ## TECHNOLOGY STACK
@@ -417,7 +435,8 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-us-west-2.pooler.supab
 ## SCHEMA OVERVIEW
 
 Tables: users, customers, vendors, orders, order_split_loads, recycling_orders,
-        bills_of_lading, company_settings, dropdown_configs, audit_logs
+        bills_of_lading, company_settings, dropdown_configs, product_weights,
+        order_type_configs, audit_logs
 
 Schema file: src/lib/db/schema.ts — this is the source of truth. Always read it before
 writing queries or API routes. Full field-level detail is in PRD.md Section 5.
@@ -448,8 +467,8 @@ additional_costs                             [order level]
 Profit % = Profit ÷ ( SUM(sell × qty) + freight_to_customer )
 Red threshold: Profit % < 8%
 
-Commission-eligible order types: Bottle, Rebottle IBC, Washout IBC
-NOT eligible: Drums, Parts
+Commission eligibility: determined per order_type via order_type_configs.is_commission_eligible.
+Do NOT hardcode eligible/ineligible type lists anywhere — always query order_type_configs.
 
 ---
 
@@ -470,7 +489,24 @@ Ready To Invoice | Complete | Canceled
 
 ## ORDER TYPE VALUES
 
-Bottle | Rebottle IBC | Washout IBC | Drums | Parts
+Canonical list lives in order_type_configs table and the ORDER_TYPES constant in schema.ts.
+Both must be kept in sync. order_type_configs is the runtime source of truth for commission
+eligibility. ORDER_TYPES constant is used for TypeScript type safety only.
+
+Commission-ELIGIBLE types (is_commission_eligible = true):
+  135 Gal New IBC | 275 Gal New IBC | 330 Gal New IBC
+  135 Gal Rebottle IBC | 275 Gal Rebottle IBC | 330 Gal Rebottle IBC
+  275 Gal Bottle | 330 Gal Bottle
+  135 Gal Washout IBC | 275 Gal Washout IBC | 330 Gal Washout IBC
+  275 Gal IBC Wash & Return Program | 330 Gal IBC Wash & Return Program
+  275 Gal Empty Washable Bottle
+
+Commission-INELIGIBLE types (is_commission_eligible = false):
+  55 Gal New OH Poly Drum | 55 Gal New TH Poly Drum
+  55 Gal Washout OH Poly Drum | 55 Gal Washout TH Poly Drum
+  55 Gal New OH Steel Drum | 55 Gal New TH Steel Drum
+  20 Liters (5 gal) Jerrycans/Carboys
+  Other — Parts & Supplies
 
 ---
 
@@ -543,6 +579,8 @@ Key routes:
 - /api/dropdown-configs — GET dropdown values by type; accepts ?type=CARRIER|ORDER_STATUS; returns { type, values, meta } (NOT a plain string[]). PUT replaces values array and merges meta for a type (ADMIN only).
 - /api/orders/check-po?number=X — GET, returns { exists: boolean }; checks uniqueness of a manual PO number. Auth required.
 - /api/orders/next-po-preview?initials=XX — GET, returns { preview: string } formatted as [Initials]-MPH[N] WITHOUT consuming the sequence (uses pg_sequence_last_value).
+- /api/order-type-configs — GET returns all rows ordered by sort_order (auth required, all roles). POST adds a single entry (ADMIN only). PUT replaces full list (ADMIN only). DELETE /api/order-type-configs/[id] removes one entry — refuses if any order_split_loads rows reference the type (ADMIN only).
+- /api/product-weights — GET returns all rows ordered by product_name (auth required, all roles). POST adds a row (ADMIN only). PUT /api/product-weights/[id] updates a row (ADMIN only). DELETE /api/product-weights/[id] removes a row (ADMIN only).
 
 ---
 
@@ -599,6 +637,8 @@ src/components/settings/carriers-section.tsx     — carriers management UI (/se
 src/components/settings/order-statuses-section.tsx — order status management UI (/settings page)
 src/components/settings/company-settings-section.tsx — company name/address/contact/logo editor (ADMIN only)
 src/components/settings/order-number-section.tsx — read-only next PO number preview (/settings page)
+src/components/settings/order-types-section.tsx     — order type list with commission toggle, add/remove (ADMIN only)
+src/components/settings/product-weights-section.tsx — product weight CRUD table (ADMIN only)
 src/app/api/auth/signout/route.ts — POST route: calls supabase.auth.signOut() server-side, redirects to /login
 src/app/api/company-settings/route.ts — GET/PUT company_settings singleton row (ADMIN only for PUT)
 src/config/nav.ts             — navigation items
@@ -633,9 +673,9 @@ Do not attempt to fix the following — the fix breaks the toolchain:
 
 **Status as of April 22, 2026:**
 
-- **RLS is enabled on all 11 public tables:** users, orders, customers, vendors,
+- **RLS is enabled on all 13 public tables:** users, orders, customers, vendors,
   bills_of_lading, recycling_orders, order_split_loads, audit_logs, company_settings,
-  dropdown_configs, product_weights.
+  dropdown_configs, product_weights, order_type_configs.
 - All tables have a **"Service role full access" policy scoped to service_role only.**
   Direct public/anon access to all tables is blocked at the database level.
 - All database queries run **server-side** through Next.js API routes. No client-side
