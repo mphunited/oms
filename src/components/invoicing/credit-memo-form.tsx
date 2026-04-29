@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { CreditMemoLineItems, type LineItemDraft } from './credit-memo-line-items'
+import { buildCreditMemoPayload } from '@/lib/invoicing/build-credit-memo-payload'
 
 type CustomerOption = { id: string; name: string }
 
@@ -48,7 +49,7 @@ export function CreditMemoForm({ open, editId, onClose, onSaved }: Props) {
       .then((data: { customers?: CustomerOption[] }) => {
         setCustomers(data.customers ?? [])
       })
-      .catch(() => {})
+      .catch(() => toast.error('Failed to load customers'))
   }, [])
 
   useEffect(() => {
@@ -101,23 +102,6 @@ export function CreditMemoForm({ open, editId, onClose, onSaved }: Props) {
     setForm(f => ({ ...f, [key]: value }))
   }
 
-  function buildPayload() {
-    return {
-      credit_number: form.credit_number.trim() || null,
-      credit_date:   form.credit_date,
-      customer_id:   form.customer_id,
-      notes:         form.notes.trim() || null,
-      line_items: form.line_items.map((li, i) => ({
-        activity_type: li.activity_type || null,
-        description:   li.description || null,
-        qty:    li.qty   ? parseFloat(li.qty)   : null,
-        rate:   li.rate  ? parseFloat(li.rate)  : null,
-        amount: li.amount ? parseFloat(li.amount) : null,
-        sort_order: i,
-      })),
-    }
-  }
-
   async function handleSave() {
     if (!form.customer_id || !form.credit_date) {
       toast.error('Customer and Credit Date are required')
@@ -130,7 +114,7 @@ export function CreditMemoForm({ open, editId, onClose, onSaved }: Props) {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload()),
+        body: JSON.stringify(buildCreditMemoPayload(form)),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -147,6 +131,7 @@ export function CreditMemoForm({ open, editId, onClose, onSaved }: Props) {
   }
 
   async function handleFinalize() {
+    if (!editId) return
     if (!form.credit_number.trim()) {
       setFinalizeError('QBO Credit # is required to finalize')
       return
@@ -158,7 +143,7 @@ export function CreditMemoForm({ open, editId, onClose, onSaved }: Props) {
         const saveRes = await fetch(`/api/credit-memos/${editId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(buildPayload()),
+          body: JSON.stringify(buildCreditMemoPayload(form)),
         })
         if (!saveRes.ok) throw new Error('Save before finalize failed')
       }
