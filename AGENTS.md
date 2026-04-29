@@ -151,8 +151,13 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     POST /api/commission/mark-paid. Set in bulk from /commission page by ADMIN or
     ACCOUNTING using a payroll date input.
 
-22. **schedule_contacts is a jsonb array on vendors** — [{name, email, is_primary}]
-    Same shape as po_contacts. Used for vendor schedule email distribution.
+22. **Vendor contact arrays (po_contacts, bol_contacts, invoice_contacts, schedule_contacts)
+    all use shape `[{name, email, role: "to"|"cc"}]`.**
+    `role: "to"` = primary recipient; `role: "cc"` = copied recipient.
+    Backward-compat: normalizeContacts() in vendor detail treats `is_primary=true` as `role="to"`,
+    `is_primary=false` as `role="cc"` for older records that lack the role field.
+    Validation: save is blocked if po_contacts or bol_contacts have entries but none with role="to".
+    schedule_contacts used for vendor schedule email distribution.
     Frontline and admin schedule recipients live in company_settings.
 
 23. **inArray() from drizzle-orm must be used for IN queries.** Never use
@@ -329,7 +334,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 | Hosting          | Vercel Pro                                                        |
 | UI Components    | shadcn/ui + Tailwind CSS                                          |
 | UI Primitives    | @base-ui/react — underlies shadcn/ui components, do NOT add Radix |
-| Charts           | Recharts                                                          |
+| Charts           | Recharts — listed but NOT YET INSTALLED. Run `npm install recharts` before use. Test locally before deploying. |
 | PDFs             | @react-pdf/renderer                                               |
 | Auth             | Supabase Auth + Microsoft Entra SSO via @supabase/ssr             |
 | Theme            | next-themes (light/dark toggle)                                   |
@@ -352,7 +357,7 @@ Before installing any new npm package, you must:
 
 1. **Check if the existing stack already solves the problem.**
    - Need UI components? → shadcn/ui first
-   - Need charts? → Recharts (already installed)
+   - Need charts? → Recharts (listed in stack but NOT yet installed — run `npm install recharts` first)
    - Need date handling? → Check if date-fns or native JS Date is sufficient
    - Need PDF? → @react-pdf/renderer (already installed)
    - Need forms/validation? → Check if react-hook-form or zod is already present
@@ -519,16 +524,16 @@ Full route table in PRD.md Section 17.
 Key routes:
 - /orders — ongoing orders table (working). MPH PO number cell is a button that opens the Order Summary Drawer (Sheet, right side) — does NOT navigate. Edit link is in the drawer header. Expandable row shows per-load card layout inside a single colSpan cell (not column-mirroring); colSpan=18. Filter bar has two always-visible rows; no More Filters toggle. Status and Carrier columns render as colored pill badges (colors from dropdown_configs.meta). List API returns csr2_name alongside csr_name. Ship To column (after Sell) shows ship_to.name and city, state from the ship_to JSONB. Hovering any row reveals a Pencil icon in the Actions cell (opacity-0 → group-hover:opacity-100) that navigates to /orders/[orderId]; Duplicate copy icon is always visible. Customer PO cell shows a badge below the PO value: "Wash & Return" (gold) when any split load order_type contains "Wash & Return"; "Split Load" (muted) for 2+ load orders with no Wash & Return; nothing otherwise.
 - /orders/new — new order form (built, tested, working)
-- /orders/[orderId] — order detail/edit (built, working — duplicate button stubs to /orders/new, no pre-fill yet)
+- /orders/[orderId] — order detail/edit (built, working — duplicate button calls POST /api/orders/duplicate/[orderId] with spinner; carries over all fields per PRD Section 16)
 - /customers — customer list (built, working)
 - /customers/[customerId] — customer detail + contacts editor (built, working)
 - /vendors — vendor list (built, working)
 - /vendors/[vendorId] — vendor detail + contacts + checklist template (built, working)
 - /recycling — placeholder page (coming soon — not yet built)
 - /schedules — weekly schedule generation (built, working — Graph API email with auto-attached PDF, recipients from DB)
-- /commission — commission report with mark-paid workflow (built, needs real data test)
+- /commission — commission report with mark-paid workflow (built, working). Server-side route guard: redirects SALES users with can_view_commission=false to /dashboard. ADMIN, ACCOUNTING, and SALES+can_view_commission pass through.
 - /team — user management (built, working — ADMIN only, manages title, phone, email_signature, role, can_view_commission, permissions)
-- /api/orders — GET with full server-side filtering + pagination (search, lifecycle, status, customer/vendor/salesperson/csr, date range, invoice/commission status, flag, page/limit)
+- /api/orders — GET with full server-side filtering + pagination (search, lifecycle, status, customer/vendor/salesperson/csr, date range, invoice/commission status, flag, page/limit). SALES role: salesperson_id filter is unconditionally enforced server-side — client cannot override.
 - /api/schedules/admin-pdf — POST admin schedule PDF
 - /api/schedules/vendor-pdf — POST vendor/Frontline schedule PDF
 - /api/commission — GET commission data, role-filtered
@@ -592,6 +597,10 @@ src/components/commission/commission-table.tsx   — commission report table wit
 src/components/commission/commission-badge.tsx   — commission status badge (Not Eligible/Eligible/Paid)
 src/components/settings/carriers-section.tsx     — carriers management UI (/settings page)
 src/components/settings/order-statuses-section.tsx — order status management UI (/settings page)
+src/components/settings/company-settings-section.tsx — company name/address/contact/logo editor (ADMIN only)
+src/components/settings/order-number-section.tsx — read-only next PO number preview (/settings page)
+src/app/api/auth/signout/route.ts — POST route: calls supabase.auth.signOut() server-side, redirects to /login
+src/app/api/company-settings/route.ts — GET/PUT company_settings singleton row (ADMIN only for PUT)
 src/config/nav.ts             — navigation items
 reference/                    — HTML prototype (UI reference only, not a spec)
 AGENTS.md                     — technical conventions, read at every session
@@ -635,6 +644,17 @@ Do not attempt to fix the following — the fix breaks the toolchain:
 - Supabase security advisor shows **zero critical errors** as of April 22, 2026.
 - The one remaining warning (leaked password protection) is **irrelevant** — the app uses
   Microsoft SSO exclusively. Email/password auth is not used.
+
+**Pre-launch verification (April 28, 2026):**
+- RLS confirmed clean across all 11 tables — no new unprotected tables found.
+- **GET /api/orders enforces SALES role filter unconditionally server-side** — after auth check,
+  if `dbUser.role === 'SALES'`, `eq(orders.salesperson_id, dbUser.id)` is pushed to conditions
+  before any query param processing. Cannot be overridden by the client.
+- **/commission page has a server-side route guard** — async server component fetches dbUser
+  and redirects to /dashboard if `role === 'SALES' && can_view_commission === false`.
+  ADMIN, ACCOUNTING, and SALES+can_view_commission pass through.
+- **Sign-out** is implemented via POST /api/auth/signout (server-side, clears all auth cookies,
+  redirects to /login). The sign-out button in user-nav.tsx is a native `<form method="POST">`.
 
 **Operational rules:**
 - When new tables are created via migration, **RLS must be manually enabled** — it is NOT
