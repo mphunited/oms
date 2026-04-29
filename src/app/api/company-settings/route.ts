@@ -35,11 +35,13 @@ export async function PUT(req: Request) {
   const [existing] = await db.select().from(company_settings).limit(1);
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const existingAddress = (existing.address ?? {}) as { street?: string; city?: string; state?: string; zip?: string };
+
   const address = {
-    street: body.street ?? existing.address?.street ?? "",
-    city: body.city ?? existing.address?.city ?? "",
-    state: body.state ?? existing.address?.state ?? "",
-    zip: body.zip ?? existing.address?.zip ?? "",
+    street: body.street ?? existingAddress.street ?? "",
+    city: body.city ?? existingAddress.city ?? "",
+    state: body.state ?? existingAddress.state ?? "",
+    zip: body.zip ?? existingAddress.zip ?? "",
   };
 
   const logo_url = body.logo_url?.trim() || existing.logo_url;
