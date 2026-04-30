@@ -51,7 +51,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 1. **NO company_id columns anywhere.** No companies table. No company_members table.
    If you are about to add company_id to anything, stop and re-read PRD.md.
 
-2. **RLS is enabled on all 13 public tables** with service_role-only policies (April 22, 2026).
+2. **RLS is enabled on all 14 public tables** with service_role-only policies (April 22, 2026).
    Direct public/anon access is blocked at the database level. All business data queries
    run server-side through Drizzle via DATABASE_URL (postgres superuser — bypasses RLS).
    Do not add anon or authenticated-role policies. See the ## Security section.
@@ -341,6 +341,13 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - API route: GET /api/product-weights (all roles). POST, PUT /api/product-weights/[id],
       DELETE /api/product-weights/[id] are ADMIN only.
     - Component: src/components/settings/product-weights-section.tsx
+
+52. **global_email_contacts is a standalone table — not linked to customers or vendors.**
+    It is a flat shared directory of name/email/company/type used for autocomplete on
+    order forms. email is unique (enforced by DB constraint). type is a pgEnum:
+    CONFIRMATION | BILL_TO | BOTH. Company is optional (nullable text).
+    Do NOT add foreign keys from global_email_contacts to any other table.
+    Do NOT attempt to sync or derive entries from the customers or vendors tables.
 ---
 
 ## TECHNOLOGY STACK
@@ -438,7 +445,7 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-us-west-2.pooler.supab
 
 Tables: users, customers, vendors, orders, order_split_loads, recycling_orders,
         bills_of_lading, company_settings, dropdown_configs, product_weights,
-        order_type_configs, audit_logs
+        order_type_configs, audit_logs, global_email_contacts
 
 Schema file: src/lib/db/schema.ts — this is the source of truth. Always read it before
 writing queries or API routes. Full field-level detail is in PRD.md Section 5.
@@ -536,6 +543,31 @@ Outlook Web deeplinks are no longer used anywhere in the app.
 
 ---
 
+## ORDER FORM AUTOCOMPLETE — GLOBAL EMAILS
+
+Both the New Order and Edit Order forms have autocomplete on two contact fields:
+- Customer Contacts for Order Confirmations → fetches GET /api/global-emails?type=CONFIRMATION
+- Bill To Contacts → fetches GET /api/global-emails?type=BILL_TO
+
+**Rules:**
+- Fetch the relevant contact list ONCE on page load. Cache in component state.
+  Do NOT fire a new API call on every keystroke — filter client-side.
+- Show suggestions after 2+ characters typed, or on focus if field is empty.
+- Match on both name and email, case-insensitive.
+- Each suggestion row: name (bold), company (muted, omit line if null), email below.
+- Selecting a suggestion populates both name and email fields. User may override either.
+- After order save succeeds, compare each contact's email (lowercased) against the
+  cached global list. Emails not found = new contacts.
+- For each new contact, show a sonner toast sequentially (one at a time):
+  "New contact — save [name] to Global Emails?" with Save and Dismiss buttons.
+- Save opens a pre-filled modal: name, email, type defaulting to CONFIRMATION or
+  BILL_TO based on which field the contact came from, with option to change to BOTH.
+  POSTs to /api/global-emails.
+- If email already exists in global list, no toast — even if name differs.
+- Do NOT modify customer_contacts or bill_to_contacts JSONB shape on orders.
+
+---
+
 ## DOCUMENT GENERATION
 
 - PO PDF: `GET /api/orders/[orderId]/po-pdf` — server-side, nodejs runtime, no separate DB record
@@ -588,6 +620,9 @@ Key routes:
 - /api/credit-memos/[id] — PUT update draft (blocked if Final), DELETE draft same-day only.
 - /api/credit-memos/[id]/finalize — POST stamps credit_number, sets status=Final, locks record.
 - /api/credit-memos/[id]/pdf — GET generates PDF. export const runtime = 'nodejs' required.
+- /global-emails — Global email contact directory. Searchable/sortable table (sort by Company or Name). All roles can view, add, and edit. ADMIN only can delete. Contacts used for autocomplete on order form customer_contacts and bill_to_contacts fields.
+- /api/global-emails — GET returns all contacts; optional ?type=CONFIRMATION|BILL_TO|BOTH filter returns records matching that type plus all BOTH records. Ordered by company ASC nulls last, name ASC. POST creates a contact (any authenticated role). Returns 409 if email already exists.
+- /api/global-emails/[id] — PUT updates name, email, company, or type (any authenticated role); checks email uniqueness excluding self. DELETE hard-deletes (ADMIN only, 403 otherwise). Does not affect existing order JSONB on delete.
 ---
 
 ## COLLABORATION
@@ -645,6 +680,11 @@ src/components/settings/company-settings-section.tsx — company name/address/co
 src/components/settings/order-number-section.tsx — read-only next PO number preview (/settings page)
 src/components/settings/order-types-section.tsx     — order type list with commission toggle, add/remove (ADMIN only)
 src/components/settings/product-weights-section.tsx — product weight CRUD table (ADMIN only)
+src/components/global-emails/global-emails-client.tsx — global email list with search,
+  sort, add/edit/delete modals, and toast notifications
+src/app/(dashboard)/global-emails/page.tsx — /global-emails page (all roles)
+src/app/api/global-emails/route.ts — GET + POST global email contacts
+src/app/api/global-emails/[id]/route.ts — PUT + DELETE single contact
 src/app/api/auth/signout/route.ts — POST route: calls supabase.auth.signOut() server-side, redirects to /login
 src/app/api/company-settings/route.ts — GET/PUT company_settings singleton row (ADMIN only for PUT)
 src/config/nav.ts             — navigation items
@@ -679,9 +719,9 @@ Do not attempt to fix the following — the fix breaks the toolchain:
 
 **Status as of April 22, 2026:**
 
-- **RLS is enabled on all 13 public tables:** users, orders, customers, vendors,
+- **RLS is enabled on all 14 public tables:** users, orders, customers, vendors,
   bills_of_lading, recycling_orders, order_split_loads, audit_logs, company_settings,
-  dropdown_configs, product_weights, order_type_configs.
+  dropdown_configs, product_weights, order_type_configs, global_email_contacts.
 - All tables have a **"Service role full access" policy scoped to service_role only.**
   Direct public/anon access to all tables is blocked at the database level.
 - All database queries run **server-side** through Next.js API routes. No client-side
