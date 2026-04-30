@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TeamMemberDialog, type TeamMember } from "@/components/team/team-member-dialog";
+import { InviteMemberDialog } from "@/components/team/invite-member-dialog";
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-[#00205B] text-white",
@@ -26,6 +27,7 @@ export function TeamClient() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<TeamMember | null>(null);
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     fetch("/api/team")
@@ -44,6 +46,11 @@ export function TeamClient() {
     setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   }
 
+  function handleInvited(newMember: TeamMember) {
+    setMembers((prev) => [...prev, newMember]);
+    setInviting(false);
+  }
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-8 text-muted-foreground">
@@ -55,6 +62,13 @@ export function TeamClient() {
 
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setInviting(true)}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Invite Member
+        </Button>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -101,6 +115,12 @@ export function TeamClient() {
         member={editing}
         onClose={() => setEditing(null)}
         onSaved={handleSaved}
+      />
+
+      <InviteMemberDialog
+        open={inviting}
+        onClose={() => setInviting(false)}
+        onInvited={handleInvited}
       />
     </>
   );
