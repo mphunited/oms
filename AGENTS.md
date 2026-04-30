@@ -87,7 +87,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 
 12. **Git verification rule** — Claude Code pushes to remote but does not always update
     local main. Always run git pull origin main before running git log to verify commits.
-    Never trust Claude Code's success confirmations — verify with git log only after pulling.
+    Never trust Claude Code's success confirmations — verify with git log only after pulling. Inside a git worktree, `git checkout main` silently fails because main is locked to the parent worktree — use `git push origin HEAD:main` directly from the worktree branch instead of checking out main to merge.
 
 13. **Session handling uses src/proxy.ts — NOT src/middleware.ts.**
     Next.js 16 renamed middleware.ts to proxy.ts with a `proxy` export.
