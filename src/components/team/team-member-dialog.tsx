@@ -65,7 +65,6 @@ export function TeamMemberDialog({ member, onClose, onSaved }: Props) {
       await updateMember(member.id, {
         name: form.name,
         title: form.title || null,
-        phone: form.phone || null,
         role: form.role,
         is_active: form.is_active,
         email_signature: form.email_signature || null,
