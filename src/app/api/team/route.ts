@@ -31,6 +31,7 @@ export async function GET() {
       email_signature: users.email_signature,
       can_view_commission: users.can_view_commission,
       is_commission_eligible: users.is_commission_eligible,
+      permissions: users.permissions,
     })
     .from(users)
     .orderBy(users.name)

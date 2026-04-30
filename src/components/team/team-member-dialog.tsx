@@ -35,6 +35,7 @@ export interface TeamMember {
   email_signature: string | null;
   can_view_commission: boolean;
   is_commission_eligible: boolean;
+  permissions: string[];
 }
 
 const ROLES = ["ADMIN", "CSR", "ACCOUNTING", "SALES"] as const;
@@ -56,6 +57,7 @@ export function TeamMemberDialog({ member, onClose, onSaved }: Props) {
     email_signature: member?.email_signature ?? "",
     can_view_commission: member?.can_view_commission ?? false,
     is_commission_eligible: member?.is_commission_eligible ?? false,
+    permissions: member?.permissions ?? [] as string[],
   });
 
   async function handleSave() {
@@ -71,6 +73,7 @@ export function TeamMemberDialog({ member, onClose, onSaved }: Props) {
         email_signature: form.email_signature || null,
         can_view_commission: form.can_view_commission,
         is_commission_eligible: form.is_commission_eligible,
+        permissions: form.permissions,
       });
       onSaved({
         ...member,
@@ -82,6 +85,7 @@ export function TeamMemberDialog({ member, onClose, onSaved }: Props) {
         email_signature: form.email_signature || null,
         can_view_commission: form.can_view_commission,
         is_commission_eligible: form.is_commission_eligible,
+        permissions: form.permissions,
       });
       toast.success("Member updated");
       onClose();
@@ -138,6 +142,40 @@ export function TeamMemberDialog({ member, onClose, onSaved }: Props) {
           <div className="flex items-center gap-3">
             <Switch id="is_commission_eligible" checked={form.is_commission_eligible} onCheckedChange={(v) => setForm((f) => ({ ...f, is_commission_eligible: v }))} />
             <Label htmlFor="is_commission_eligible">Commission Eligible (appears in commission report)</Label>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Order Form Permissions</Label>
+            <div className="flex flex-col gap-2 pt-0.5">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.permissions.includes("SALES")}
+                  onChange={(e) => setForm((f) => ({
+                    ...f,
+                    permissions: e.target.checked
+                      ? [...f.permissions.filter((p) => p !== "SALES"), "SALES"]
+                      : f.permissions.filter((p) => p !== "SALES"),
+                  }))}
+                  className="h-4 w-4 rounded border-input accent-[#00205B]"
+                />
+                <span className="text-sm">Appears as Salesperson on orders</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.permissions.includes("CSR")}
+                  onChange={(e) => setForm((f) => ({
+                    ...f,
+                    permissions: e.target.checked
+                      ? [...f.permissions.filter((p) => p !== "CSR"), "CSR"]
+                      : f.permissions.filter((p) => p !== "CSR"),
+                  }))}
+                  className="h-4 w-4 rounded border-input accent-[#00205B]"
+                />
+                <span className="text-sm">Appears as CSR on orders</span>
+              </label>
+            </div>
           </div>
 
           <div className="space-y-1.5">
