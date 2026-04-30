@@ -60,6 +60,7 @@ export async function updateMember(
     email_signature: string | null;
     can_view_commission: boolean;
     is_commission_eligible: boolean;
+    permissions: string[];
   }
 ) {
   const [user] = await db.update(users)
