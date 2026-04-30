@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { Resolver, SubmitHandler } from 'react-hook-form'
+import type { Resolver } from 'react-hook-form'
 import { toast } from 'sonner'
 import { orderFormSchema, emptyLoad, type OrderFormValues, type SplitLoadValue } from '@/lib/orders/order-form-schema'
 import { deriveInitials } from '@/lib/orders/commission-eligibility'
@@ -81,7 +81,7 @@ export function useNewOrderForm() {
     return () => sub.unsubscribe()
   }, [vendors, form])
 
-  const onSubmit: SubmitHandler<OrderFormValues> = async (data) => {
+  async function onSubmit(data: OrderFormValues): Promise<{ id: string; order_number: string } | null> {
     setSubmitError(null)
     setIsSubmitting(true)
     try {
@@ -121,7 +121,7 @@ export function useNewOrderForm() {
       })
       if (res.status === 409) {
         toast.error('PO number already exists')
-        return
+        return null
       }
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({ error: res.statusText }))
@@ -129,8 +129,10 @@ export function useNewOrderForm() {
       }
       const order = await res.json() as { id: string; order_number: string }
       setSavedOrder(order)
+      return order
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to save order. Please try again.')
+      return null
     } finally {
       setIsSubmitting(false)
     }

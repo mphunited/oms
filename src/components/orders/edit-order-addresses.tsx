@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ContactSuggestInput, type ContactSuggestion } from '@/components/orders/contact-suggest-input'
 
 export type AddressValue = {
   name: string
@@ -117,11 +118,14 @@ type EditOrderAddressesProps = {
   onBillToChange: (v: AddressValue) => void
   onContactsChange: (v: CustomerContact[]) => void
   onBillToContactsChange: (v: CustomerContact[]) => void
+  globalConfirmationContacts?: ContactSuggestion[]
+  globalBillToContacts?: ContactSuggestion[]
 }
 
 export function EditOrderAddresses({
   shipTo, billTo, customerContacts, billToContacts,
   onShipToChange, onBillToChange, onContactsChange, onBillToContactsChange,
+  globalConfirmationContacts = [], globalBillToContacts = [],
 }: EditOrderAddressesProps) {
   return (
     <section className="space-y-4">
@@ -152,15 +156,24 @@ export function EditOrderAddresses({
                 <div key={contact.id ?? `contact-${index}`} className="grid grid-cols-6 gap-2 rounded-md border p-3">
                   <div className="col-span-2 space-y-1">
                     <Label className="text-xs text-muted-foreground">Name</Label>
-                    <Input value={contact.name}
-                      onChange={e => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, name: e.target.value } : c))}
-                      placeholder="Full name" />
+                    <ContactSuggestInput
+                      value={contact.name}
+                      onChange={v => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, name: v } : c))}
+                      onSelectSuggestion={s => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, name: s.name, email: s.email } : c))}
+                      suggestions={globalConfirmationContacts}
+                      placeholder="Full name"
+                    />
                   </div>
                   <div className="col-span-2 space-y-1">
                     <Label className="text-xs text-muted-foreground">Email</Label>
-                    <Input type="email" value={contact.email}
-                      onChange={e => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, email: e.target.value } : c))}
-                      placeholder="email@company.com" />
+                    <ContactSuggestInput
+                      type="email"
+                      value={contact.email}
+                      onChange={v => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, email: v } : c))}
+                      onSelectSuggestion={s => onContactsChange(customerContacts.map((c, i) => i === index ? { ...c, name: s.name, email: s.email } : c))}
+                      suggestions={globalConfirmationContacts}
+                      placeholder="email@company.com"
+                    />
                   </div>
                   <div className="col-span-1 flex flex-col justify-end gap-1">
                     <Label className="text-xs text-muted-foreground">Role</Label>
@@ -209,15 +222,24 @@ export function EditOrderAddresses({
               <div key={contact.id ?? `btc-${index}`} className="grid grid-cols-5 gap-2 rounded-md border p-3">
                 <div className="col-span-2 space-y-1">
                   <Label className="text-xs text-muted-foreground">Name</Label>
-                  <Input value={contact.name}
-                    onChange={e => onBillToContactsChange(billToContacts.map((c, i) => i === index ? { ...c, name: e.target.value } : c))}
-                    placeholder="Full name" />
+                  <ContactSuggestInput
+                    value={contact.name}
+                    onChange={v => onBillToContactsChange(billToContacts.map((c, i) => i === index ? { ...c, name: v } : c))}
+                    onSelectSuggestion={s => onBillToContactsChange(billToContacts.map((c, i) => i === index ? { ...c, name: s.name, email: s.email } : c))}
+                    suggestions={globalBillToContacts}
+                    placeholder="Full name"
+                  />
                 </div>
                 <div className="col-span-2 space-y-1">
                   <Label className="text-xs text-muted-foreground">Email</Label>
-                  <Input type="email" value={contact.email}
-                    onChange={e => onBillToContactsChange(billToContacts.map((c, i) => i === index ? { ...c, email: e.target.value } : c))}
-                    placeholder="email@company.com" />
+                  <ContactSuggestInput
+                    type="email"
+                    value={contact.email}
+                    onChange={v => onBillToContactsChange(billToContacts.map((c, i) => i === index ? { ...c, email: v } : c))}
+                    onSelectSuggestion={s => onBillToContactsChange(billToContacts.map((c, i) => i === index ? { ...c, name: s.name, email: s.email } : c))}
+                    suggestions={globalBillToContacts}
+                    placeholder="email@company.com"
+                  />
                 </div>
                 <div className="flex items-end">
                   <Button type="button" variant="ghost" size="icon"

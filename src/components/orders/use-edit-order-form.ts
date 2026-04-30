@@ -154,7 +154,7 @@ export function useEditOrderForm(orderId: string) {
     if (matched) setOrderType(matched)
   }, [splitLoads, orderTypeManuallySet])
 
-  async function handleSave() {
+  async function handleSave(): Promise<boolean> {
     setSaving(true)
     setSaved(false)
     try {
@@ -201,8 +201,10 @@ export function useEditOrderForm(orderId: string) {
       if (!res.ok) throw new Error(`${res.status}`)
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
+      return true
     } catch (err) {
       alert('Save failed: ' + (err instanceof Error ? err.message : String(err)))
+      return false
     } finally {
       setSaving(false)
     }
