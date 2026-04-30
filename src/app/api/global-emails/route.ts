@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
-    const { name, email, type } = body
+    const { name, email, company, type } = body
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 })
@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
       .values({
         name: name.trim(),
         email: email.trim().toLowerCase(),
+        company: (typeof company === 'string' && company.trim()) ? company.trim() : null,
         type: (type as 'CONFIRMATION' | 'BILL_TO' | 'BOTH') ?? 'BOTH',
       })
       .returning()

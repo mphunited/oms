@@ -13,8 +13,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params
     const body = await req.json()
 
-    const updates: { name?: string; email?: string; type?: 'CONFIRMATION' | 'BILL_TO' | 'BOTH'; updated_at?: Date } = {}
+    const updates: { name?: string; email?: string; company?: string | null; type?: 'CONFIRMATION' | 'BILL_TO' | 'BOTH'; updated_at?: Date } = {}
     if (body.name !== undefined) updates.name = String(body.name).trim()
+    if (body.company !== undefined) {
+      updates.company = (typeof body.company === 'string' && body.company.trim()) ? body.company.trim() : null
+    }
     if (body.email !== undefined) {
       const trimmed = String(body.email).trim().toLowerCase()
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

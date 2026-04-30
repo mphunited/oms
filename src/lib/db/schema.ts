@@ -471,6 +471,7 @@ export const global_email_contacts = pgTable("global_email_contacts", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  company: text("company"),
   type: globalEmailContactTypeEnum("type").notNull().default("BOTH"),
   created_at: timestamp("created_at", { withTimezone: true })
     .notNull()

@@ -13,6 +13,7 @@ export type GlobalEmailContactRow = {
   id: string
   name: string
   email: string
+  company: string | null
   type: 'CONFIRMATION' | 'BILL_TO' | 'BOTH'
 }
 
@@ -20,6 +21,7 @@ type ModalInitial = {
   id?: string
   name: string
   email: string
+  company?: string | null
   type?: string
 }
 
@@ -37,6 +39,7 @@ export function GlobalEmailModal({
   const isEdit = !!initial?.id
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [company, setCompany] = useState('')
   const [type, setType] = useState<'CONFIRMATION' | 'BILL_TO' | 'BOTH'>('BOTH')
   const [saving, setSaving] = useState(false)
   const [emailError, setEmailError] = useState<string | null>(null)
@@ -45,6 +48,7 @@ export function GlobalEmailModal({
     if (open) {
       setName(initial?.name ?? '')
       setEmail(initial?.email ?? '')
+      setCompany(initial?.company ?? '')
       setType((initial?.type as 'CONFIRMATION' | 'BILL_TO' | 'BOTH') ?? 'BOTH')
       setEmailError(null)
     }
@@ -66,7 +70,7 @@ export function GlobalEmailModal({
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimName, email: trimEmail, type }),
+        body: JSON.stringify({ name: trimName, email: trimEmail, company: company.trim() || null, type }),
       })
       if (res.status === 409) {
         const data = await res.json()
@@ -102,6 +106,10 @@ export function GlobalEmailModal({
             <Label htmlFor="ge-email">Email *</Label>
             <Input id="ge-email" type="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError(null) }} onKeyDown={handleKeyDown} placeholder="email@company.com" />
             {emailError && <p className="text-xs text-destructive">{emailError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="ge-company">Company</Label>
+            <Input id="ge-company" value={company} onChange={e => setCompany(e.target.value)} onKeyDown={handleKeyDown} placeholder="Company name (optional)" />
           </div>
           <div className="space-y-1.5">
             <Label>Type</Label>
