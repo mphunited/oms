@@ -65,7 +65,6 @@ export function InviteMemberDialog({ open, onClose, onInvited }: Props) {
         is_active: true,
         can_view_commission: false,
         is_commission_eligible: false,
-        permissions: [],
         email_signature: null,
       });
       handleClose();
