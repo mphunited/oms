@@ -17,6 +17,9 @@ import { EditOrderFreightSection } from '@/components/orders/edit-order-freight-
 import { EditOrderIdentitySection } from '@/components/orders/edit-order-identity-section'
 import { EditOrderDeleteModal } from '@/components/orders/edit-order-delete-modal'
 import { useEditOrderForm } from '@/components/orders/use-edit-order-form'
+import { useGlobalContacts } from '@/components/orders/use-global-contacts'
+import { NewContactPrompt } from '@/components/orders/new-contact-prompt'
+import type { NewContactEntry } from '@/components/orders/new-contact-prompt'
 
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
@@ -62,7 +65,20 @@ export default function OrderDetailPage() {
     csrInitials,
   } = useEditOrderForm(orderId)
 
+  const { confirmationContacts, billToContacts: globalBillToContacts, findNewContacts } = useGlobalContacts()
+  const [pendingNewContacts, setPendingNewContacts] = useState<NewContactEntry[]>([])
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+
+  async function onSave() {
+    const ok = await handleSave()
+    if (ok) {
+      const newContacts = [
+        ...findNewContacts(customerContacts, confirmationContacts, 'CONFIRMATION'),
+        ...findNewContacts(billToContacts, globalBillToContacts, 'BILL_TO'),
+      ]
+      if (newContacts.length > 0) setPendingNewContacts(newContacts)
+    }
+  }
 
   if (loading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>
   if (error)   return <p className="p-6 text-sm text-destructive">Error: {error}</p>
@@ -216,6 +232,8 @@ export default function OrderDetailPage() {
         onBillToChange={setBillTo}
         onContactsChange={setCustomerContacts}
         onBillToContactsChange={setBillToContacts}
+        globalConfirmationContacts={confirmationContacts}
+        globalBillToContacts={globalBillToContacts}
       />
 
       <Separator className="bg-[#B88A44]" />
@@ -280,9 +298,11 @@ export default function OrderDetailPage() {
         onIsRevisedChange={setIsRevised}
         onInvoiceStatusChange={setInvoicePaymentStatus}
         onQbInvoiceNumberChange={setQbInvoiceNumber}
-        onSave={handleSave}
+        onSave={onSave}
       />
       </div>
+
+      <NewContactPrompt pending={pendingNewContacts} onClear={() => setPendingNewContacts([])} />
 
       {showDeleteModal && (
         <EditOrderDeleteModal

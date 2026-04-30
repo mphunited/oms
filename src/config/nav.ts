@@ -10,6 +10,7 @@ import {
   UsersRound,
   Receipt,
   Settings,
+  Mail,
 } from "lucide-react";
 
 export type NavItem = {
@@ -47,6 +48,11 @@ export const NAV_ITEMS: NavItem[] = [
     title: "Vendors",
     href: "/vendors",
     icon: Truck,
+  },
+  {
+    title: "Global Emails",
+    href: "/global-emails",
+    icon: Mail,
   },
   {
     title: "Schedules",

@@ -19,6 +19,12 @@ export const userRoleEnum = pgEnum("user_role", [
   "SALES",
 ]);
 
+export const globalEmailContactTypeEnum = pgEnum("global_email_contact_type", [
+  "CONFIRMATION",
+  "BILL_TO",
+  "BOTH",
+]);
+
 // ─── SINGLE TENANT — NO company_id ANYWHERE ───────────────────────────────────
 // MPH United only. No companies table. No company_members table.
 // salesperson_id and csr_id are UUID FKs to users — NOT text dropdowns.
@@ -455,6 +461,27 @@ export const company_settings = pgTable("company_settings", {
 
 export type CompanySettings = typeof company_settings.$inferSelect;
 export type NewCompanySettings = typeof company_settings.$inferInsert;
+
+// ─── global_email_contacts ─────────────────────────────────────────────────────
+// Global directory of email contacts. Used for autocomplete on order form
+// customer_contacts (CONFIRMATION) and bill_to_contacts (BILL_TO) fields.
+// email is unique — one record per address. type controls which fields it surfaces in.
+
+export const global_email_contacts = pgTable("global_email_contacts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  type: globalEmailContactTypeEnum("type").notNull().default("BOTH"),
+  created_at: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updated_at: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type GlobalEmailContact = typeof global_email_contacts.$inferSelect;
+export type NewGlobalEmailContact = typeof global_email_contacts.$inferInsert;
 
 // ─── dropdown_configs ─────────────────────────────────────────────────────────
 

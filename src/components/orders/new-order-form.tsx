@@ -22,6 +22,9 @@ import { OrderAddressFields } from '@/components/orders/order-address-fields'
 import { OrderContactFields } from '@/components/orders/order-contact-fields'
 import { BillToContactFields } from '@/components/orders/bill-to-contact-fields'
 import { useNewOrderForm } from '@/components/orders/use-new-order-form'
+import { useGlobalContacts } from '@/components/orders/use-global-contacts'
+import { NewContactPrompt } from '@/components/orders/new-contact-prompt'
+import type { NewContactEntry } from '@/components/orders/new-contact-prompt'
 import { matchOrderType } from '@/lib/orders/description-type-map'
 import { emptyLoad } from '@/lib/orders/order-form-schema'
 import type { OrderFormValues } from '@/lib/orders/order-form-schema'
@@ -34,6 +37,8 @@ export function NewOrderForm() {
     carriers, statusOptions, onSubmit,
   } = useNewOrderForm()
 
+  const { confirmationContacts, billToContacts: globalBillToContacts, findNewContacts } = useGlobalContacts()
+  const [pendingNewContacts, setPendingNewContacts] = useState<NewContactEntry[]>([])
   const [notesOpen, setNotesOpen] = useState(true)
   const [orderTypeManuallySet, setOrderTypeManuallySet] = useState(false)
   const [emailingPO, setEmailingPO] = useState(false)
@@ -80,15 +85,25 @@ export function NewOrderForm() {
   }
 
   async function handleSubmit(data: OrderFormValues) {
+    let result: { id: string; order_number: string } | null = null
     if (isManualMode) {
       const trimmed = manualPONumber.trim()
       if (!trimmed || /\s/.test(trimmed)) { setManualPOError('PO number cannot be empty or contain spaces'); return }
       const checkRes = await fetch(`/api/orders/check-po?number=${encodeURIComponent(trimmed)}`)
       const { exists } = await checkRes.json()
       if (exists) { toast.error('PO number already exists'); return }
-      await onSubmit({ ...data, manual_order_number: trimmed })
+      result = await onSubmit({ ...data, manual_order_number: trimmed })
     } else {
-      await onSubmit(data)
+      result = await onSubmit(data)
+    }
+    if (result) {
+      const watchedConfirmation = form.getValues('customer_contacts') ?? []
+      const watchedBillTo = form.getValues('bill_to_contacts') ?? []
+      const newContacts = [
+        ...findNewContacts(watchedConfirmation, confirmationContacts, 'CONFIRMATION'),
+        ...findNewContacts(watchedBillTo, globalBillToContacts, 'BILL_TO'),
+      ]
+      if (newContacts.length > 0) setPendingNewContacts(newContacts)
     }
   }
 
@@ -262,8 +277,8 @@ export function NewOrderForm() {
         <section className="space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Addresses & Contacts</h2>
           <div className="grid grid-cols-2 gap-6">
-            <div><p className="text-sm font-medium mb-3">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /><hr className="border-[#B88A44] my-6" /><OrderContactFields control={form.control} register={form.register} setValue={form.setValue} /></div>
-            <div className="space-y-3"><p className="text-sm font-medium">Bill To</p><OrderAddressFields prefix="bill_to" register={form.register} notesLabel="Bill To Notes" hideEmailFields /><BillToContactFields control={form.control} register={form.register} /></div>
+            <div><p className="text-sm font-medium mb-3">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /><hr className="border-[#B88A44] my-6" /><OrderContactFields control={form.control} register={form.register} setValue={form.setValue} globalContacts={confirmationContacts} /></div>
+            <div className="space-y-3"><p className="text-sm font-medium">Bill To</p><OrderAddressFields prefix="bill_to" register={form.register} notesLabel="Bill To Notes" hideEmailFields /><BillToContactFields control={form.control} register={form.register} setValue={form.setValue} globalContacts={globalBillToContacts} /></div>
           </div>
         </section>
 
@@ -295,6 +310,7 @@ export function NewOrderForm() {
       <aside className="w-64 shrink-0 space-y-4">
         <OrderMarginCard control={form.control} loads={loads} />
       </aside>
+      <NewContactPrompt pending={pendingNewContacts} onClear={() => setPendingNewContacts([])} />
     </form>
   )
 }
