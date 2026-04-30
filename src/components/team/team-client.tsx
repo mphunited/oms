@@ -46,11 +46,6 @@ export function TeamClient() {
     setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   }
 
-  function handleInvited(newMember: TeamMember) {
-    setMembers((prev) => [...prev, newMember]);
-    setInviting(false);
-  }
-
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-8 text-muted-foreground">
@@ -65,7 +60,7 @@ export function TeamClient() {
       <div className="flex justify-end mb-4">
         <Button onClick={() => setInviting(true)}>
           <UserPlus className="h-4 w-4 mr-2" />
-          Invite Member
+          Add Member
         </Button>
       </div>
 
@@ -120,7 +115,6 @@ export function TeamClient() {
       <InviteMemberDialog
         open={inviting}
         onClose={() => setInviting(false)}
-        onInvited={handleInvited}
       />
     </>
   );
