@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-export type GlobalContactSuggestion = { name: string; email: string }
+export type GlobalContactSuggestion = { name: string; email: string; company?: string | null }
 
 export function useGlobalContacts() {
   const [confirmationContacts, setConfirmationContacts] = useState<GlobalContactSuggestion[]>([])
@@ -11,15 +11,15 @@ export function useGlobalContacts() {
   useEffect(() => {
     fetch('/api/global-emails?type=CONFIRMATION')
       .then(r => r.json())
-      .then((data: { name: string; email: string }[]) =>
-        setConfirmationContacts(Array.isArray(data) ? data.map(d => ({ name: d.name, email: d.email })) : [])
+      .then((data: { name: string; email: string; company?: string | null }[]) =>
+        setConfirmationContacts(Array.isArray(data) ? data.map(d => ({ name: d.name, email: d.email, company: d.company ?? null })) : [])
       )
       .catch(() => {})
 
     fetch('/api/global-emails?type=BILL_TO')
       .then(r => r.json())
-      .then((data: { name: string; email: string }[]) =>
-        setBillToContacts(Array.isArray(data) ? data.map(d => ({ name: d.name, email: d.email })) : [])
+      .then((data: { name: string; email: string; company?: string | null }[]) =>
+        setBillToContacts(Array.isArray(data) ? data.map(d => ({ name: d.name, email: d.email, company: d.company ?? null })) : [])
       )
       .catch(() => {})
   }, [])

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 
-export type ContactSuggestion = { name: string; email: string }
+export type ContactSuggestion = { name: string; email: string; company?: string | null }
 
 type Props = {
   value: string
@@ -59,6 +59,7 @@ export function ContactSuggestInput({ value, onChange, onSelectSuggestion, sugge
               onMouseDown={e => { e.preventDefault(); onSelectSuggestion(s); setOpen(false) }}
             >
               <div className="font-medium">{s.name}</div>
+              {s.company && <div className="text-xs text-muted-foreground">{s.company}</div>}
               <div className="text-xs text-muted-foreground">{s.email}</div>
             </button>
           ))}

@@ -26,7 +26,7 @@ export function GlobalEmailsClient({ isAdmin }: { isAdmin: boolean }) {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('ALL')
   const [modalOpen, setModalOpen] = useState(false)
-  const [modalInitial, setModalInitial] = useState<{ id?: string; name: string; email: string; type?: string } | null>(null)
+  const [modalInitial, setModalInitial] = useState<{ id?: string; name: string; email: string; company?: string | null; type?: string } | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
@@ -39,18 +39,18 @@ export function GlobalEmailsClient({ isAdmin }: { isAdmin: boolean }) {
 
   const filtered = contacts.filter(c => {
     const q = search.toLowerCase()
-    const matchSearch = !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)
+    const matchSearch = !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || (c.company ?? '').toLowerCase().includes(q)
     const matchType = typeFilter === 'ALL' || c.type === typeFilter
     return matchSearch && matchType
   })
 
   function openAdd() {
-    setModalInitial({ name: '', email: '', type: 'BOTH' })
+    setModalInitial({ name: '', email: '', company: null, type: 'BOTH' })
     setModalOpen(true)
   }
 
   function openEdit(c: GlobalEmailContactRow) {
-    setModalInitial({ id: c.id, name: c.name, email: c.email, type: c.type })
+    setModalInitial({ id: c.id, name: c.name, email: c.email, company: c.company, type: c.type })
     setModalOpen(true)
   }
 
@@ -114,6 +114,7 @@ export function GlobalEmailsClient({ isAdmin }: { isAdmin: boolean }) {
               <tr>
                 <th className="px-4 py-2 text-left font-medium text-muted-foreground">Name</th>
                 <th className="px-4 py-2 text-left font-medium text-muted-foreground">Email</th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Company</th>
                 <th className="px-4 py-2 text-left font-medium text-muted-foreground">Type</th>
                 <th className="px-4 py-2 text-left font-medium text-muted-foreground w-10">Actions</th>
               </tr>
@@ -121,7 +122,7 @@ export function GlobalEmailsClient({ isAdmin }: { isAdmin: boolean }) {
             <tbody className="divide-y">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
                     {contacts.length === 0
                       ? 'No contacts yet. Add your first contact to get started.'
                       : 'No contacts match your search.'}
@@ -131,6 +132,7 @@ export function GlobalEmailsClient({ isAdmin }: { isAdmin: boolean }) {
                 <tr key={c.id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-2 font-medium">{c.name}</td>
                   <td className="px-4 py-2 text-muted-foreground">{c.email}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{c.company || <span className="text-muted-foreground/50">—</span>}</td>
                   <td className="px-4 py-2">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${TYPE_BADGE[c.type] ?? ''}`}>
                       {TYPE_LABEL[c.type] ?? c.type}
