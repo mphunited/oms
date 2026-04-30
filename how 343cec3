@@ -1,0 +1,45 @@
+[33mcommit f07f25e01498fee795b444af13fdc804f1a62344[m
+Author: Jack <jack2@mphunited.com>
+Date:   Wed Apr 22 23:05:46 2026 -0500
+
+    fix: improve name extraction in auth user sync trigger
+    
+    Priority: full_name → custom_claims given+family → email fallback.
+    Matches Entra SSO token structure. Cleaned up stale random-UUID rows
+    for jack2@mphunited.com; one correct row now with auth UUID and ADMIN role.
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+[1mdiff --git a/drizzle/0010_auth_user_sync_trigger.sql b/drizzle/0010_auth_user_sync_trigger.sql[m
+[1mindex c409f4b..711c129 100644[m
+[1m--- a/drizzle/0010_auth_user_sync_trigger.sql[m
+[1m+++ b/drizzle/0010_auth_user_sync_trigger.sql[m
+[36m@@ -1,6 +1,11 @@[m
+ -- Trigger: sync auth.users → public.users on first SSO sign-in[m
+ -- Fires AFTER INSERT on auth.users so the public.users row is created[m
+ -- automatically with the correct UUID, avoiding the FK mismatch bug.[m
+[32m+[m[32m--[m
+[32m+[m[32m-- Name extraction priority:[m
+[32m+[m[32m--   1. raw_user_meta_data->>'full_name'[m
+[32m+[m[32m--   2. custom_claims given_name + family_name concatenated[m
+[32m+[m[32m--   3. email as last resort[m
+ [m
+ CREATE OR REPLACE FUNCTION public.handle_new_auth_user()[m
+ RETURNS trigger[m
+[36m@@ -13,7 +18,15 @@[m [mBEGIN[m
+   VALUES ([m
+     NEW.id,[m
+     NEW.email,[m
+[31m-    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'),[m
+[32m+[m[32m    COALESCE([m
+[32m+[m[32m      NULLIF(TRIM(NEW.raw_user_meta_data->>'full_name'), ''),[m
+[32m+[m[32m      NULLIF(TRIM(CONCAT([m
+[32m+[m[32m        NEW.raw_user_meta_data->'custom_claims'->>'given_name',[m
+[32m+[m[32m        ' ',[m
+[32m+[m[32m        NEW.raw_user_meta_data->'custom_claims'->>'family_name'[m
+[32m+[m[32m      )), ''),[m
+[32m+[m[32m      NEW.email[m
+[32m+[m[32m    ),[m
+     'CSR',[m
+     true,[m
+     NOW()[m

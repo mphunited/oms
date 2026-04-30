@@ -110,6 +110,8 @@ All tables are in Supabase. Migrations managed via Drizzle in `drizzle/`.
 | company_settings | MPH United singleton row |
 | dropdown_configs | Configurable dropdown lists (one row per type; values is a jsonb string[]) |
 | audit_logs | Immutable change log |
+| credit_memos | Customer credit memo headers — Draft and Final states |
+| credit_memo_line_items | Line items for credit memos — activity type, description, qty, rate, amount |
 
 ### users table — key fields
 id (UUID, mirrors auth.users), email, name, avatar_url, entra_id, title, phone,
@@ -590,6 +592,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | /vendors/[vendorId] | Vendor detail, contacts, checklist template | 1 — Done |
 | /schedules | Weekly schedule generation | 1 — Done (Graph API email, auto-attached PDF) |
 | /commission | Commission report rebuilt around order_split_loads. One row per eligible split load. Filters: salesperson (commission_eligible only, auto-selects Renee), commission status (unpaid/paid/all), invoice payment status, ship date range, commission paid date range. Columns: Vendor, Customer, Sales/CSR, MPH PO (clickable link), Customer PO, Description, Ship Date, Qty, Invoice Status, Invoice Paid Date, Comm Paid Date. Footer: total selected qty + commission amount (qty × $3). Mark Commission Paid stamps split load rows. Server-side route guard: SALES users with can_view_commission=false are redirected to /dashboard. | 1 — Done |
+| /invoicing | Two-tab accounting workspace. Tab 1 — Invoice Queue: shows all orders where invoice_payment_status != 'Paid' AND (status = 'Ready To Invoice' OR ship_date < today), excluding Cancelled/Canceled. Columns: MPH PO (opens Order Summary Drawer), Customer, Customer PO, Order Type, Ship Date (amber highlight if past due), Invoice # (inline editable, R-suffix auto-appended if salesperson is commission-eligible), SP/CSR (salesperson top, CSR below), Invoice Status (inline dropdown), Date Paid (inline date picker), Save (per-row button). Save writes qb_invoice_number + invoice_payment_status + invoice_paid_date in single PATCH to /api/orders/[id]. Setting Paid requires Date Paid or save is blocked. Setting Paid triggers commission eligibility on all eligible order_split_loads rows. Downgrading from Paid shows confirmation dialog and resets invoice_paid_date and commission eligibility. Orders disappear from queue on next page load after Paid, not mid-session. Filters: Customer (searchable), Invoice Status (multi-select), Ship Date range. Persisted in URL params. Tab 2 — Credit Memos: list of all credit memos with Credit #, Date, Customer, Total, Status, Created By. Create/Edit form: customer selector, credit date, free-text line items (activity type, description, qty, rate, auto-calculated amount), memo-level notes, running total. Draft memos do not consume a sequence number. Finalizing stamps nextval('credit_memo_number_seq') and locks memo from editing. Final memos cannot be edited or deleted. Draft memos can be deleted same-day only. PDF generated on demand via GET /api/credit-memos/[id]/pdf — matches existing QBO credit memo format. | 1 |
 | /settings | Admin settings — Carriers, Order Statuses, Company Settings (name/address/contact/logo via PUT /api/company-settings), Order Number preview, Order Types (order_type_configs CRUD with commission eligibility toggle), Product Weights (product_weights CRUD) | 1 — Done |
 | /team | User management — ADMIN only, manages title/phone/email_signature/role/can_view_commission/permissions | 1 — Done |
 | /api/orders | GET orders with server-side filtering + pagination; POST new order. SALES role: salesperson_id filter unconditionally enforced server-side before query param processing. | 1 — Done |
@@ -608,6 +611,10 @@ This is the primary mechanism for repeat customer orders where most info stays t
 | /api/schedules/vendor-pdf | POST vendor/Frontline schedule PDF | 1 — Done |
 | /api/commission | GET commission data, role-filtered | 1 — Done |
 | /api/commission/mark-paid | POST bulk mark commission paid | 1 — Done |
+| /api/credit-memos | GET list (ACCOUNTING + ADMIN); POST create draft | 1 |
+| /api/credit-memos/[id] | PUT update draft (blocked if Final); DELETE draft same-day only | 1 |
+| /api/credit-memos/[id]/finalize | POST — stamps nextval('credit_memo_number_seq'), sets status=Final, locks record | 1 |
+| /api/credit-memos/[id]/pdf | GET — generates credit memo PDF via @react-pdf/renderer. Must declare export const runtime = 'nodejs' | 1 |
 | /api/auth/signout | POST — calls supabase.auth.signOut() server-side, clears auth cookies, redirects to /login. Triggered by native form POST from user-nav.tsx sign-out button. | 1 — Done |
 | /api/company-settings | GET company_settings singleton row; PUT updates name/legal_name/address/email/phone/logo_url (ADMIN only; preserves existing logo_url if submitted value is blank) | 1 — Done |
 
@@ -639,7 +646,7 @@ This is the primary mechanism for repeat customer orders where most info stays t
 
 ### Reports and admin
 13. ✅ COMPLETE — Commission report page — rebuilt around order_split_loads. Per-load commission tracking, mark-paid workflow, salesperson filter (commission_eligible only), status/invoice/date filters.
-14. Invoicing queue
+14. ✅ COMPLETE — Invoicing page (/invoicing). Two-tab page: Invoice Queue with inline editing (invoice number, status, date paid, R-suffix for commission-eligible salesperson, commission trigger on Paid), Credit Memos tab with Draft/Final workflow and PDF generation. New tables: credit_memos, credit_memo_line_items. New routes: /api/orders/[id]/invoice (PATCH), /api/credit-memos (GET/POST), /api/credit-memos/[id] (PUT/DELETE), /api/credit-memos/[id]/finalize (POST), /api/credit-memos/[id]/pdf (GET).
 15. ✅ COMPLETE — Admin/settings page — Carriers section (CARRIER type in dropdown_configs) and Order Statuses section (ORDER_STATUS type) built and working. Company Settings section (name, legal_name, address, email, phone, logo_url via PUT /api/company-settings; preserves logo_url if blank submitted). Order Number section (read-only preview using next-po-preview endpoint). Both dropdown sections include inline color swatches per item: clicking a swatch opens a native color picker; color changes update the swatch in real time; a "Save Colors" button appears only when colors are dirty and calls PUT /api/dropdown-configs with the updated meta. New items default to #6b7280; deleted items are removed from meta.
 16. ✅ COMPLETE — Dashboard (hero stat cards, pure CSS/HTML horizontal bar chart — Recharts not used, not installed — recent 10 orders table)
 17. Financial snapshot (admin only)
@@ -699,6 +706,33 @@ When Harding National is onboarded as a second tenant:
 - Architecture rules in Section 4 prohibiting `company_id` will need to be revised at that time.
 
 ---
+## 20. Invoicing Business Rules
+
+### Invoice Queue
+- The invoicing page is the primary workflow for Gracie and Peter to record invoice numbers and payment dates.
+- invoice_payment_status values: 'Not Invoiced' | 'Invoiced' | 'Paid' — defined in INVOICE_PAYMENT_STATUSES constant in schema.ts.
+- Setting invoice_payment_status = 'Paid' on the invoicing page triggers the same commission eligibility update as setting invoice_paid_date on the edit order page. Both paths must produce identical commission behavior.
+- Commission trigger: when invoice_payment_status is set to 'Paid', update commission_status to 'Eligible' on all order_split_loads rows for that order where the load's order_type is commission-eligible per order_type_configs.is_commission_eligible. Do NOT use keyword matching.
+- Downgrading invoice_payment_status from 'Paid' to any other value must show a confirmation dialog, clear invoice_paid_date, and reset commission_status to 'Not Eligible' on all split load rows that are not already 'Commission Paid'.
+- The invoicing queue filters use the existing GET /api/orders endpoint with a new ?view=invoicing param. No separate invoicing API route is needed for the queue.
+
+### R-Suffix Rule
+- When the salesperson on an order has is_commission_eligible = true, the Invoice # field on /invoicing auto-appends a literal "R" suffix.
+- The R is shown as a fixed non-editable suffix label on the input — the user types the number only.
+- The value stored in qb_invoice_number includes the R (e.g. "1234R").
+- This rule is tied to is_commission_eligible on users, not to a specific user's name or ID. Currently Renee Sauvageau is the only commission-eligible user.
+- Do not add a separate boolean or config for this — is_commission_eligible is the single source of truth.
+
+### Credit Memos
+- Credit memos are issued to customers only. No vendor credit memo document exists in this app.
+- Credit memos are standalone records — they do not alter invoice_payment_status or any field on orders.
+- Credit memo numbers are entered manually by Accounting. QBO owns the single number sequence covering both invoices and credit memos. The app records the number after it is generated in QBO. Do not create a Postgres sequence for credit memo numbers.
+- Activity type on credit memo line items is free text. Common values: IBC, Sales, COGS. No dropdown enforcement.
+- A single credit memo can reference multiple MPH PO numbers in the description field as free text. No FK relationship between credit_memo_line_items and orders is required.
+- Recycling order invoicing is descoped from Phase 1. Standard orders only on the invoicing page.
+- The credit memo PDF must match the existing QBO-generated format exactly: MPH United header, logo from company_settings.logo_url, Credit To block (customer name and address), Credit # and Date top right, line items table (Activity, QTY, Rate, Amount columns), Total Credit footer.
+- PDF route must declare export const runtime = 'nodejs' per Section 4 Rule 10.
+- Roles with access to /invoicing and all credit memo routes: ACCOUNTING, ADMIN. CSR access to be added later when invoicing workflow expands.
 
 ## 20. Phase 2 Features (Do NOT Build in Phase 1)
 
@@ -812,6 +846,12 @@ When Harding National is onboarded as a second tenant:
 | Confirmation email table columns | MPH PO, Customer PO, Description, Qty, Price, Ship Date, ETA Delivery Date. Ship Via and Payment Terms appear as labeled fields below the table. Ship To block below that. |
 | Sales Order # | Removed from all UI and PDFs April 28 2026. Schema column retained for historical data only. |
 | Ship To phone fields | Office Phone, Ext, Cell removed from Ship To section on Edit Order page. Retained in Bill To. |
+| Invoicing page R-suffix rule | When orders.salesperson_id resolves to a user where is_commission_eligible = true, the Invoice # input on /invoicing displays a fixed "R" suffix label and saves the value as qb_invoice_number with R appended (e.g. "1234R"). Currently applies to Renee Sauvageau only. Do not generalize to other users without an explicit product decision. |
+| Credit memo sequence | QBO owns the single number sequence for both invoices and credit memos. The app does not generate credit memo numbers. credit_memos.credit_number is manually entered by Accounting after creating the credit memo in QBO. This is the same pattern as qb_invoice_number on orders. Do not create a credit_memo_number_seq Postgres sequence. |
+| Invoice and credit memo sending | Invoices and credit memos are recorded in the app but not emailed or pushed from the app in Phase 1. No send button, no email action, no QBO push on either the invoicing page or credit memo forms. Email and QBO sync are Phase 2 only. |
+| Credit memo status | credit_memos.status is 'Draft' or 'Final'. Draft = editable, no sequence number assigned. Final = sequence number stamped, locked from all edits. DELETE is only permitted on Draft memos created today. This mirrors the PO number pattern where sequence is consumed only on confirmed save. |
+| Credit memo PDF response pattern | GET /api/credit-memos/[id]/pdf uses the same Buffer → response pattern as the PO PDF route. Read src/app/api/orders/[orderId]/po-pdf/route.ts before modifying. |
+| Invoicing SP/CSR column | Displays first names only, same as the orders page. Read src/components/orders/order-row.tsx for the pattern. |
 ---
 
 ## 22. What the Current Prototype Is NOT
@@ -888,3 +928,5 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 *Prior: April 23, 2026 — permissions jsonb column added to users (controls order-form salesperson/CSR dropdowns independently of app role; seeded for 15 users); freight_carrier changed from text Input to Select populated from dropdown_configs CARRIER type (34 carriers seeded); GET /api/users now accepts ?permission= filter; GET /api/dropdown-configs route created; on_auth_user_created auth trigger applied via Supabase MCP (tracks full_name → custom_claims → email priority); inviteMember fixed to use supabase.auth.admin.inviteUserByEmail; orders table server-side filters and search fully built; recycling placeholder page added; 192 customers and 32 vendors seeded.*
 *This document should be updated whenever significant decisions are made or scope changes.*
 *Retire: New_MPH_Order_Management_App.docx and MPH-OMS-HANDOFF.md once this file is committed to the repo.*
+
+*Last updated: April 29, 2026 — Invoicing page spec added (Section 20): invoice queue with inline editing, R-suffix rule for commission-eligible salesperson, credit memo tab with Draft/Final workflow, credit_memos and credit_memo_line_items tables, credit_memo_number_seq sequence. New routes: /invoicing, /api/credit-memos, /api/credit-memos/[id], /api/credit-memos/[id]/finalize, /api/credit-memos/[id]/pdf.*

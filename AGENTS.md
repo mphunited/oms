@@ -581,7 +581,11 @@ Key routes:
 - /api/orders/next-po-preview?initials=XX — GET, returns { preview: string } formatted as [Initials]-MPH[N] WITHOUT consuming the sequence (uses pg_sequence_last_value).
 - /api/order-type-configs — GET returns all rows ordered by sort_order (auth required, all roles). POST adds a single entry (ADMIN only). PUT replaces full list (ADMIN only). DELETE /api/order-type-configs/[id] removes one entry — refuses if any order_split_loads rows reference the type (ADMIN only).
 - /api/product-weights — GET returns all rows ordered by product_name (auth required, all roles). POST adds a row (ADMIN only). PUT /api/product-weights/[id] updates a row (ADMIN only). DELETE /api/product-weights/[id] removes a row (ADMIN only).
-
+- /api/orders/[id]/invoice — PATCH updates qb_invoice_number, invoice_payment_status, invoice_paid_date. Sets commission_status = 'Eligible' on eligible split loads when Paid. Resets on downgrade. ACCOUNTING and ADMIN only.
+- /api/credit-memos — GET list, POST create draft. ACCOUNTING and ADMIN only.
+- /api/credit-memos/[id] — PUT update draft (blocked if Final), DELETE draft same-day only.
+- /api/credit-memos/[id]/finalize — POST stamps credit_number, sets status=Final, locks record.
+- /api/credit-memos/[id]/pdf — GET generates PDF. export const runtime = 'nodejs' required.
 ---
 
 ## COLLABORATION
