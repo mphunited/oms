@@ -14,7 +14,9 @@ MAKE ALL FIXES AND CODE CHANGES AS SIMPLE AS HUMANLY POSSIBLE. THEY SHOULD ONLY 
 2. Read PRD.md — product requirements, feature scope, business rules, build order
 3. Read src/lib/db/schema.ts — current schema before writing any queries or API routes
 4. Review the TECHNOLOGY STACK section in this file before writing any code
-5. If working on auth or user sync: read drizzle/0010_auth_user_sync_trigger.sql to understand the SSO→public.users sync mechanism
+5. If working on auth or user sync: read drizzle/0010_auth_user_sync_trigger.sql
+   to understand the SSO→public.users sync mechanism. Do NOT use inviteUserByEmail
+   or manually insert rows into public.users — see ## USER ONBOARDING section.
 6. Then proceed with the task
 
 **Do not skip any of these steps. Do not rely on memory from a previous session.**
@@ -708,6 +710,20 @@ Do not attempt to fix the following — the fix breaks the toolchain:
 - **When Harding National is added as a second tenant**, the service_role-only policies
   must be replaced with tenant-aware RLS policies enforcing row-level tenant isolation
   **before** any Harding National data is added to the database.
+
+## USER ONBOARDING
+
+Do NOT use inviteUserByEmail or manually insert rows into public.users.
+The correct process:
+1. Share https://oms-jade.vercel.app with the new user
+2. They sign in with their MPH United Microsoft account
+3. The handle_new_auth_user trigger creates their public.users row automatically
+   with role=CSR and is_active=true
+4. Admin updates their role, permissions, can_view_commission, and
+   is_commission_eligible via the /team page pencil button
+
+The inviteMember server action in src/actions/team.ts is unused and should
+not be called. The Add Member button on /team shows the app URL only.
 
 ---
 

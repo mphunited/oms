@@ -53,6 +53,11 @@ Current assignments (as of April 23, 2026):
 - **CSR permissions:** Christina Bayne, Keith Ferrell, Jordan Mannering, Matt Cozik, Suzanne Ridenour, Gracie Medley
 - **No permissions:** Jack Schlaack, David Harding, Peter Mannering, Jack2, Service Account
 
+**User onboarding:** New users sign in directly at oms-jade.vercel.app using
+their MPH United Microsoft account. No invite flow. The auth trigger creates
+their public.users row on first login with role=CSR. Admin configures role
+and permissions afterward via /team page.
+
 ---
 
 ## 3. Technology Stack (All Decisions Final)
