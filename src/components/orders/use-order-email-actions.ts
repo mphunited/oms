@@ -111,8 +111,7 @@ export function useOrderEmailActions(
       const { fullOrders, vendor } = await fetchOrdersAndVendor(ids)
       const bolContacts = (vendor.bol_contacts ?? []) as Array<{ name: string; email: string; role?: 'to' | 'cc'; is_primary?: boolean }>
       const primary = bolContacts.find(c => (c.role === 'to' || c.role === 'cc') ? c.role === 'to' : c.is_primary === true) ?? bolContacts[0] ?? null
-      if (!primary?.email) throw new Error('No BOL contact email found for this vendor')
-      const to = [primary.email]
+      const to = primary?.email ? [primary.email] : []
       const cc = bolContacts.filter(c => c !== primary).map(c => c.email).filter((e): e is string => Boolean(e))
       const vendorName = vendor.name ?? ''
       const count = fullOrders.length
