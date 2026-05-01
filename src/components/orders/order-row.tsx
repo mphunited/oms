@@ -538,7 +538,7 @@ export function OrderTableRow({
         <td className="px-3 py-2">{order.customer_name ?? '—'}</td>
         <td className="px-3 py-2 text-muted-foreground">
           <div className="flex flex-col">
-            <span>{order.customer_po ?? ''}</span>
+            <span>{order.split_loads[0]?.customer_po ?? order.customer_po ?? ''}</span>
             {(() => {
               const loads = order.split_loads
               const hasWashReturn = loads.some(l => l.order_type?.includes('Wash & Return'))
