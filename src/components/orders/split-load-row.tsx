@@ -150,7 +150,7 @@ export function SplitLoadRow({
       <div className={`grid gap-3 ${index === 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
         <div className="space-y-1.5">
           <Label className="text-xs">Qty</Label>
-          <Input type="number" min="0" step="1" value={load.qty}
+          <Input type="number" min="0" step="1" value={load.qty != null && load.qty !== '' ? Math.round(Number(load.qty)) : ''}
             onChange={e => set('qty', e.target.value)} placeholder="0" />
         </div>
         {index === 0 && (

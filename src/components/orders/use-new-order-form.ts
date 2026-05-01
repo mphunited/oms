@@ -93,14 +93,18 @@ export function useNewOrderForm() {
         const hasLoad1Qty = vendor.default_load1_qty != null
         const hasLoad1Buy = vendor.default_load1_buy != null
         if (hasCost || hasQty || hasFreight || hasLoad1Qty || hasLoad1Buy) {
-          setLoads(prev => prev.map((l, i) => ({
-            ...l,
-            ...(hasCost ? { bottle_cost: vendor.default_bottle_cost! } : {}),
-            ...(hasQty ? { bottle_qty: vendor.default_bottle_qty! } : {}),
-            ...(hasFreight ? { mph_freight_bottles: vendor.default_mph_freight_bottles! } : {}),
-            ...(i === 0 && hasLoad1Qty ? { qty: vendor.default_load1_qty! } : {}),
-            ...(i === 0 && hasLoad1Buy ? { buy: vendor.default_load1_buy! } : {}),
-          })))
+          setLoads(prev => {
+            const load0 = prev[0]
+            const updated = {
+              ...load0,
+              ...(hasCost && !load0.bottle_cost ? { bottle_cost: vendor.default_bottle_cost! } : {}),
+              ...(hasQty && !load0.bottle_qty ? { bottle_qty: vendor.default_bottle_qty! } : {}),
+              ...(hasFreight && !load0.mph_freight_bottles ? { mph_freight_bottles: vendor.default_mph_freight_bottles! } : {}),
+              ...(hasLoad1Qty && !load0.qty ? { qty: vendor.default_load1_qty! } : {}),
+              ...(hasLoad1Buy && !load0.buy ? { buy: vendor.default_load1_buy! } : {}),
+            }
+            return [updated, ...prev.slice(1)]
+          })
         }
       }
     })
