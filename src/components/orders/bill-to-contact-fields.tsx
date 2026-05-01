@@ -1,6 +1,6 @@
 'use client'
 
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import type { Control, UseFormSetValue } from 'react-hook-form'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ export function BillToContactFields({ control, register, setValue, globalContact
   globalContacts?: ContactSuggestion[]
 }) {
   const { fields, append, remove } = useFieldArray({ control, name: 'bill_to_contacts' })
+  const watched = useWatch({ control, name: 'bill_to_contacts' })
 
   function selectSuggestion(idx: number, s: ContactSuggestion) {
     setValue(`bill_to_contacts.${idx}.name`, s.name)
@@ -37,7 +38,7 @@ export function BillToContactFields({ control, register, setValue, globalContact
           <div className="col-span-2 space-y-1">
             <Label className="text-xs text-muted-foreground">Name</Label>
             <ContactSuggestInput
-              value={(field as { name: string }).name ?? ''}
+              value={watched?.[idx]?.name ?? ''}
               onChange={v => setValue(`bill_to_contacts.${idx}.name`, v)}
               onSelectSuggestion={s => selectSuggestion(idx, s)}
               suggestions={globalContacts}
@@ -49,7 +50,7 @@ export function BillToContactFields({ control, register, setValue, globalContact
             <div className="flex gap-1.5">
               <ContactSuggestInput
                 type="email"
-                value={(field as { email: string }).email ?? ''}
+                value={watched?.[idx]?.email ?? ''}
                 onChange={v => setValue(`bill_to_contacts.${idx}.email`, v)}
                 onSelectSuggestion={s => selectSuggestion(idx, s)}
                 suggestions={globalContacts}
