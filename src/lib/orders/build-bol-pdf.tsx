@@ -108,7 +108,7 @@ export function BillOfLadingPDF({order,splitLoads,vendor,companySetting,weightMa
             </View>
             <View style={S.subB}>
               <Text style={S.lbl}>CUSTOMER PO #</Text>
-              <Text style={S.val}>{order.customer_po??'--'}</Text>
+              <Text style={S.val}>{splitLoads[0]?.customer_po ?? order.customer_po ?? '--'}</Text>
             </View>
           </View>
         </View>

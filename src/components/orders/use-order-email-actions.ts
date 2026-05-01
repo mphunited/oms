@@ -22,9 +22,11 @@ function blobToBase64(blob: Blob): Promise<string> {
 async function fetchOrdersAndVendor(ids: string[]) {
   const fullOrders = await Promise.all(
     ids.map(id =>
-      fetch(`/api/orders/${id}`).then(r => {
+      fetch(`/api/orders/${id}`).then(async r => {
         if (!r.ok) throw new Error(`Failed to fetch order ${id}`)
-        return r.json()
+        const data = await r.json()
+        console.log(`[Email Debug] fetched order ${id}:`, JSON.stringify(data, null, 2))
+        return data
       })
     )
   )
@@ -143,6 +145,9 @@ export function useOrderEmailActions(
       openDraft(webLink)
       onClearSelection()
     } catch (err) {
+      console.error('[BOL Email] error message:', err instanceof Error ? err.message : String(err))
+      console.error('[BOL Email] error stack:', err instanceof Error ? err.stack : 'no stack available')
+      console.error('[BOL Email] full error:', err)
       const msg = err instanceof Error ? err.message : String(err)
       if (msg === '__SAME_VENDOR__') toast.error('All selected orders must be from the same vendor', { id: toastId })
       else if (msg === '__NO_VENDOR__') toast.error('Selected orders have no vendor assigned', { id: toastId })
