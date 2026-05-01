@@ -315,6 +315,11 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     ChecklistPopup in order-row.tsx). Do not add checklist back to the edit page handleSave
     body in use-edit-order-form.ts.
 
+53. **DATE_FIELDS coercion on order_split_loads** — `ship_date`, `wanted_date`, and
+    `commission_paid_date` must be coerced from empty string (`""`) or `undefined` to `null`
+    before DB insert/update. PostgreSQL rejects empty string for date columns. This coercion
+    runs alongside NUMERIC_FIELDS coercion in the PATCH /api/orders/[orderId] route handler.
+
 49. **customer_contacts JSONB shape on orders** | `[{name, email, is_primary: boolean}]` — `is_primary=true` → To recipient, `false` → Cc recipient for confirmation emails. Default first contact to `true`, rest to `false`. Treat missing `is_primary` as `true` for backward compatibility. Stored on the orders table, not the customers table.
 
     **Email Customer Confirmation** | `POST /api/orders/confirmation-email`. Accepts `orderIds[]`. Guards against multi-customer selection (400). CPU detection: `freight_carrier` contains "CPU" (case-insensitive). Opens Graph API draft via `createDraft`/`openDraft` — does not auto-send. HTML email uses Outlook-safe nested table layout (not div-based). Table columns: MPH PO | Customer PO | Description | Qty | Price | Ship Date | ETA Delivery Date. Below table: Ship Via, Payment Terms, Ship To block. CPU orders append vendor address, dock_info, and TONU verbiage. Non-CPU orders append closing line only. `orders@mphunited.com` is NOT added to confirmation email Cc — it belongs to PO emails only. Greeting uses first names of all `is_primary=true` contacts.

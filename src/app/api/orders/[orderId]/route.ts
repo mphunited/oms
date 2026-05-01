@@ -107,7 +107,11 @@ export async function PATCH(
             for (const field of ALLOWED_LOAD_FIELDS) {
               if (field in load) clean[field] = (load as Record<string, unknown>)[field]
             }
+            const DATE_FIELDS = ['ship_date', 'wanted_date', 'commission_paid_date']
             for (const field of NUMERIC_FIELDS) {
+              if (clean[field] === '' || clean[field] === undefined) clean[field] = null
+            }
+            for (const field of DATE_FIELDS) {
               if (clean[field] === '' || clean[field] === undefined) clean[field] = null
             }
             clean.commission_status = deriveLoadCommissionStatus(clean.order_type as string, configMap)
@@ -125,7 +129,18 @@ export async function PATCH(
             delete lv.preview_po
           }
 
-          await tx.insert(order_split_loads).values(loadValues as NewOrderSplitLoad[])
+          console.log('[PATCH split loads] inserting rows:', JSON.stringify(loadValues, null, 2))
+          try {
+            await tx.insert(order_split_loads).values(loadValues as NewOrderSplitLoad[])
+          } catch (insertErr) {
+            console.error('[PATCH split loads] insert error:', {
+              message: (insertErr as any)?.message,
+              code: (insertErr as any)?.code,
+              detail: (insertErr as any)?.detail,
+              cause: (insertErr as any)?.cause,
+            })
+            throw insertErr
+          }
 
           const orderCommissionStatus = deriveOrderCommissionStatus(
             loadValues.map(l => ({
