@@ -308,7 +308,7 @@ export default function VendorDetailPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Default Bottle Qty</Label>
-            <Input type="number" min="0" step="1" value={defaultBottleQty} onChange={e => setDefaultBottleQty(e.target.value)} placeholder="0" />
+            <Input type="number" min="0" step="1" value={defaultBottleQty !== '' ? String(Math.round(Number(defaultBottleQty))) : ''} onChange={e => setDefaultBottleQty(e.target.value ? String(Math.round(Number(e.target.value))) : '')} placeholder="0" />
           </div>
           <div className="space-y-1.5">
             <Label>Default MPH Freight Bottles</Label>
