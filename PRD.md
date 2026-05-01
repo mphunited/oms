@@ -175,6 +175,8 @@ po_contacts (jsonb array — PO email recipients),
 bol_contacts (jsonb array — BOL email recipients, different from PO),
 invoice_contacts (jsonb array — invoice recipients, Phase 2 but schema now),
 checklist_template (jsonb array — default action items copied to new orders),
+default_bottle_cost, default_bottle_qty, default_mph_freight_bottles (numeric(10,2), nullable — autofill bottle fields on Load 1 of New Order form when vendor is selected),
+default_load1_qty, default_load1_buy (numeric(10,2), nullable — autofill qty and buy on Load 1 of New Order form when vendor is selected, only if those fields are currently empty),
 created_at
 
 ### customers table — key fields
@@ -885,6 +887,11 @@ When Harding National is onboarded as a second tenant:
 | Credit memo status | credit_memos.status is 'Draft' or 'Final'. Draft = editable, no sequence number assigned. Final = sequence number stamped, locked from all edits. DELETE is only permitted on Draft memos created today. This mirrors the PO number pattern where sequence is consumed only on confirmed save. |
 | Credit memo PDF response pattern | GET /api/credit-memos/[id]/pdf uses the same Buffer → response pattern as the PO PDF route. Read src/app/api/orders/[orderId]/po-pdf/route.ts before modifying. |
 | Invoicing SP/CSR column | Displays first names only, same as the orders page. Read src/components/orders/order-row.tsx for the pattern. |
+| Vendor Load 1 Defaults | vendors table has two additional nullable numeric(10,2) columns: default_load1_qty and default_load1_buy. On the vendor edit page these appear in a "Load 1 Defaults" section above the existing "Bottle Defaults" section, separated by a Separator. When a vendor is selected on the New Order form, default_load1_qty and default_load1_buy autofill qty and buy on Load 1 only — autofill is skipped if the field already has a non-empty value. Autofill does not apply on the Edit Order page. |
+| Bottle Qty display | bottle_qty and default_load1_qty are stored as numeric(10,2) in the DB but are displayed and entered as whole integers throughout the UI. All inputs use Math.round(Number(...)) for display and step="1". This applies to the split-load-row qty input, the bottle_qty input, and the default_load1_qty and default_bottle_qty inputs on the vendor detail page. |
+| New Order nav item | A "New Order" nav item (FilePlus icon) is in the left sidebar, directly below the "Orders" item. Links to /orders/new. Defined in src/config/nav.ts. |
+| Dashboard buttons | The /dashboard page has two prominent navy buttons (bg-[#00205B], hover:bg-[#B88A44]) at the top of the page content above the stat cards: "New Order" (FilePlus icon, links to /orders/new) and "Orders" (ClipboardList icon, links to /orders). |
+| Description type map | src/lib/orders/description-type-map.ts contains a specific entry for "275 Gal Empty Washable Bottle" using keywords ['Empty', 'Washable', '275']. This entry is placed before the generic ['275', 'Bottle'] entry so that descriptions containing "Empty Washable" match the specific type first. Ordering in this array is the only safeguard against broad keyword matches. |
 ---
 
 ## 22. What the Current Prototype Is NOT
@@ -963,3 +970,5 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 *Retire: New_MPH_Order_Management_App.docx and MPH-OMS-HANDOFF.md once this file is committed to the repo.*
 
 *Last updated: April 29, 2026 — Invoicing page spec added (Section 20): invoice queue with inline editing, R-suffix rule for commission-eligible salesperson, credit memo tab with Draft/Final workflow, credit_memos and credit_memo_line_items tables, credit_memo_number_seq sequence. New routes: /invoicing, /api/credit-memos, /api/credit-memos/[id], /api/credit-memos/[id]/finalize, /api/credit-memos/[id]/pdf.*
+
+*Last updated: May 1, 2026 — Vendor Load 1 Defaults (default_load1_qty, default_load1_buy columns; Load 1 Defaults section on vendor page; New Order form autofill guard); Bottle Qty whole-integer display rule; New Order nav item; Dashboard quick-action buttons; Description type map ordering fix for 275 Gal Empty Washable Bottle.*

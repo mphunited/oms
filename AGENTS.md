@@ -84,6 +84,8 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     These autofill the bottle section on order_split_loads when a CSR
     expands it on the order form. Fields remain editable per order.
     Migration required before building the vendor page.
+    vendors table also has default_load1_qty and default_load1_buy — these autofill qty and buy
+    on Load 1 of the New Order form when the vendor is selected, only if those fields are currently empty.
 
 12. **Git verification rule** — Claude Code pushes to remote but does not always update
     local main. Always run git pull origin main before running git log to verify commits.
