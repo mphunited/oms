@@ -111,7 +111,7 @@ export function CommissionTable({ rows, selectedIds, onToggle, onToggleAll, role
               <td className="px-3 py-2 text-muted-foreground">{row.customerPo ?? '—'}</td>
               <td className="px-3 py-2 text-muted-foreground">{row.description ?? '—'}</td>
               <td className="px-3 py-2 text-muted-foreground">{formatDate(row.ship_date)}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{row.qty ?? '—'}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{row.qty != null ? parseFloat(row.qty).toString() : '—'}</td>
               <td className="px-3 py-2">
                 <span className={
                   row.invoice_payment_status === 'Paid'

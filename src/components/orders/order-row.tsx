@@ -649,7 +649,7 @@ export function OrderTableRow({
                   <span className="col-span-2 whitespace-pre-wrap">{load.description ?? '—'}</span>
 
                   <span className="text-muted-foreground">Qty</span>
-                  <span>{load.qty ?? '—'}</span>
+                  <span>{load.qty != null ? parseFloat(load.qty).toString() : '—'}</span>
 
                   <span className="text-muted-foreground">Buy</span>
                   <span>{formatCurrency(load.buy)}</span>

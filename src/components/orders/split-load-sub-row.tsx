@@ -34,7 +34,7 @@ export function SplitLoadSubRow({ load, orderNumber, orderCustomerPo }: Props) {
       <td /> {/* customer col */}
       <td className="px-3 py-1.5">{custPo}</td>
       <td className="px-3 py-1.5" title={load.description ?? ''}>{load.description ?? '—'}</td>
-      <td className="px-3 py-1.5 text-right tabular-nums">{load.qty ?? '—'}</td>
+      <td className="px-3 py-1.5 text-right tabular-nums">{load.qty != null ? parseFloat(load.qty).toString() : '—'}</td>
       <td className="px-3 py-1.5">{formatDate(load.ship_date)}</td>
       <td className="px-3 py-1.5">{formatDate(load.wanted_date)}</td>
       <td /> {/* vendor col */}
