@@ -161,6 +161,11 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Validation: save is blocked if po_contacts or bol_contacts have entries but none with role="to".
     schedule_contacts used for vendor schedule email distribution.
     Frontline and admin schedule recipients live in company_settings.
+    If bol_contacts or po_contacts is empty, sendBolEmail and sendPoEmail open an Outlook
+    draft with an empty To field rather than throwing. This is intentional — allows manual
+    recipient entry while vendor contacts are being populated. Do not add a hard throw guard back.
+    As of 2026-04-30, all 28 vendors have empty bol_contacts. Contacts are being added manually
+    through the /vendors UI over time. This is expected and not a bug.
 
 23. **inArray() from drizzle-orm must be used for IN queries.** Never use
     manual .in() on a column. Import inArray from 'drizzle-orm'.
