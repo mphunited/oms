@@ -10,7 +10,14 @@ import { deriveInitials } from '@/lib/orders/commission-eligibility'
 
 type UserOption = { id: string; name: string | null; role: string }
 type Option = { id: string; name: string }
-type VendorOption = { id: string; name: string; is_blind_shipment_default: boolean }
+type VendorOption = {
+  id: string
+  name: string
+  is_blind_shipment_default: boolean
+  default_bottle_cost: string | null
+  default_bottle_qty: string | null
+  default_mph_freight_bottles: string | null
+}
 
 export function useNewOrderForm() {
   const [customers,        setCustomers]        = useState<Option[]>([])
@@ -77,9 +84,22 @@ export function useNewOrderForm() {
       if (vendor?.name !== 'MPH United / Alliance Container -- Hillsboro, TX') {
         form.setValue('sales_order_number', '')
       }
+      if (vendor) {
+        const hasCost = vendor.default_bottle_cost != null
+        const hasQty = vendor.default_bottle_qty != null
+        const hasFreight = vendor.default_mph_freight_bottles != null
+        if (hasCost || hasQty || hasFreight) {
+          setLoads(prev => prev.map(l => ({
+            ...l,
+            ...(hasCost ? { bottle_cost: vendor.default_bottle_cost! } : {}),
+            ...(hasQty ? { bottle_qty: vendor.default_bottle_qty! } : {}),
+            ...(hasFreight ? { mph_freight_bottles: vendor.default_mph_freight_bottles! } : {}),
+          })))
+        }
+      }
     })
     return () => sub.unsubscribe()
-  }, [vendors, form])
+  }, [vendors, form, setLoads])
 
   async function onSubmit(data: OrderFormValues): Promise<{ id: string; order_number: string } | null> {
     setSubmitError(null)

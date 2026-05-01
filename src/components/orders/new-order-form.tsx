@@ -243,6 +243,7 @@ export function NewOrderForm() {
             terms={form.watch('terms') ?? ''}
             csrInitials={csrInitials}
             isManualMode={isManualMode}
+            alwaysShowBottleFields
             onTermsChange={v => form.setValue('terms', v)}
             onChange={setLoads}
           />

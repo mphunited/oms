@@ -14,13 +14,15 @@ type Props = {
   terms: string
   csrInitials: string
   isManualMode?: boolean
+  alwaysShowBottleFields?: boolean
   onTermsChange: (v: string) => void
   onChange: (loads: SplitLoadValue[]) => void
 }
 
 export function OrderSplitLoadsEditor({
   loads, orderPo, orderCustomerPo, orderShipDate, orderWantedDate,
-  terms, csrInitials, isManualMode = false, onTermsChange, onChange,
+  terms, csrInitials, isManualMode = false, alwaysShowBottleFields = false,
+  onTermsChange, onChange,
 }: Props) {
   const [assigningPoIndex, setAssigningPoIndex] = useState<number | null>(null)
 
@@ -68,6 +70,7 @@ export function OrderSplitLoadsEditor({
           onAssignPo={() => handleAssignPo(index)}
           assigningPo={assigningPoIndex === index}
           isManualMode={isManualMode}
+          alwaysShowBottleFields={alwaysShowBottleFields}
         />
       ))}
       <button type="button" onClick={add}
