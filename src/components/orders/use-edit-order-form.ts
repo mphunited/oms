@@ -128,7 +128,7 @@ export function useEditOrderForm(orderId: string) {
           id: l.id,
           description: l.description ?? '',
           part_number: l.part_number ?? '',
-          qty: l.qty ?? '',
+          qty: l.qty != null ? parseFloat(l.qty).toString() : '',
           buy: l.buy ?? '',
           sell: l.sell ?? '',
           bottle_cost: l.bottle_cost ?? '',
