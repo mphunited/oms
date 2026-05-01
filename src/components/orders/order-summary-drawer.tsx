@@ -304,7 +304,7 @@ export function OrderSummaryDrawer({ orderId, statusMeta, onClose }: OrderSummar
                       )}
 
                       <span className="text-muted-foreground">Qty</span>
-                      <span>{load.qty ?? '—'}</span>
+                      <span>{load.qty != null ? parseFloat(load.qty).toString() : '—'}</span>
 
                       <span className="text-muted-foreground">Buy</span>
                       <span>{formatCurrency(load.buy)}</span>
