@@ -277,7 +277,7 @@ export default function VendorDetailPage() {
               type="number"
               min="0"
               step="1"
-              value={defaultLoad1Qty}
+              value={defaultLoad1Qty !== '' ? String(Math.round(Number(defaultLoad1Qty))) : ''}
               onChange={e => setDefaultLoad1Qty(e.target.value ? String(Math.round(Number(e.target.value))) : '')}
               placeholder="0"
             />
