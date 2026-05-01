@@ -129,18 +129,7 @@ export async function PATCH(
             delete lv.preview_po
           }
 
-          console.log('[PATCH split loads] inserting rows:', JSON.stringify(loadValues, null, 2))
-          try {
-            await tx.insert(order_split_loads).values(loadValues as NewOrderSplitLoad[])
-          } catch (insertErr) {
-            console.error('[PATCH split loads] insert error:', {
-              message: (insertErr as any)?.message,
-              code: (insertErr as any)?.code,
-              detail: (insertErr as any)?.detail,
-              cause: (insertErr as any)?.cause,
-            })
-            throw insertErr
-          }
+          await tx.insert(order_split_loads).values(loadValues as NewOrderSplitLoad[])
 
           const orderCommissionStatus = deriveOrderCommissionStatus(
             loadValues.map(l => ({
