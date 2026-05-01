@@ -34,8 +34,8 @@ export async function PATCH(
     const allowed = [
       'name', 'is_active', 'is_blind_shipment_default', 'notes', 'lead_contact', 'dock_info',
       'address', 'contacts', 'po_contacts', 'bol_contacts',
-      'checklist_template', 'default_bottle_cost',
-      'default_bottle_qty', 'default_mph_freight_bottles',
+      'checklist_template', 'default_load1_qty', 'default_load1_buy',
+      'default_bottle_cost', 'default_bottle_qty', 'default_mph_freight_bottles',
     ]
     const updateData: Record<string, unknown> = {}
     for (const key of allowed) {

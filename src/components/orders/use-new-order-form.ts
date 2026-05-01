@@ -14,6 +14,8 @@ type VendorOption = {
   id: string
   name: string
   is_blind_shipment_default: boolean
+  default_load1_qty: string | null
+  default_load1_buy: string | null
   default_bottle_cost: string | null
   default_bottle_qty: string | null
   default_mph_freight_bottles: string | null
@@ -88,12 +90,16 @@ export function useNewOrderForm() {
         const hasCost = vendor.default_bottle_cost != null
         const hasQty = vendor.default_bottle_qty != null
         const hasFreight = vendor.default_mph_freight_bottles != null
-        if (hasCost || hasQty || hasFreight) {
-          setLoads(prev => prev.map(l => ({
+        const hasLoad1Qty = vendor.default_load1_qty != null
+        const hasLoad1Buy = vendor.default_load1_buy != null
+        if (hasCost || hasQty || hasFreight || hasLoad1Qty || hasLoad1Buy) {
+          setLoads(prev => prev.map((l, i) => ({
             ...l,
             ...(hasCost ? { bottle_cost: vendor.default_bottle_cost! } : {}),
             ...(hasQty ? { bottle_qty: vendor.default_bottle_qty! } : {}),
             ...(hasFreight ? { mph_freight_bottles: vendor.default_mph_freight_bottles! } : {}),
+            ...(i === 0 && hasLoad1Qty ? { qty: vendor.default_load1_qty! } : {}),
+            ...(i === 0 && hasLoad1Buy ? { buy: vendor.default_load1_buy! } : {}),
           })))
         }
       }
