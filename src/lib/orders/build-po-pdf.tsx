@@ -150,7 +150,7 @@ export function PurchaseOrderPDF({ order, splitLoads, vendor, companySetting }: 
           <View style={S.rowBorder}>
             <View style={S.cell}>
               <Text style={S.lbl}>CUSTOMER PO #</Text>
-              <Text style={S.val}>{order.customer_po ?? '--'}</Text>
+              <Text style={S.val}>{splitLoads[0]?.customer_po ?? order.customer_po ?? '--'}</Text>
             </View>
             <View style={S.cellR}>
               <Text style={S.lbl}>REQUIRED SHIP DATE</Text>
