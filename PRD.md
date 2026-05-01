@@ -20,6 +20,7 @@ invoicing. They do not manufacture or warehouse product.
 
 ## 2. The Team
 
+<<<<<<< Updated upstream
 | Person | Role in App | Permissions (order dropdowns) | Notes |
 |--------|-------------|-------------------------------|-------|
 | Jack Schlaack | Admin / IT Lead | (none) | Builds the app using Claude Code. Not a professional developer. |
@@ -57,6 +58,23 @@ Current assignments (as of April 23, 2026):
 their MPH United Microsoft account. No invite flow. The auth trigger creates
 their public.users row on first login with role=CSR. Admin configures role
 and permissions afterward via /team page.
+=======
+| Person | Role in App | Notes |
+|--------|-------------|-------|
+| Jack Schlaack | Admin / IT Lead | Builds the app using Claude Code. Not a professional developer. |
+| Keith Ferrell | CSR & Admin | Will use the app. Will eventually contribute to building it. Currently unavailable. |
+| Christina Bayne | CSR / General Manager | Primary CSR user. Early tester target. |
+| Jordan Mannering | CSR | CSR user. |
+| Gracie Medley | Accounting & CSR | Accounting & CSR user. |
+| Renee Sauvageau | Salesperson | Commission report user. Only salesperson that receives commission. Sees only her own orders and can't edit orders. |
+| Jennifer Wilkes | Salesperson | Sees only her own orders and can't edit orders. |
+| Larry Mitchum | Salesperson | Sees only his own orders and can't edit orders. |
+| Mike Harding | Salesperson / Owner | Sees everything. |
+| David Harding | CFO / Owner | Sees everything |
+| Peter Mannering | Accounting / Controller | Accounting user.| 
+| Matt Cozik | CSR | CSR for Recycling Orders | 
+| Suzanne Ridenour | CSR | CSR for Empties | 
+>>>>>>> Stashed changes
 
 ---
 
@@ -276,6 +294,7 @@ Ready To Ship | Ready To Invoice | Complete | Cancelled
 20 Liters (5 gal) Jerrycans/Carboys |
 Other — Parts & Supplies
 
+<<<<<<< Updated upstream
 Canonical list managed in order_type_configs table. ORDER_TYPES constant in schema.ts
 is TypeScript type safety only. Runtime dropdown values fetched from GET /api/order-type-configs.
 
@@ -286,6 +305,10 @@ eligibility is only for one salesperson: Renee (not Mike, Larry, or Jennifer).
 **order_type now lives per split load on order_split_loads** in addition to the order-level
 field on orders. Commission eligibility is evaluated per split load based on its own
 order_type. The order-level order_type remains for filtering and display on the orders list.
+=======
+Commission eligibility is keyword-based: any type containing `New IBC`, `Bottle`,
+`Rebottle`, `Washout`, or `Wash & Return` is eligible. Commission eligibility is only for one salesperson and that is Renee (not Mike, Larry, or Jennifer)
+>>>>>>> Stashed changes
 
 ---
 
