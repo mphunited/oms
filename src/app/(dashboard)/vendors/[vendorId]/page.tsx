@@ -52,6 +52,8 @@ type Vendor = {
   po_contacts: VendorContact[] | null
   bol_contacts: VendorContact[] | null
   checklist_template: ChecklistItem[] | null
+  default_load1_qty: string | null
+  default_load1_buy: string | null
   default_bottle_cost: string | null
   default_bottle_qty: string | null
   default_mph_freight_bottles: string | null
@@ -121,8 +123,10 @@ export default function VendorDetailPage() {
   const [poContacts, setPoContacts]   = useState<VendorContact[]>([])
   const [bolContacts, setBolContacts] = useState<VendorContact[]>([])
   const [checklistTemplate, setChecklistTemplate] = useState<ChecklistItem[]>([])
-  const [defaultBottleCost, setDefaultBottleCost]             = useState('')
-  const [defaultBottleQty, setDefaultBottleQty]               = useState('')
+  const [defaultLoad1Qty, setDefaultLoad1Qty]                   = useState('')
+  const [defaultLoad1Buy, setDefaultLoad1Buy]                   = useState('')
+  const [defaultBottleCost, setDefaultBottleCost]               = useState('')
+  const [defaultBottleQty, setDefaultBottleQty]                 = useState('')
   const [defaultMphFreightBottles, setDefaultMphFreightBottles] = useState('')
 
   useEffect(() => {
@@ -141,6 +145,8 @@ export default function VendorDetailPage() {
         setPoContacts(normalizeContacts((data.po_contacts as unknown[]) ?? []))
         setBolContacts(normalizeContacts((data.bol_contacts as unknown[]) ?? []))
         setChecklistTemplate((data.checklist_template as ChecklistItem[]) ?? [])
+        setDefaultLoad1Qty(data.default_load1_qty ?? '')
+        setDefaultLoad1Buy(data.default_load1_buy ?? '')
         setDefaultBottleCost(data.default_bottle_cost ?? '')
         setDefaultBottleQty(data.default_bottle_qty ?? '')
         setDefaultMphFreightBottles(data.default_mph_freight_bottles ?? '')
@@ -180,6 +186,8 @@ export default function VendorDetailPage() {
           po_contacts: poContacts,
           bol_contacts: bolContacts,
           checklist_template: checklistTemplate,
+          default_load1_qty: defaultLoad1Qty || null,
+          default_load1_buy: defaultLoad1Buy || null,
           default_bottle_cost: defaultBottleCost || null,
           default_bottle_qty: defaultBottleQty || null,
           default_mph_freight_bottles: defaultMphFreightBottles || null,
@@ -255,6 +263,37 @@ export default function VendorDetailPage() {
       <section className="space-y-4">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Address</h2>
         <AddressFields label="Vendor Address" value={address} onChange={setAddress} />
+      </section>
+
+      <Separator />
+
+      <section className="space-y-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Load 1 Defaults</h2>
+        <p className="text-xs text-muted-foreground">These autofill Load 1 qty and buy price on new orders for this vendor.</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label>Default Load 1 Qty</Label>
+            <Input
+              type="number"
+              min="0"
+              step="1"
+              value={defaultLoad1Qty}
+              onChange={e => setDefaultLoad1Qty(e.target.value ? String(Math.round(Number(e.target.value))) : '')}
+              placeholder="0"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Default Load 1 Buy</Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={defaultLoad1Buy}
+              onChange={e => setDefaultLoad1Buy(e.target.value)}
+              placeholder="0.00"
+            />
+          </div>
+        </div>
       </section>
 
       <Separator />

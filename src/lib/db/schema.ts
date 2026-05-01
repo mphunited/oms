@@ -189,6 +189,14 @@ export const vendors = pgTable("vendors", {
   // [{ name, email, phone, role: "to"|"cc" }] — recipients for vendor schedule email
   checklist_template: jsonb("checklist_template"),
   // [{ label, done }]
+  default_load1_qty: numeric("default_load1_qty", {
+    precision: 10,
+    scale: 2,
+  }),
+  default_load1_buy: numeric("default_load1_buy", {
+    precision: 10,
+    scale: 2,
+  }),
   default_bottle_cost: numeric("default_bottle_cost", {
     precision: 10,
     scale: 2,
