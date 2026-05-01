@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   ShoppingCart,
+  FilePlus,
   RefreshCw,
   Users,
   Truck,
@@ -32,6 +33,11 @@ export const NAV_ITEMS: NavItem[] = [
     title: "Orders",
     href: "/orders",
     icon: ShoppingCart,
+  },
+  {
+    title: "New Order",
+    href: "/orders/new",
+    icon: FilePlus,
   },
   {
     title: "Recycling",

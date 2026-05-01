@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { FilePlus, ClipboardList } from 'lucide-react'
 import { db } from '@/lib/db'
 import { orders, customers, users } from '@/lib/db/schema'
 import { eq, not, inArray, and, gte, lte, desc, count, sql } from 'drizzle-orm'
@@ -95,6 +96,24 @@ export default async function DashboardPage() {
   return (
     <div className="p-6 max-w-5xl space-y-8">
       <h1 className="text-2xl font-semibold">Dashboard</h1>
+
+      {/* Quick actions */}
+      <div className="flex gap-3">
+        <Link
+          href="/orders/new"
+          className="inline-flex items-center gap-2 rounded-md bg-[#00205B] px-5 py-3 text-base font-medium text-white shadow hover:bg-[#B88A44] transition-colors"
+        >
+          <FilePlus className="h-5 w-5" />
+          New Order
+        </Link>
+        <Link
+          href="/orders"
+          className="inline-flex items-center gap-2 rounded-md bg-[#00205B] px-5 py-3 text-base font-medium text-white shadow hover:bg-[#B88A44] transition-colors"
+        >
+          <ClipboardList className="h-5 w-5" />
+          Orders
+        </Link>
+      </div>
 
       {/* Hero stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
