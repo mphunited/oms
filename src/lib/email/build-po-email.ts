@@ -113,7 +113,7 @@ export function buildPoEmail(
       count === 1
         ? (first.customer?.name ?? '')
         : [...new Set(orders.map(o => o.customer?.name).filter(Boolean))].join(', ')
-    intro = `Please find ${orderWord} below for MPH United / ${vendorName}${vendorLoc ? ` -- ${vendorLoc}` : ''}${shipToLoc ? ` -- ${shipToLoc}` : ''} to ${customerNames}.`
+    intro = `Please find ${orderWord} below for MPH United / ${vendorName}${vendorLoc ? ` -- ${vendorLoc}` : ''}${shipToLoc ? ` -- ${shipToLoc}` : ''} for ${customerNames}.`
   }
 
   // ── Table ────────────────────────────────────────────────────────────────────
@@ -162,11 +162,11 @@ export function buildPoEmail(
   if (!isBlind) {
     const salesNums = orders.map(o => o.sales_order_number).filter(Boolean)
     if (salesNums.length > 0) {
-      below.push(`<p style="margin:6px 0;font-size:13px;"><strong>Sales Order #:</strong> ${salesNums.join(', ')}</p>`)
+      below.push(`<p style="margin:6px 0;font-size:12px;"><strong>Sales Order #:</strong> ${salesNums.join(', ')}</p>`)
     }
 
     const carriers = [...new Set(orders.map(o => o.freight_carrier).filter(Boolean))]
-    below.push(`<p style="margin:6px 0;font-size:13px;"><strong>Ship Via:</strong> ${carriers.length > 0 ? carriers.join(', ') : '—'}</p>`)
+    below.push(`<p style="margin:6px 0;font-size:12px;"><strong>Ship Via:</strong> ${carriers.length > 0 ? carriers.join(', ') : '—'}</p>`)
 
     const addr = first.ship_to
     if (addr) {
@@ -177,27 +177,27 @@ export function buildPoEmail(
       ]
         .filter(Boolean)
         .join('<br/>')
-      below.push(`<p style="margin:6px 0;font-size:13px;"><strong>Ship To:</strong><br/>${addrLines}</p>`)
+      below.push(`<p style="margin:6px 0;font-size:12px;"><strong>Ship To:</strong><br/>${addrLines}</p>`)
     }
 
     const notesOrders = orders.filter(o => o.po_notes)
     if (notesOrders.length === 1) {
-      below.push(`<p style="margin:6px 0;font-size:13px;"><strong>PO Notes:</strong> ${notesOrders[0].po_notes}</p>`)
+      below.push(`<p style="margin:6px 0;font-size:12px;"><strong>PO Notes:</strong> ${notesOrders[0].po_notes}</p>`)
     } else if (notesOrders.length > 1) {
       below.push(
         notesOrders
-          .map(o => `<p style="margin:6px 0;font-size:13px;"><strong>PO Notes (${o.order_number}):</strong> ${o.po_notes}</p>`)
+          .map(o => `<p style="margin:6px 0;font-size:12px;"><strong>PO Notes (${o.order_number}):</strong> ${o.po_notes}</p>`)
           .join('')
       )
     }
   } else {
     const notesOrders = orders.filter(o => o.po_notes)
     if (notesOrders.length === 1) {
-      below.push(`<p style="margin:6px 0;font-size:13px;"><strong>PO Notes:</strong> ${notesOrders[0].po_notes}</p>`)
+      below.push(`<p style="margin:6px 0;font-size:12px;"><strong>PO Notes:</strong> ${notesOrders[0].po_notes}</p>`)
     } else if (notesOrders.length > 1) {
       below.push(
         notesOrders
-          .map(o => `<p style="margin:6px 0;font-size:13px;"><strong>PO Notes (${o.order_number}):</strong> ${o.po_notes}</p>`)
+          .map(o => `<p style="margin:6px 0;font-size:12px;"><strong>PO Notes (${o.order_number}):</strong> ${o.po_notes}</p>`)
           .join('')
       )
     }
@@ -210,11 +210,11 @@ export function buildPoEmail(
       : 'Please confirm receipt of these POs and provide expected ship dates at your earliest convenience. Please reference MPH PO # on all correspondence and shipping documents.'
 
   // ── Assemble ─────────────────────────────────────────────────────────────────
-  const bodyHtml = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;max-width:760px;line-height:1.5;">
+  const bodyHtml = `<div style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;color:#1f2937;max-width:760px;line-height:1.5;">
   <p style="margin:0 0 16px;">Hello ${greetingName},</p>
   <p style="margin:0 0 20px;">${intro}</p>
   <p style="margin:0 0 8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#374151;">PRODUCTS ORDERED</p>
-  <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px;">
+  <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:12px;">
     <thead>${headerRow}</thead>
     <tbody>${dataRows.join('')}</tbody>
   </table>

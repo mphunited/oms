@@ -122,11 +122,10 @@ export async function sendBolEmail(
       : '—'
     const shipDateFmt = formatDate(shipDate || order.ship_date)
     const subject = `MPH United BOL ${order.order_number} -- ${vendorName} | Ship ${shipDateFmt}`
-    const bodyHtml = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;max-width:700px;line-height:1.6;">
+    const bodyHtml = `<div style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;color:#1f2937;max-width:700px;line-height:1.6;">
   <p style="margin:0 0 16px;">Hello ${vendorName},</p>
   <p style="margin:0 0 16px;">Please find attached the Bill of Lading for MPH United order ${order.order_number}, shipping to ${shipToLine} on ${shipDateFmt}.</p>
   <p style="margin:0 0 24px;">Please confirm receipt at your earliest convenience.</p>
-  <p style="margin:0;">Thank you,<br/>MPH United</p>
 </div>`
     const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
     const pdfRes = await fetch(`/api/orders/${order.id}/bol-pdf`)

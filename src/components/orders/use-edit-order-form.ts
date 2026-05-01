@@ -229,7 +229,7 @@ export function useEditOrderForm(orderId: string) {
       { id: orderId, order_number: order.order_number, vendor_id: order.vendor_id,
         vendor_name: order.vendor_name, customer_name: order.customer_name,
         customer_po: order.customer_po, sales_order_number: order.sales_order_number,
-        freight_carrier: order.freight_carrier, ship_date: order.ship_date,
+        freight_carrier: freightCarrier || order.freight_carrier, ship_date: order.ship_date,
         is_blind_shipment: order.is_blind_shipment },
       splitLoads, shipDate, shipTo, poNotes, setEmailingPo,
     )

@@ -68,7 +68,7 @@ function firstNames(contacts: Array<{ name?: string }>): string {
 
 function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustomerPo: string | null, wantedDate: string | null): string {
   const rows = loads.map(l => {
-    const mphPo = escapeHtml(l.order_number_override ?? orderNumber)
+    const mphPo = escapeHtml(l.order_number_override || orderNumber)
     const custPo = escapeHtml(l.customer_po ?? orderCustomerPo ?? '—')
     const desc = escapeHtml(l.description ?? '—')
     const qty = escapeHtml(l.qty ?? '—')
@@ -77,13 +77,13 @@ function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustome
     const eta = formatDate(wantedDate)
     return `
       <tr>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${mphPo}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${custPo}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${desc}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;text-align:right;">${qty}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;text-align:right;">${price}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${shipDate}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:Arial,sans-serif;font-size:14px;">${eta}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">${mphPo}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">${custPo}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">${desc}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;text-align:right;">${qty}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;text-align:right;">${price}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">${shipDate}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">${eta}</td>
       </tr>`
   }).join('')
 
@@ -91,13 +91,13 @@ function buildTable(loads: ConfirmationLoad[], orderNumber: string, orderCustome
     <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:20px;">
       <thead>
         <tr style="background-color:#00205B;">
-          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">MPH PO</th>
-          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Customer PO</th>
-          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Description</th>
-          <th style="padding:10px 12px;text-align:right;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Qty</th>
-          <th style="padding:10px 12px;text-align:right;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Price</th>
-          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">Ship Date</th>
-          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:Arial,sans-serif;font-size:13px;">ETA Delivery Date</th>
+          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">MPH PO</th>
+          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">Customer PO</th>
+          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">Description</th>
+          <th style="padding:10px 12px;text-align:right;color:#ffffff;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">Qty</th>
+          <th style="padding:10px 12px;text-align:right;color:#ffffff;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">Price</th>
+          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">Ship Date</th>
+          <th style="padding:10px 12px;text-align:left;color:#ffffff;font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;">ETA Delivery Date</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -132,15 +132,11 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
   const greetingContacts = primaryContacts.length > 0 ? primaryContacts : toContacts.length > 0 ? toContacts : contacts
   const greeting = firstNames(greetingContacts)
 
-  const allMphPos = orders.flatMap(o =>
-    o.split_loads.map(l => l.order_number_override ?? o.order_number)
-  )
-  const uniqueMphPos = [...new Set(allMphPos)]
-
   const custPo = first.customer_po
+  const mphPoList = orders.map(o => o.order_number).join(', ')
   const subject = custPo && orders.length === 1
-    ? `Order Confirmation — ${first.customer_name} | PO: ${custPo} | MPH: ${uniqueMphPos.join(', ')}`
-    : `Order Confirmation — ${first.customer_name} | MPH: ${uniqueMphPos.join(', ')}`
+    ? `Order Confirmation — ${first.customer_name} | PO: ${custPo} | MPH: ${first.order_number}`
+    : `Order Confirmation — ${first.customer_name} | MPH: ${mphPoList}`
 
   const tablesHtml = orders.map(o => buildTable(o.split_loads, o.order_number, o.customer_po, o.wanted_date)).join('')
 
@@ -160,15 +156,16 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
   const cpuOrder = orders.find(o => isCpu(o.freight_carrier))
   const vendorBlock = cpuOrder
     ? `
-      <p style="font-family:Arial,sans-serif;font-size:14px;margin:20px 0 8px;">For picking up, please contact the shipping area at the following plant below to schedule your appointment prior to going on for it. Though it's not common, we may have unforeseen issues that happen overnight that could negatively impact the timely shipment of your load. We ask that you have the carrier contact the plant the morning of the scheduled pick up to make sure it is still ready to go to avoid TONU charges.</p>
-      <p style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;margin:8px 0;">***HAVE MPH PO # FOR PICK UP REFERENCE***</p>
-      <p style="font-family:Arial,sans-serif;font-size:14px;margin:8px 0;">
+      <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;margin:20px 0 8px;">For picking up, please contact the shipping area at the following plant below to schedule your appointment prior to going on for it. Though it's not common, we may have unforeseen issues that happen overnight that could negatively impact the timely shipment of your load. We ask that you have the carrier contact the plant the morning of the scheduled pick up to make sure it is still ready to go to avoid TONU charges.</p>
+      <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;font-weight:bold;margin:8px 0;">***HAVE MPH PO # FOR PICK UP REFERENCE***</p>
+      <br>
+      <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;margin:8px 0;">
         ${escapeHtml(cpuOrder.vendor_name ?? '')}<br>
         ${escapeHtml(cpuOrder.vendor_address?.street ?? '')}<br>
         ${[escapeHtml(cpuOrder.vendor_address?.city), escapeHtml(cpuOrder.vendor_address?.state), escapeHtml(cpuOrder.vendor_address?.zip)].filter(Boolean).join(', ')}<br>
         ${escapeHtml(cpuOrder.vendor_dock_info ?? '')}
       </p>`
-    : `<p style="font-family:Arial,sans-serif;font-size:14px;margin:20px 0 0;">Please do not hesitate to reach out with any questions.</p>`
+    : `<p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;margin:20px 0 0;">Please do not hesitate to reach out with any questions.</p>`
 
   const greetingLine = greeting ? `Hello ${greeting},` : 'Hello,'
 
@@ -176,27 +173,27 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td align="left" valign="top">
-          <table width="700" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,sans-serif;color:#1f2937;text-align:left;">
+          <table width="700" cellpadding="0" cellspacing="0" border="0" style="font-family:'Aptos','Calibri','Arial',sans-serif;color:#1f2937;text-align:left;">
             <tr>
               <td style="padding:0;">
-                <p style="font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">${escapeHtml(greetingLine)}</p>
-                <p style="font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">Please see your order confirmation below.</p>
+                <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;margin:0 0 16px;">${escapeHtml(greetingLine)}</p>
+                <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;margin:0 0 16px;">Please see your order confirmation below.</p>
 
                 ${tablesHtml}
 
                 <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                   <tr>
-                    <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Ship Via:</td>
-                    <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${shipVia}</td>
+                    <td style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Ship Via:</td>
+                    <td style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;padding:2px 0;">${shipVia}</td>
                   </tr>
                   <tr>
-                    <td style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Payment Terms:</td>
-                    <td style="font-family:Arial,sans-serif;font-size:14px;padding:2px 0;">${paymentTerms}</td>
+                    <td style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;font-weight:bold;padding:2px 12px 2px 0;color:#00205B;">Payment Terms:</td>
+                    <td style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;padding:2px 0;">${paymentTerms}</td>
                   </tr>
                 </table>
 
-                <p style="font-family:Arial,sans-serif;font-size:14px;font-weight:bold;margin:0 0 4px;color:#00205B;">Ship To:</p>
-                <p style="font-family:Arial,sans-serif;font-size:14px;margin:0 0 16px;">${shipToLines}</p>
+                <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;font-weight:bold;margin:0 0 4px;color:#00205B;">Ship To:</p>
+                <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12px;margin:0 0 16px;">${shipToLines}</p>
 
                 ${vendorBlock}
               </td>
