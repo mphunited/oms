@@ -41,12 +41,13 @@ type SplitLoadRowProps = {
   onAssignPo: () => Promise<void>
   assigningPo: boolean
   isManualMode?: boolean
+  alwaysShowBottleFields?: boolean
 }
 
 export function SplitLoadRow({
   load, index, orderPo, orderCustomerPo, orderShipDate, orderWantedDate,
   terms, onTermsChange, onChange, onRemove, onAssignPo, assigningPo,
-  isManualMode = false,
+  isManualMode = false, alwaysShowBottleFields = false,
 }: SplitLoadRowProps) {
   const [orderTypes, setOrderTypes] = useState<string[]>([])
 
@@ -57,7 +58,7 @@ export function SplitLoadRow({
   const set = (field: keyof SplitLoadValue, value: string | boolean) =>
     onChange({ ...load, [field]: value })
 
-  const showBottleFields = BOTTLE_KEYWORDS.some(kw => load.order_type.includes(kw))
+  const showBottleFields = alwaysShowBottleFields || BOTTLE_KEYWORDS.some(kw => load.order_type.includes(kw))
 
   const mphPoDisplay = index === 0
     ? (orderPo || '(auto-generated on save)')
