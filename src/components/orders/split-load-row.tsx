@@ -214,7 +214,7 @@ export function SplitLoadRow({
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Bottle Qty</Label>
             <Input type="number" min="0" step="1" value={load.bottle_qty}
-              onChange={e => set('bottle_qty', e.target.value)} placeholder="0" />
+              onChange={e => { const v = parseInt(e.target.value, 10); set('bottle_qty', isNaN(v) ? '' : String(v)) }} placeholder="0" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">MPH Freight Bottles</Label>
