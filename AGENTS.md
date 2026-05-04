@@ -297,7 +297,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 46. **Filter bar on /orders has two always-visible rows — no More Filters toggle.**
     Row 1: Search | lifecycle pills (Active/Complete/Flagged/All) | Status multi-select.
     Row 2: Customer | Vendor | CSR | Salesperson | Ship Date range.
-    No Cancelled lifecycle pill. Both rows flex-wrap for smaller screens.
+    No Canceled lifecycle pill. Both rows flex-wrap for smaller screens.
 
 41. **New Order form layout rules:**
     - Blind Shipment toggle is in the Customer & Vendor section, second row under Vendor.
