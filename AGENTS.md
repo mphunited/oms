@@ -360,6 +360,12 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     CONFIRMATION | BILL_TO | BOTH. Company is optional (nullable text).
     Do NOT add foreign keys from global_email_contacts to any other table.
     Do NOT attempt to sync or derive entries from the customers or vendors tables.
+
+54. **Canonical order status spelling is "Canceled" (one L).** "Cancelled" (two L's) was
+    removed from ORDER_STATUSES in schema.ts and normalized in the database via migration
+    in May 2026. Do not reintroduce "Cancelled" anywhere — not in code, queries, filters,
+    seed data, or migrations. The lifecycle filter in GET /api/orders uses "Canceled" only.
+
 ---
 
 ## TECHNOLOGY STACK
@@ -665,6 +671,10 @@ Always verify the commit appears on main with `git log --oneline -5` before repo
 ---
 
 ## FILE STRUCTURE REFERENCE
+src/components/schedules/schedules-client.tsx — schedule page client; Download PDF saves file locally; Email Schedule is always visible, self-contained single-click (fetches PDF, reads headers, creates Graph API draft with PDF attached, opens Outlook); no prior Download PDF required
+src/app/api/schedules/admin-pdf/route.ts  — POST: renders admin schedule PDF; returns recipients in x-email-to/x-email-cc/x-email-subject headers from company_settings.admin_schedule_recipients
+src/app/api/schedules/vendor-pdf/route.ts — POST: renders vendor or Frontline schedule PDF; returns recipients from vendors.schedule_contacts (vendor) or company_settings.frontline_schedule_contacts (Frontline) in response headers
+src/lib/schedules/                        — schedule PDF builders, order fetching, date utils, email utils
 src/lib/db/schema.ts          — Drizzle schema, always read before writing queries
 src/lib/db/index.ts           — Drizzle client
 src/lib/email/msal-client.ts  — MSAL singleton + getMailToken()
