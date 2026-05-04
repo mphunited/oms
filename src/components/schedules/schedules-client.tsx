@@ -188,12 +188,9 @@ export function SchedulesClient() {
   }, [startDate, endDate]);
 
   async function handleEmailSchedule(type: ScheduleType) {
-    const draft = type === "admin" ? adminEmailDraft : type === "vendor" ? vendorEmailDraft : frontlineEmailDraft;
-    if (!draft) return;
     setEmailingSchedule(type);
     const toastId = toast.loading("Creating draft…");
     try {
-      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()]);
       let pdfRes: Response;
       if (type === "admin") {
         pdfRes = await fetch("/api/schedules/admin-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ startDate, endDate }) });
@@ -203,8 +200,22 @@ export function SchedulesClient() {
         pdfRes = await fetch("/api/schedules/vendor-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ startDate, endDate, frontline: true }) });
       }
       if (!pdfRes.ok) throw new Error("Failed to fetch schedule PDF");
+      const count = parseInt(pdfRes.headers.get("x-shipment-count") ?? "0", 10);
+      const emailTo = pdfRes.headers.get("x-email-to") ?? "";
+      const emailCc = pdfRes.headers.get("x-email-cc") ?? "";
+      const emailSubject = (pdfRes.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
+      const formattedStart = formatDate(startDate);
+      const formattedEnd = formatDate(endDate);
+      const bodyHtml = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`;
       const base64 = await blobToBase64(await pdfRes.blob());
-      const { id: messageId, webLink } = await createDraft(token, { to: draft.to, cc: draft.cc, subject: draft.subject, bodyHtml: draft.bodyHtml, signature });
+      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()]);
+      const { id: messageId, webLink } = await createDraft(token, {
+        to: emailTo.split(",").filter(Boolean),
+        cc: emailCc.split(",").filter(Boolean),
+        subject: emailSubject,
+        bodyHtml,
+        signature,
+      });
       await attachFileToDraft(token, messageId, `MPH Schedule ${startDate}.pdf`, base64);
       toast.success("Draft created — opening Outlook", { id: toastId });
       openDraft(webLink);
@@ -220,7 +231,7 @@ export function SchedulesClient() {
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Weekly Schedules</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Click Generate PDF to download the schedule, then click Email Schedule to send it.
+          Click Download PDF to save the schedule, then click Email Schedule to send it.
         </p>
       </div>
 
@@ -252,15 +263,13 @@ export function SchedulesClient() {
         <div className="flex flex-wrap items-center gap-3">
           <Button onClick={handleGenerateAdmin} disabled={generating !== null} className="h-8 text-sm bg-[#00205B] hover:bg-[#00205B]/90">
             {generating === "admin" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 mr-1.5" />}
-            Generate PDF
+            Download PDF
           </Button>
           {adminCount !== null && <span className="text-sm text-muted-foreground">{adminCount} shipment{adminCount !== 1 ? "s" : ""}</span>}
-          {adminEmailDraft && (
-            <Button variant="outline" className="h-8 text-sm" disabled={emailingSchedule !== null} onClick={() => handleEmailSchedule("admin")}>
-              {emailingSchedule === "admin" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 mr-1.5" />}
-              {emailingSchedule === "admin" ? "Creating…" : "Email Schedule"}
-            </Button>
-          )}
+          <Button variant="outline" className="h-8 text-sm" disabled={emailingSchedule !== null} onClick={() => handleEmailSchedule("admin")}>
+            {emailingSchedule === "admin" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 mr-1.5" />}
+            {emailingSchedule === "admin" ? "Creating…" : "Email Schedule"}
+          </Button>
         </div>
       </div>
 
@@ -291,15 +300,13 @@ export function SchedulesClient() {
         <div className="flex flex-wrap items-center gap-3">
           <Button onClick={handleGenerateVendor} disabled={generating !== null || !selectedVendorId} className="h-8 text-sm bg-[#00205B] hover:bg-[#00205B]/90">
             {generating === "vendor" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 mr-1.5" />}
-            Generate PDF
+            Download PDF
           </Button>
           {vendorCount !== null && <span className="text-sm text-muted-foreground">{vendorCount} shipment{vendorCount !== 1 ? "s" : ""}</span>}
-          {vendorEmailDraft && (
-            <Button variant="outline" className="h-8 text-sm" disabled={emailingSchedule !== null} onClick={() => handleEmailSchedule("vendor")}>
-              {emailingSchedule === "vendor" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 mr-1.5" />}
-              {emailingSchedule === "vendor" ? "Creating…" : "Email Schedule"}
-            </Button>
-          )}
+          <Button variant="outline" className="h-8 text-sm" disabled={emailingSchedule !== null} onClick={() => handleEmailSchedule("vendor")}>
+            {emailingSchedule === "vendor" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 mr-1.5" />}
+            {emailingSchedule === "vendor" ? "Creating…" : "Email Schedule"}
+          </Button>
         </div>
       </div>
 
@@ -313,15 +320,13 @@ export function SchedulesClient() {
         <div className="flex flex-wrap items-center gap-3">
           <Button onClick={handleGenerateFrontline} disabled={generating !== null} className="h-8 text-sm bg-[#00205B] hover:bg-[#00205B]/90">
             {generating === "frontline" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <FileText className="h-3.5 w-3.5 mr-1.5" />}
-            Generate PDF
+            Download PDF
           </Button>
           {frontlineCount !== null && <span className="text-sm text-muted-foreground">{frontlineCount} shipment{frontlineCount !== 1 ? "s" : ""}</span>}
-          {frontlineEmailDraft && (
-            <Button variant="outline" className="h-8 text-sm" disabled={emailingSchedule !== null} onClick={() => handleEmailSchedule("frontline")}>
-              {emailingSchedule === "frontline" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 mr-1.5" />}
-              {emailingSchedule === "frontline" ? "Creating…" : "Email Schedule"}
-            </Button>
-          )}
+          <Button variant="outline" className="h-8 text-sm" disabled={emailingSchedule !== null} onClick={() => handleEmailSchedule("frontline")}>
+            {emailingSchedule === "frontline" ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Mail className="h-3.5 w-3.5 mr-1.5" />}
+            {emailingSchedule === "frontline" ? "Creating…" : "Email Schedule"}
+          </Button>
         </div>
       </div>
     </div>
