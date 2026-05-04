@@ -51,6 +51,7 @@ type Vendor = {
   contacts: VendorContact[] | null
   po_contacts: VendorContact[] | null
   bol_contacts: VendorContact[] | null
+  schedule_contacts: VendorContact[] | null
   checklist_template: ChecklistItem[] | null
   default_load1_qty: string | null
   default_load1_buy: string | null
@@ -120,8 +121,9 @@ export default function VendorDetailPage() {
   const [notes, setNotes]             = useState('')
   const [address, setAddress]         = useState<AddressValue | null>(null)
   const [contacts, setContacts]       = useState<VendorContact[]>([])
-  const [poContacts, setPoContacts]   = useState<VendorContact[]>([])
-  const [bolContacts, setBolContacts] = useState<VendorContact[]>([])
+  const [poContacts, setPoContacts]             = useState<VendorContact[]>([])
+  const [bolContacts, setBolContacts]           = useState<VendorContact[]>([])
+  const [scheduleContacts, setScheduleContacts] = useState<VendorContact[]>([])
   const [checklistTemplate, setChecklistTemplate] = useState<ChecklistItem[]>([])
   const [defaultLoad1Qty, setDefaultLoad1Qty]                   = useState('')
   const [defaultLoad1Buy, setDefaultLoad1Buy]                   = useState('')
@@ -144,6 +146,7 @@ export default function VendorDetailPage() {
         setContacts(normalizeContacts((data.contacts as unknown[]) ?? []))
         setPoContacts(normalizeContacts((data.po_contacts as unknown[]) ?? []))
         setBolContacts(normalizeContacts((data.bol_contacts as unknown[]) ?? []))
+        setScheduleContacts(normalizeContacts((data.schedule_contacts as unknown[]) ?? []))
         setChecklistTemplate((data.checklist_template as ChecklistItem[]) ?? [])
         setDefaultLoad1Qty(data.default_load1_qty ?? '')
         setDefaultLoad1Buy(data.default_load1_buy ?? '')
@@ -185,6 +188,7 @@ export default function VendorDetailPage() {
           contacts,
           po_contacts: poContacts,
           bol_contacts: bolContacts,
+          schedule_contacts: scheduleContacts,
           checklist_template: checklistTemplate,
           default_load1_qty: defaultLoad1Qty || null,
           default_load1_buy: defaultLoad1Buy || null,
@@ -324,6 +328,7 @@ export default function VendorDetailPage() {
         <VendorContactEditor title="General Contacts" contacts={contacts} onChange={setContacts} />
         <VendorContactEditor title="PO Contacts" contacts={poContacts} onChange={setPoContacts} error={poContactError} />
         <VendorContactEditor title="BOL Contacts" contacts={bolContacts} onChange={setBolContacts} error={bolContactError} />
+        <VendorContactEditor title="Schedule Contacts" contacts={scheduleContacts} onChange={setScheduleContacts} />
       </section>
 
       <Separator />
