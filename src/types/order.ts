@@ -11,7 +11,7 @@ export type OrderStatus =
   | 'Ready To Ship'
   | 'Ready To Invoice'
   | 'Complete'
-  | 'Cancelled';
+  | 'Canceled';
 
 import type { Order, OrderSplitLoad, Customer, BillOfLading } from "@/lib/db/schema";
 
