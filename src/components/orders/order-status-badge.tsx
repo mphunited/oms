@@ -11,7 +11,7 @@ const statusColors: Record<string, string> = {
   "Ready To Ship":                  "bg-cyan-50 text-cyan-700 border-cyan-200",
   "Ready To Invoice":               "bg-emerald-50 text-emerald-700 border-emerald-200",
   "Complete":                       "bg-green-100 text-green-800 border-green-300",
-  "Cancelled":                      "bg-red-100 text-red-700 border-red-200",
+  "Canceled":                       "bg-red-100 text-red-700 border-red-200",
 }
 
 const invoiceStatusColors: Record<string, string> = {

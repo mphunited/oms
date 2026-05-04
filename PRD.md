@@ -260,7 +260,7 @@ eligibility is only for one salesperson: Renee (not Mike, Larry, or Jennifer).
 
 Pending | Waiting On Vendor To Confirm | Waiting To Confirm To Customer |
 Confirmed To Customer | Rinse And Return Stage | Sent Order To Carrier |
-Ready To Ship | Ready To Invoice | Complete | Cancelled
+Ready To Ship | Ready To Invoice | Complete | Canceled
 
 ---
 
@@ -330,7 +330,7 @@ No greeting modal is shown. Greeting name is derived automatically from vendor.n
 - **BOL emails to vendors:** To = vendor's bol_contacts (primary first), CC = remaining bol_contacts. orders@mphunited.com is NOT CC'd on BOLs.
 - **Customer confirmations:** To = order's customer_contacts field (jsonb [{name, email}], extract emails directly from array)
 - **Invoice emails:** To = customer invoice contacts. orders@mphunited.com CC'd on invoices (Phase 2).
-- **Weekly schedules:** Open in Outlook Web button on the schedule generation screen (deeplink acceptable here — no PDF attachment needed).
+- **Weekly schedules:** Graph API draft with PDF auto-attached. Recipients from company_settings.admin_schedule_recipients (admin), vendors.schedule_contacts(vendor), company_settings.        frontline_schedule_contacts (Frontline).
 - **Bulk PO email:** All selected orders must be from the same vendor — show error toast if not.
 
 ### PO Email Body Spec
@@ -949,5 +949,7 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 *Last updated: April 29, 2026 — Invoicing page spec added (Section 20): invoice queue with inline editing, R-suffix rule for commission-eligible salesperson, credit memo tab with Draft/Final workflow, credit_memos and credit_memo_line_items tables, credit_memo_number_seq sequence. New routes: /invoicing, /api/credit-memos, /api/credit-memos/[id], /api/credit-memos/[id]/finalize, /api/credit-memos/[id]/pdf.*
 
 *Last updated: May 1, 2026 — Vendor Load 1 Defaults (default_load1_qty, default_load1_buy columns; Load 1 Defaults section on vendor page; New Order form autofill guard); Bottle Qty whole-integer display rule; New Order nav item; Dashboard quick-action buttons; Description type map ordering fix for 275 Gal Empty Washable Bottle.*
+
+*Last updated: May 1, 2026 — Fixed ship_date/wanted_date not displaying on orders list, PO email, and confirmation email. Root cause: orders.ship_date was null when dates were only set on split load rows at creation time. Fix: one-time backfill migration syncing split_loads[0].ship_date up to orders.ship_date where null; edit form load in use-edit-order-form.ts now falls back to split_loads[0].ship_date when orders.ship_date is null.*
 
 *Last updated: May 4, 2026 — "Canceled" spelling normalized to one L throughout (migration applied to orders and recycling_orders, "Cancelled" removed from ORDER_STATUSES); schedule email architecture completed (Email Schedule button always visible, self-contained single-click draft creation via Graph API, no prior Download PDF required); Download PDF renamed from "Generate PDF" on schedules page; admin_schedule_recipients editor added to /settings company settings section; vendor schedule_contacts section added to vendor edit page; PRD merge conflict resolved in Section 2 Team table.*

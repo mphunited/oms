@@ -8,7 +8,7 @@ import { eq, not, inArray, and, gte, lte, desc, count, sql } from 'drizzle-orm'
 import { StatusBarChart } from '@/components/dashboard/status-bar-chart'
 import { formatDate } from '@/lib/utils/format-date'
 
-const INACTIVE = ['Complete', 'Cancelled', 'Canceled']
+const INACTIVE = ['Complete', 'Canceled']
 
 function getWeekBounds() {
   const now = new Date()
