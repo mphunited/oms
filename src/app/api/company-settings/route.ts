@@ -55,6 +55,8 @@ export async function PUT(req: Request) {
       email: body.email ?? existing.email,
       phone: body.phone ?? existing.phone,
       logo_url,
+      admin_schedule_recipients: body.admin_schedule_recipients ?? existing.admin_schedule_recipients,
+      frontline_schedule_contacts: body.frontline_schedule_contacts ?? existing.frontline_schedule_contacts,
       updated_at: new Date(),
     })
     .where(eq(company_settings.id, existing.id));

@@ -32,6 +32,8 @@ export function CompanySettingsSection() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [adminRecipients, setAdminRecipients] = useState<ScheduleRecipient[]>([]);
   const [newRecipient, setNewRecipient] = useState({ name: "", email: "" });
+  const [frontlineRecipients, setFrontlineRecipients] = useState<ScheduleRecipient[]>([]);
+  const [newFrontlineRecipient, setNewFrontlineRecipient] = useState({ name: "", email: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -56,6 +58,7 @@ export function CompanySettingsSection() {
         logo_url: data.logo_url ?? "",
       });
       setAdminRecipients((data.admin_schedule_recipients as ScheduleRecipient[]) ?? []);
+      setFrontlineRecipients((data.frontline_schedule_contacts as ScheduleRecipient[]) ?? []);
     } catch {
       toast.error("Failed to load company settings");
     } finally {
@@ -79,6 +82,18 @@ export function CompanySettingsSection() {
     setAdminRecipients(prev => prev.filter((_, i) => i !== index));
   }
 
+  function handleAddFrontlineRecipient() {
+    const name = newFrontlineRecipient.name.trim();
+    const email = newFrontlineRecipient.email.trim();
+    if (!name || !email) { toast.error("Name and email are required"); return; }
+    setFrontlineRecipients(prev => [...prev, { name, email }]);
+    setNewFrontlineRecipient({ name: "", email: "" });
+  }
+
+  function handleRemoveFrontlineRecipient(index: number) {
+    setFrontlineRecipients(prev => prev.filter((_, i) => i !== index));
+  }
+
   async function handleSave() {
     if (!form.name.trim()) { toast.error("Company name is required"); return; }
     setSaving(true);
@@ -86,7 +101,7 @@ export function CompanySettingsSection() {
       const res = await fetch("/api/company-settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, admin_schedule_recipients: adminRecipients }),
+        body: JSON.stringify({ ...form, admin_schedule_recipients: adminRecipients, frontline_schedule_contacts: frontlineRecipients }),
       });
       if (!res.ok) throw new Error(await res.text());
       toast.success("Company settings saved");
@@ -262,6 +277,65 @@ export function CompanySettingsSection() {
               <Button
                 type="button"
                 onClick={handleAddRecipient}
+                disabled={saving}
+                variant="outline"
+                className="h-8 text-sm border-[#B88A44] text-[#B88A44] hover:bg-[#B88A44]/10"
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Frontline Schedule Recipients</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Contacts who receive the Frontline carrier schedule email.
+              </p>
+            </div>
+
+            {frontlineRecipients.length > 0 && (
+              <div className="space-y-1.5">
+                {frontlineRecipients.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-1.5">
+                    <span className="text-sm font-medium flex-1">{r.name}</span>
+                    <span className="text-sm text-muted-foreground flex-1">{r.email}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFrontlineRecipient(i)}
+                      disabled={saving}
+                      className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                      aria-label={`Remove ${r.name}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Name"
+                value={newFrontlineRecipient.name}
+                onChange={e => setNewFrontlineRecipient(prev => ({ ...prev, name: e.target.value }))}
+                className="h-8 text-sm flex-1"
+                disabled={saving}
+              />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={newFrontlineRecipient.email}
+                onChange={e => setNewFrontlineRecipient(prev => ({ ...prev, email: e.target.value }))}
+                onKeyDown={e => { if (e.key === "Enter") handleAddFrontlineRecipient(); }}
+                className="h-8 text-sm flex-1"
+                disabled={saving}
+              />
+              <Button
+                type="button"
+                onClick={handleAddFrontlineRecipient}
                 disabled={saving}
                 variant="outline"
                 className="h-8 text-sm border-[#B88A44] text-[#B88A44] hover:bg-[#B88A44]/10"
