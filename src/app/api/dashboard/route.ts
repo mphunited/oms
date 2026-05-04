@@ -4,7 +4,7 @@ import { orders, customers, users } from '@/lib/db/schema'
 import { eq, not, inArray, and, gte, lte, desc, count, sql } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 
-const INACTIVE_STATUSES = ['Complete', 'Cancelled', 'Canceled']
+const INACTIVE_STATUSES = ['Complete', 'Canceled']
 
 function getWeekBounds() {
   const now = new Date()

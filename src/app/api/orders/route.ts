@@ -65,7 +65,7 @@ export async function GET(req: Request) {
             eq(orders.status, 'Ready To Invoice'),
             sql`${orders.ship_date} < ${today}`,
           ),
-          notInArray(orders.status, ['Cancelled', 'Canceled']),
+          notInArray(orders.status, ['Canceled']),
         ))
         .orderBy(orders.ship_date)
 
@@ -151,11 +151,11 @@ export async function GET(req: Request) {
     if (commissionStatuses.length > 0)     conditions.push(inArray(orders.commission_status, commissionStatuses))
 
     if (lifecycle === 'active') {
-      conditions.push(notInArray(orders.status, ['Complete', 'Cancelled']))
+      conditions.push(notInArray(orders.status, ['Complete', 'Canceled']))
     } else if (lifecycle === 'complete') {
       conditions.push(eq(orders.status, 'Complete'))
     } else if (lifecycle === 'cancelled') {
-      conditions.push(eq(orders.status, 'Cancelled'))
+      conditions.push(eq(orders.status, 'Canceled'))
     }
 
     if (shipDateFrom) conditions.push(gte(orders.ship_date, shipDateFrom))
