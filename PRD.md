@@ -330,7 +330,11 @@ No greeting modal is shown. Greeting name is derived automatically from vendor.n
 - **BOL emails to vendors:** To = vendor's bol_contacts (primary first), CC = remaining bol_contacts. orders@mphunited.com is NOT CC'd on BOLs.
 - **Customer confirmations:** To = order's customer_contacts field (jsonb [{name, email}], extract emails directly from array)
 - **Invoice emails:** To = customer invoice contacts. orders@mphunited.com CC'd on invoices (Phase 2).
-- **Weekly schedules:** Graph API draft with PDF auto-attached. Recipients from company_settings.admin_schedule_recipients (admin), vendors.schedule_contacts(vendor), company_settings.        frontline_schedule_contacts (Frontline).
+- **Weekly schedules:** Graph API draft with PDF auto-attached. Recipients from 
+company_settings.admin_schedule_recipients (admin), vendors.schedule_contacts 
+(vendor), company_settings.frontline_schedule_contacts (Frontline).
+- admin_schedule_recipients and frontline_schedule_contacts shape: 
+[{ name, email, role: "to"|"cc" }]. Backward-compat: missing role treated as "to".
 - **Bulk PO email:** All selected orders must be from the same vendor — show error toast if not.
 
 ### PO Email Body Spec
@@ -869,6 +873,10 @@ When Harding National is onboarded as a second tenant:
 | New Order nav item | A "New Order" nav item (FilePlus icon) is in the left sidebar, directly below the "Orders" item. Links to /orders/new. Defined in src/config/nav.ts. |
 | Dashboard buttons | The /dashboard page has two prominent navy buttons (bg-[#00205B], hover:bg-[#B88A44]) at the top of the page content above the stat cards: "New Order" (FilePlus icon, links to /orders/new) and "Orders" (ClipboardList icon, links to /orders). |
 | Description type map | src/lib/orders/description-type-map.ts contains a specific entry for "275 Gal Empty Washable Bottle" using keywords ['Empty', 'Washable', '275']. This entry is placed before the generic ['275', 'Bottle'] entry so that descriptions containing "Empty Washable" match the specific type first. Ordering in this array is the only safeguard against broad keyword matches. |
+| admin_schedule_recipients UI | Editable in /settings company settings section. 
+  Shape: [{ name, email, role: "to"|"cc" }]. Managed alongside company name/address. |
+| frontline_schedule_contacts UI | Editable in /settings company settings section, 
+  separate box below admin recipients. Same shape and UI pattern. |
 ---
 
 ## 22. What the Current Prototype Is NOT

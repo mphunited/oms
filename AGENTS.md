@@ -162,7 +162,10 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     `is_primary=false` as `role="cc"` for older records that lack the role field.
     Validation: save is blocked if po_contacts or bol_contacts have entries but none with role="to".
     schedule_contacts used for vendor schedule email distribution.
-    Frontline and admin schedule recipients live in company_settings.
+    Frontline and admin schedule recipients live in company_settings as 
+    admin_schedule_recipients and frontline_schedule_contacts JSONB columns. 
+    Shape: [{ name, email, role: "to"|"cc" }]. Backward-compat: missing role treated as "to". 
+    Both editable via /settings company settings section UI.
     If bol_contacts or po_contacts is empty, sendBolEmail and sendPoEmail open an Outlook
     draft with an empty To field rather than throwing. This is intentional — allows manual
     recipient entry while vendor contacts are being populated. Do not add a hard throw guard back.
