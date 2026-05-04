@@ -118,20 +118,20 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
   const first = orders[0]
   const contacts = first.customer_contacts ?? []
 
-  const toContacts = contacts.filter(c => c.is_primary !== false)
+  const toContacts = contacts.filter(c => c.is_primary === true)
   const ccContacts = contacts.filter(c => c.is_primary === false)
+  const effectiveToContacts = toContacts.length > 0 ? toContacts : contacts
+  const effectiveCcContacts = toContacts.length > 0 ? ccContacts : []
 
-  const toEmails = (toContacts.length > 0 ? toContacts : contacts)
+  const toEmails = effectiveToContacts
     .map(c => c.email?.trim())
     .filter((e): e is string => !!e)
 
-  const ccEmails = (toContacts.length > 0 ? ccContacts : [])
+  const ccEmails = effectiveCcContacts
     .map(c => c.email?.trim())
     .filter((e): e is string => !!e)
 
-  const primaryContacts = contacts.filter(c => c.is_primary === true)
-  const greetingContacts = primaryContacts.length > 0 ? primaryContacts : toContacts.length > 0 ? toContacts : contacts
-  const greeting = firstNames(greetingContacts)
+  const greeting = firstNames(effectiveToContacts)
 
   const custPo = first.customer_po
   const mphPoList = orders.map(o => o.order_number).join(', ')
@@ -177,7 +177,7 @@ export function buildConfirmationEmail(orders: ConfirmationOrder[]): {
           <table width="700" cellpadding="0" cellspacing="0" border="0" style="font-family:'Aptos','Calibri','Arial',sans-serif;color:#1f2937;text-align:left;">
             <tr>
               <td style="padding:0;">
-                <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12pt;margin:0 0 16px;">${escapeHtml(greetingLine)}</p>
+                <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12pt;margin:0 0 16px;">${greetingLine}</p>
                 <p style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12pt;margin:0 0 16px;">Please see your order confirmation below.</p>
 
                 ${tablesHtml}
