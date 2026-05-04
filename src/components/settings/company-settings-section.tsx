@@ -9,7 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
 type AddressJson = { street?: string; city?: string; state?: string; zip?: string };
-type ScheduleRecipient = { name: string; email: string };
+type ScheduleRecipient = { name: string; email: string; role: "to" | "cc" };
+
+function normalizeRecipients(raw: unknown[]): ScheduleRecipient[] {
+  return raw.map((r) => {
+    const rec = r as { name: string; email: string; role?: string };
+    return { name: rec.name, email: rec.email, role: rec.role === "cc" ? "cc" : "to" };
+  });
+}
 
 interface FormState {
   name: string;
@@ -28,10 +35,31 @@ const EMPTY: FormState = {
   email: "", phone: "", logo_url: "",
 };
 
+function RoleToggle({ role, onChange, disabled }: { role: "to" | "cc"; onChange: (r: "to" | "cc") => void; disabled: boolean }) {
+  return (
+    <div className="flex rounded-md border border-border overflow-hidden shrink-0">
+      <button
+        type="button"
+        onClick={() => onChange("to")}
+        disabled={disabled}
+        className={`h-7 px-2 text-xs font-medium transition-colors ${role === "to" ? "bg-[#00205B] text-white" : "text-muted-foreground hover:bg-muted"}`}
+      >To</button>
+      <button
+        type="button"
+        onClick={() => onChange("cc")}
+        disabled={disabled}
+        className={`h-7 px-2 text-xs font-medium border-l border-border transition-colors ${role === "cc" ? "bg-[#00205B] text-white" : "text-muted-foreground hover:bg-muted"}`}
+      >Cc</button>
+    </div>
+  );
+}
+
 export function CompanySettingsSection() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [adminRecipients, setAdminRecipients] = useState<ScheduleRecipient[]>([]);
-  const [newRecipient, setNewRecipient] = useState({ name: "", email: "" });
+  const [newRecipient, setNewRecipient] = useState<ScheduleRecipient>({ name: "", email: "", role: "to" });
+  const [frontlineRecipients, setFrontlineRecipients] = useState<ScheduleRecipient[]>([]);
+  const [newFrontlineRecipient, setNewFrontlineRecipient] = useState<ScheduleRecipient>({ name: "", email: "", role: "to" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -55,7 +83,8 @@ export function CompanySettingsSection() {
         phone: data.phone ?? "",
         logo_url: data.logo_url ?? "",
       });
-      setAdminRecipients((data.admin_schedule_recipients as ScheduleRecipient[]) ?? []);
+      setAdminRecipients(normalizeRecipients((data.admin_schedule_recipients as unknown[]) ?? []));
+      setFrontlineRecipients(normalizeRecipients((data.frontline_schedule_contacts as unknown[]) ?? []));
     } catch {
       toast.error("Failed to load company settings");
     } finally {
@@ -71,12 +100,32 @@ export function CompanySettingsSection() {
     const name = newRecipient.name.trim();
     const email = newRecipient.email.trim();
     if (!name || !email) { toast.error("Name and email are required"); return; }
-    setAdminRecipients(prev => [...prev, { name, email }]);
-    setNewRecipient({ name: "", email: "" });
+    setAdminRecipients(prev => [...prev, { name, email, role: newRecipient.role }]);
+    setNewRecipient({ name: "", email: "", role: "to" });
   }
 
   function handleRemoveRecipient(index: number) {
     setAdminRecipients(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function handleUpdateRecipientRole(index: number, role: "to" | "cc") {
+    setAdminRecipients(prev => prev.map((r, i) => i === index ? { ...r, role } : r));
+  }
+
+  function handleAddFrontlineRecipient() {
+    const name = newFrontlineRecipient.name.trim();
+    const email = newFrontlineRecipient.email.trim();
+    if (!name || !email) { toast.error("Name and email are required"); return; }
+    setFrontlineRecipients(prev => [...prev, { name, email, role: newFrontlineRecipient.role }]);
+    setNewFrontlineRecipient({ name: "", email: "", role: "to" });
+  }
+
+  function handleRemoveFrontlineRecipient(index: number) {
+    setFrontlineRecipients(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function handleUpdateFrontlineRecipientRole(index: number, role: "to" | "cc") {
+    setFrontlineRecipients(prev => prev.map((r, i) => i === index ? { ...r, role } : r));
   }
 
   async function handleSave() {
@@ -86,7 +135,7 @@ export function CompanySettingsSection() {
       const res = await fetch("/api/company-settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, admin_schedule_recipients: adminRecipients }),
+        body: JSON.stringify({ ...form, admin_schedule_recipients: adminRecipients, frontline_schedule_contacts: frontlineRecipients }),
       });
       if (!res.ok) throw new Error(await res.text());
       toast.success("Company settings saved");
@@ -228,6 +277,7 @@ export function CompanySettingsSection() {
                   <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-1.5">
                     <span className="text-sm font-medium flex-1">{r.name}</span>
                     <span className="text-sm text-muted-foreground flex-1">{r.email}</span>
+                    <RoleToggle role={r.role} onChange={(role) => handleUpdateRecipientRole(i, role)} disabled={saving} />
                     <button
                       type="button"
                       onClick={() => handleRemoveRecipient(i)}
@@ -259,9 +309,71 @@ export function CompanySettingsSection() {
                 className="h-8 text-sm flex-1"
                 disabled={saving}
               />
+              <RoleToggle role={newRecipient.role} onChange={(role) => setNewRecipient(prev => ({ ...prev, role }))} disabled={saving} />
               <Button
                 type="button"
                 onClick={handleAddRecipient}
+                disabled={saving}
+                variant="outline"
+                className="h-8 text-sm border-[#B88A44] text-[#B88A44] hover:bg-[#B88A44]/10"
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Frontline Schedule Recipients</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Contacts who receive the Frontline carrier schedule email.
+              </p>
+            </div>
+
+            {frontlineRecipients.length > 0 && (
+              <div className="space-y-1.5">
+                {frontlineRecipients.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-1.5">
+                    <span className="text-sm font-medium flex-1">{r.name}</span>
+                    <span className="text-sm text-muted-foreground flex-1">{r.email}</span>
+                    <RoleToggle role={r.role} onChange={(role) => handleUpdateFrontlineRecipientRole(i, role)} disabled={saving} />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFrontlineRecipient(i)}
+                      disabled={saving}
+                      className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                      aria-label={`Remove ${r.name}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Name"
+                value={newFrontlineRecipient.name}
+                onChange={e => setNewFrontlineRecipient(prev => ({ ...prev, name: e.target.value }))}
+                className="h-8 text-sm flex-1"
+                disabled={saving}
+              />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={newFrontlineRecipient.email}
+                onChange={e => setNewFrontlineRecipient(prev => ({ ...prev, email: e.target.value }))}
+                onKeyDown={e => { if (e.key === "Enter") handleAddFrontlineRecipient(); }}
+                className="h-8 text-sm flex-1"
+                disabled={saving}
+              />
+              <RoleToggle role={newFrontlineRecipient.role} onChange={(role) => setNewFrontlineRecipient(prev => ({ ...prev, role }))} disabled={saving} />
+              <Button
+                type="button"
+                onClick={handleAddFrontlineRecipient}
                 disabled={saving}
                 variant="outline"
                 className="h-8 text-sm border-[#B88A44] text-[#B88A44] hover:bg-[#B88A44]/10"
