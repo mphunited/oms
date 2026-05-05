@@ -439,7 +439,7 @@ export function OrderTableRow({
 
   return (
     <>
-      <tr className={`group hover:bg-muted/30 transition-colors${selected ? ' bg-muted/20' : ''}`}>
+      <tr className={`group hover:bg-muted/30 transition-colors${order.flag ? ' bg-red-50 dark:bg-red-950/20' : selected ? ' bg-muted/20' : ''}`}>
         {/* Expand */}
         <td className="px-2 py-2">
           <button type="button" onClick={onToggleExpand}
@@ -463,7 +463,7 @@ export function OrderTableRow({
           <button type="button" onClick={onToggleFlag}
             className="flex items-center justify-center h-6 w-6 rounded hover:bg-muted transition-colors"
             aria-label={order.flag ? 'Remove flag' : 'Flag order'}>
-            <Flag className={`h-4 w-4 ${order.flag ? 'text-[#B88A44] fill-[#B88A44]' : 'text-slate-300 hover:text-slate-400'}`} />
+            <Flag className={`h-4 w-4 ${order.flag ? 'text-red-500 fill-red-500' : 'text-slate-300 hover:text-slate-400'}`} />
           </button>
         </td>
 
