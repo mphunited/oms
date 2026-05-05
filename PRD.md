@@ -259,7 +259,7 @@ eligibility is only for one salesperson: Renee (not Mike, Larry, or Jennifer).
 ## 8. Standard Order Statuses
 
 Pending | Waiting On Vendor To Confirm | Waiting To Confirm To Customer |
-Confirmed To Customer | Rinse And Return Stage | Sent Order To Carrier |
+Confirmed To Customer | Wash & Return Stage | Sent Order To Carrier |
 Ready To Ship | Ready To Invoice | Complete | Canceled
 
 ---
@@ -347,10 +347,14 @@ PO email body is built by `src/lib/email/build-po-email.ts` — pure function, r
 | Single order, blind | `MPH United PO [order_number] \| Ship [MM/DD/YYYY]` |
 | Multiple orders, non-blind | `[count] MPH United POs [order_numbers] \| Multiple Orders` |
 | Multiple orders, blind | `[count] MPH United POs [order_numbers] \| Multiple Orders` |
+| Revised single order, non-blind | `REVISED: MPH United PO [order_number] -- [customer_name] \| Ship [MM/DD/YYYY]` |
+| Revised single order, blind | `REVISED: MPH United PO [order_number] \| Ship [MM/DD/YYYY]` |
 
 **Intro paragraph:**
-- Non-blind: `Please find [order/X orders] below for MPH United / [vendor_name] -- [vendor_city, vendor_state] -- [customer_ship_to_city, customer_ship_to_state] to [customer_name].`
-- Blind: `Please find [order/X orders] below for MPH United / [vendor_name] -- [vendor_city, vendor_state].`
+- Non-blind: `Please find [order/X orders] below for [vendor_name] -- [vendor_city, vendor_state] -- [customer_ship_to_city, customer_ship_to_state] to [customer_name].`
+- Blind: `Please find [order/X orders] below for [vendor_name] -- [vendor_city, vendor_state].`
+- When all orders have is_revised = true, prepend "REVISED: " to subject and 
+  insert "REVISED " before "order"/"orders" in the intro body.
 
 **Order table:**
 - Non-blind columns: MPH PO | Customer PO | Product/Description | Ship Date | Qty | Unit Price | Total
@@ -506,7 +510,8 @@ Flag | MPH PO | Status | Sales/CSR | Customer | Customer PO | Description | Qty 
 Ship Date | Wanted Date | Vendor | Buy | Sell | Ship To | Carrier | Actions
 
 Rules:
-- Flag column shows flag icon; clickable to toggle; lucide Flag icon, gold filled when true, gray outline when false.
+- Flag column shows flag icon; clickable to toggle; lucide Flag icon, red filled (text-red-500 fill-red-500) when true, gray outline when false.
+  Flagged rows highlight with bg-red-50 dark:bg-red-950/20.
 - **MPH PO number cell is a button** — clicking it opens the Order Summary Drawer (Sheet, right side). It does NOT navigate to the edit page. The Edit link is inside the drawer header.
 - **Actions cell hover pencil** — hovering any order row reveals a Pencil icon in the Actions cell (opacity-0 → opacity-100 on group-hover; `group` class on `<tr>`). Clicking it navigates directly to /orders/[orderId]. The drawer open behavior on MPH PO click is unchanged.
 - **Status** renders as a colored pill badge (color from dropdown_configs.meta for ORDER_STATUS).
@@ -522,8 +527,8 @@ Rules:
 - **Each order row is expandable** via a chevron icon. Expanded view renders a single
   colSpan cell containing one card per split load. Card style: bg-muted/40 rounded-md p-3
   border-l-4 border-[#B88A44]. Grid inside: grid-cols-2 gap-x-6 gap-y-1 text-sm.
-  "Load N" label only shown when 2+ loads exist. Fields shown: Load PO, Order Type,
-  Description (col-span-2), Qty, Buy, Sell, Ship Date, Wanted Date.
+  "Load N" label only shown when 2+ loads exist. Fields shown: Load PO, Customer PO, Description (col-span-2), Qty, Buy, Sell.
+  Order Type, Ship Date, and Wanted Date are NOT shown — Order Type is redundant; dates are already on the main row.
   Commission status and bottle fields are NOT shown in the expanded row (not returned by
   list API — use the Order Summary Drawer for full detail).
   Do NOT attempt to align expanded row cells to parent column widths.
@@ -536,7 +541,7 @@ Split Loads (full fields including commission status and bottle fields), Freight
 (only if non-zero), Notes (only if populated). Edit Order link in drawer header.
 
 **Filter bar** — two always-visible rows (no More Filters toggle, no hidden filters):
-- Row 1: Search field | lifecycle pills (Active / Complete / Flagged / All) | Status multi-select
+- Row 1: Search field | lifecycle pills (Active / Complete / Flagged / All) | Status multi-select | Clear Filters button
 - Row 2: Customer multi-select | Vendor multi-select | CSR multi-select | Salesperson multi-select | Ship Date range
 Both rows flex-wrap for graceful degradation on smaller screens. No Cancelled lifecycle pill.
 
@@ -554,6 +559,11 @@ Filters available:
 - Salesperson: multi-select
 - Ship date: range
 - Flag: flagged only toggle
+
+**Column sort** — Ship Date, Customer, Vendor, and Ship To column headers are sortable.
+Click to sort ascending; click again to toggle descending. Active column shows ArrowUp/ArrowDown
+indicator; inactive sortable columns show ArrowUpDown. Default sort: Ship Date ASC, nulls last.
+Sort state does not persist across page refreshes.
 
 ---
 
@@ -961,3 +971,9 @@ DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 *Last updated: May 1, 2026 — Fixed ship_date/wanted_date not displaying on orders list, PO email, and confirmation email. Root cause: orders.ship_date was null when dates were only set on split load rows at creation time. Fix: one-time backfill migration syncing split_loads[0].ship_date up to orders.ship_date where null; edit form load in use-edit-order-form.ts now falls back to split_loads[0].ship_date when orders.ship_date is null.*
 
 *Last updated: May 4, 2026 — "Canceled" spelling normalized to one L throughout (migration applied to orders and recycling_orders, "Cancelled" removed from ORDER_STATUSES); schedule email architecture completed (Email Schedule button always visible, self-contained single-click draft creation via Graph API, no prior Download PDF required); Download PDF renamed from "Generate PDF" on schedules page; admin_schedule_recipients editor added to /settings company settings section; vendor schedule_contacts section added to vendor edit page; PRD merge conflict resolved in Section 2 Team table.*
+
+*Last updated: May 5, 2026 — Wash & Return Stage replaces Rinse & Return Stage / Rinse And Return Stage as canonical order status (DB updated, code normalized); 
+PO email intro no longer prepends hardcoded "MPH United / " prefix; REVISED label added to PO email subject and body when is_revised = true; orders list default sort 
+changed to ship_date ASC NULLS LAST with sortable columns (Ship Date, Customer, Vendor, Ship To); Clear Filters button added to filter bar Row 1; flagged orders 
+show red row highlight and red flag icon; expanded row updated (Order Type and dates removed, Customer PO added below Load PO); duplicate route commission matching 
+replaced with DB lookup.*
