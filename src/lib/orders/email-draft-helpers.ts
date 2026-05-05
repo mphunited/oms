@@ -26,6 +26,7 @@ type OrderSnap = {
   freight_carrier: string | null
   ship_date: string | null
   is_blind_shipment: boolean
+  is_revised: boolean
 }
 
 type AddressSnap = {
@@ -65,6 +66,7 @@ export async function sendPoEmail(
     const orderData: OrderWithRelations = {
       order_number: order.order_number,
       is_blind_shipment: order.is_blind_shipment,
+      is_revised: order.is_revised,
       customer_po: order.customer_po,
       sales_order_number: order.sales_order_number,
       freight_carrier: order.freight_carrier,

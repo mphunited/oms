@@ -230,7 +230,7 @@ export function useEditOrderForm(orderId: string) {
         vendor_name: order.vendor_name, customer_name: order.customer_name,
         customer_po: order.customer_po, sales_order_number: order.sales_order_number,
         freight_carrier: freightCarrier || order.freight_carrier, ship_date: order.ship_date,
-        is_blind_shipment: order.is_blind_shipment },
+        is_blind_shipment: order.is_blind_shipment, is_revised: order.is_revised },
       splitLoads, shipDate, shipTo, poNotes, setEmailingPo,
     )
   }
