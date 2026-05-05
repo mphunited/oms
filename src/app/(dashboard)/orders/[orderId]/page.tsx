@@ -17,6 +17,7 @@ import { EditOrderFreightSection } from '@/components/orders/edit-order-freight-
 import { EditOrderIdentitySection } from '@/components/orders/edit-order-identity-section'
 import { EditOrderDeleteModal } from '@/components/orders/edit-order-delete-modal'
 import { useEditOrderForm } from '@/components/orders/use-edit-order-form'
+import { formatVendorName } from '@/lib/utils/format-vendor-name'
 import { useGlobalContacts } from '@/components/orders/use-global-contacts'
 import { NewContactPrompt } from '@/components/orders/new-contact-prompt'
 import type { NewContactEntry } from '@/components/orders/new-contact-prompt'
@@ -164,7 +165,7 @@ export default function OrderDetailPage() {
           <div className="space-y-1.5">
             <Label>Vendor</Label>
             <OrderCombobox
-              options={vendorOptions}
+              options={vendorOptions.map(v => ({ ...v, name: formatVendorName(v.name) }))}
               value={vendorId}
               onChange={v => {
                 setVendorId(v)

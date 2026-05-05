@@ -22,6 +22,7 @@ import { OrderAddressFields } from '@/components/orders/order-address-fields'
 import { OrderContactFields } from '@/components/orders/order-contact-fields'
 import { BillToContactFields } from '@/components/orders/bill-to-contact-fields'
 import { useNewOrderForm } from '@/components/orders/use-new-order-form'
+import { formatVendorName } from '@/lib/utils/format-vendor-name'
 import { useGlobalContacts } from '@/components/orders/use-global-contacts'
 import { NewContactPrompt } from '@/components/orders/new-contact-prompt'
 import type { NewContactEntry } from '@/components/orders/new-contact-prompt'
@@ -215,7 +216,7 @@ export function NewOrderForm() {
             </div>
             <div className="space-y-1.5">
               <Label>Vendor</Label>
-              <OrderCombobox options={vendors} value={watchedValues.vendor_id ?? ''} onChange={v => form.setValue('vendor_id', v)} placeholder="Choose vendor" />
+              <OrderCombobox options={vendors.map(v => ({ ...v, name: formatVendorName(v.name) }))} value={watchedValues.vendor_id ?? ''} onChange={v => form.setValue('vendor_id', v)} placeholder="Choose vendor" />
             </div>
             {vendors.find(v => v.id === watchedValues.vendor_id)?.name === 'MPH United / Alliance Container -- Hillsboro, TX' && (
               <div className="space-y-1.5">
