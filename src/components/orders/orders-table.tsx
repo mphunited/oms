@@ -157,7 +157,7 @@ export function OrdersTable() {
   }
 
   return (
-    <div className="flex flex-col gap-3 h-full">
+    <div className="flex flex-col gap-3 min-h-0 flex-1">
       <div className="sticky top-0 z-10 bg-background space-y-2 pb-2">
         <OrdersFilterBar filters={filters} onChange={handleFilterChange} onClearAll={handleClearAll} />
 
