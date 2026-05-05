@@ -37,6 +37,18 @@ export function OrdersTable() {
 
   const [emailingConfirmation, setEmailingConfirmation] = useState(false)
 
+  const filterBarRef = useRef<HTMLDivElement>(null)
+  const [filterBarHeight, setFilterBarHeight] = useState(0)
+
+  useEffect(() => {
+    if (!filterBarRef.current) return
+    const observer = new ResizeObserver(entries => {
+      setFilterBarHeight(entries[0].contentRect.height)
+    })
+    observer.observe(filterBarRef.current)
+    return () => observer.disconnect()
+  }, [])
+
   useEffect(() => {
     Promise.all([
       fetch('/api/me').then(r => r.json()),
@@ -158,7 +170,7 @@ export function OrdersTable() {
 
   return (
     <div className="flex flex-col min-h-0 flex-1 gap-3">
-      <div className="shrink-0">
+      <div ref={filterBarRef} className="sticky top-14 z-20 bg-background space-y-2 pb-3 shadow-sm">
         <OrdersFilterBar filters={filters} onChange={handleFilterChange} onClearAll={handleClearAll} />
       </div>
 
@@ -193,9 +205,9 @@ export function OrdersTable() {
         <p className="p-6 text-sm text-muted-foreground">No orders found.</p>
       ) : (
         <>
-          <div className="overflow-auto rounded-md border flex-1 min-h-0">
+          <div className="rounded-md border">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10 border-b bg-[#00205B]">
+              <thead className="border-b bg-[#00205B] sticky z-10" style={{ top: `calc(3.5rem + ${filterBarHeight}px)` }}>
                 <tr>
                   <th className="w-8 px-2 py-2" aria-label="Expand" />
                   <th className="w-8 px-2 py-2">
