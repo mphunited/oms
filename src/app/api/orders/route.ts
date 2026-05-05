@@ -204,6 +204,7 @@ export async function GET(req: Request) {
         freight_to_customer:    orders.freight_to_customer,
         additional_costs:       orders.additional_costs,
         flag:                   orders.flag,
+        is_revised:             orders.is_revised,
         invoice_payment_status: orders.invoice_payment_status,
         commission_status:      orders.commission_status,
         ship_to:                orders.ship_to,
