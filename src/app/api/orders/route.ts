@@ -106,6 +106,20 @@ export async function GET(req: Request) {
     const page            = Math.max(1, parseInt(searchParams.get('page')  || '1',  10))
     const limit           = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)))
 
+    const VALID_SORT_BY = ['ship_date', 'customer_name', 'ship_to_name', 'vendor_name'] as const
+    type SortByKey = typeof VALID_SORT_BY[number]
+    const rawSortBy  = searchParams.get('sortBy') || 'ship_date'
+    const sortByKey: SortByKey = (VALID_SORT_BY as readonly string[]).includes(rawSortBy) ? rawSortBy as SortByKey : 'ship_date'
+    const sortDir    = searchParams.get('sortDir') === 'desc' ? 'DESC' : 'ASC'
+
+    const sortExprMap: Record<SortByKey, ReturnType<typeof sql>> = {
+      ship_date:     sql`${orders.ship_date} ${sql.raw(sortDir)} NULLS LAST`,
+      customer_name: sql`${customers.name} ${sql.raw(sortDir)} NULLS LAST`,
+      vendor_name:   sql`${vendors.name} ${sql.raw(sortDir)} NULLS LAST`,
+      ship_to_name:  sql`(${orders.ship_to}->>'name') ${sql.raw(sortDir)} NULLS LAST`,
+    }
+    const orderByClause = sortExprMap[sortByKey]
+
     const statusList             = parseList(searchParams.get('status'))
     const customerIds            = parseList(searchParams.get('customer_id'))
     const vendorIds              = parseList(searchParams.get('vendor_id'))
@@ -206,7 +220,7 @@ export async function GET(req: Request) {
       .leftJoin(csrUser,   eq(orders.csr_id, csrUser.id))
       .leftJoin(csr2User,  eq(orders.csr2_id, csr2User.id))
       .where(where)
-      .orderBy(desc(orders.created_at))
+      .orderBy(orderByClause)
       .limit(limit)
       .offset((page - 1) * limit)
 

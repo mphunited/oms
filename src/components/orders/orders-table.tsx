@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Mail } from 'lucide-react'
+import { Mail, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { OrdersFilterBar, DEFAULT_FILTERS, type FilterState } from './orders-filter-bar'
 import { OrdersPagination } from './orders-pagination'
@@ -30,6 +30,8 @@ export function OrdersTable() {
   const [statusMeta, setStatusMeta] = useState<BadgeMeta>(null)
   const [carrierMeta, setCarrierMeta] = useState<BadgeMeta>(null)
   const [summaryOrderId, setSummaryOrderId] = useState<string | null>(null)
+  const [sortBy, setSortBy]   = useState<'ship_date' | 'customer_name' | 'ship_to_name' | 'vendor_name'>('ship_date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { emailingPos, emailingBols, handleEmailPosClick, handleEmailBolsClick } =
@@ -83,6 +85,8 @@ export function OrdersTable() {
     if (filters.shipDateTo)                 params.set('ship_date_to', filters.shipDateTo)
     if (filters.salespersonIds.length > 0) params.set('salesperson_id', filters.salespersonIds.join(','))
     if (filters.csrIds.length > 0)         params.set('csr_id', filters.csrIds.join(','))
+    params.set('sortBy', sortBy)
+    params.set('sortDir', sortDir)
     params.set('page', String(page))
     params.set('limit', String(LIMIT))
 
@@ -103,7 +107,7 @@ export function OrdersTable() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, filters.lifecycle, filters.statuses, filters.flagOnly,
       filters.vendorIds, filters.customerIds, filters.shipDateFrom, filters.shipDateTo,
-      filters.salespersonIds, filters.csrIds, page])
+      filters.salespersonIds, filters.csrIds, page, sortBy, sortDir])
 
   function handleFilterChange(update: Partial<FilterState>) {
     setFilters(prev => ({ ...prev, ...update }))
@@ -168,6 +172,23 @@ export function OrdersTable() {
     void sendConfirmationEmail([...selectedIds], setEmailingConfirmation)
   }
 
+  function handleSortClick(col: typeof sortBy) {
+    if (col === sortBy) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(col)
+      setSortDir('asc')
+    }
+    setPage(1)
+  }
+
+  function SortIcon({ col }: { col: typeof sortBy }) {
+    if (col !== sortBy) return <ArrowUpDown className="inline ml-1 h-3.5 w-3.5 opacity-50" />
+    return sortDir === 'asc'
+      ? <ArrowUp className="inline ml-1 h-3.5 w-3.5" />
+      : <ArrowDown className="inline ml-1 h-3.5 w-3.5" />
+  }
+
   return (
     <div className="space-y-3">
 
@@ -220,16 +241,16 @@ export function OrdersTable() {
                   <th className="px-3 py-2 text-left font-medium text-white">MPH PO</th>
                   <th className="px-3 py-2 text-left font-medium text-white">Status</th>
                   <th className="px-3 py-2 text-left font-medium text-white">Sales / CSR</th>
-                  <th className="px-3 py-2 text-left font-medium text-white">Customer</th>
+                  <th className="px-3 py-2 text-left font-medium text-white cursor-pointer select-none hover:text-[#E5C678] transition-colors" onClick={() => handleSortClick('customer_name')}>Customer<SortIcon col="customer_name" /></th>
                   <th className="px-3 py-2 text-left font-medium text-white">Customer PO</th>
                   <th className="px-3 py-2 text-left font-medium text-white">Description</th>
                   <th className="px-3 py-2 text-right font-medium text-white">Qty</th>
-                  <th className="px-3 py-2 text-left font-medium text-white">Ship Date</th>
+                  <th className="px-3 py-2 text-left font-medium text-white cursor-pointer select-none hover:text-[#E5C678] transition-colors" onClick={() => handleSortClick('ship_date')}>Ship Date<SortIcon col="ship_date" /></th>
                   <th className="px-3 py-2 text-left font-medium text-white">Wanted Date</th>
-                  <th className="px-3 py-2 text-left font-medium text-white">Vendor</th>
+                  <th className="px-3 py-2 text-left font-medium text-white cursor-pointer select-none hover:text-[#E5C678] transition-colors" onClick={() => handleSortClick('vendor_name')}>Vendor<SortIcon col="vendor_name" /></th>
                   <th className="px-3 py-2 text-right font-medium text-white">Buy</th>
                   <th className="px-3 py-2 text-right font-medium text-white">Sell</th>
-                  <th className="px-3 py-2 text-left font-medium text-white">Ship To</th>
+                  <th className="px-3 py-2 text-left font-medium text-white cursor-pointer select-none hover:text-[#E5C678] transition-colors" onClick={() => handleSortClick('ship_to_name')}>Ship To<SortIcon col="ship_to_name" /></th>
                   <th className="px-3 py-2 text-left font-medium text-white">Carrier</th>
                   <th className="px-3 py-2 text-left font-medium text-white">Actions</th>
                 </tr>
