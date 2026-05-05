@@ -157,7 +157,7 @@ export function OrdersTable() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3 h-full">
       <div className="sticky top-0 z-10 bg-background space-y-2 pb-2">
         <OrdersFilterBar filters={filters} onChange={handleFilterChange} onClearAll={handleClearAll} />
 
@@ -191,7 +191,7 @@ export function OrdersTable() {
         <p className="p-6 text-sm text-muted-foreground">No orders found.</p>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-md border">
+          <div className="overflow-x-auto overflow-y-auto rounded-md border flex-1 min-h-0">
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 border-b bg-[#00205B]">
                 <tr>
