@@ -6,7 +6,7 @@ export type OrderStatus =
   | 'Waiting On Vendor To Confirm'
   | 'Waiting To Confirm To Customer'
   | 'Confirmed To Customer'
-  | 'Rinse And Return Stage'
+  | 'Wash & Return Stage'
   | 'Sent Order To Carrier'
   | 'Ready To Ship'
   | 'Ready To Invoice'
