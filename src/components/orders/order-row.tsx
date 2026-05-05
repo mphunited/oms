@@ -8,6 +8,7 @@ import { OrderStatusBadge } from './order-status-badge'
 import type { FullSplitLoad } from './split-load-sub-row'
 import { formatDate } from '@/lib/utils/format-date'
 import { formatCurrency, firstDescription, firstQty } from '@/lib/utils/order-table-utils'
+import { formatVendorName } from '@/lib/utils/format-vendor-name'
 import { getBadgeColor, getBadgeTextColor } from '@/lib/orders/badge-colors'
 import type { OrderStatus } from '@/types/order'
 
@@ -566,7 +567,7 @@ export function OrderTableRow({
         <td className="px-3 py-2 text-right tabular-nums">{firstQty(order.split_loads)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.ship_date)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.wanted_date)}</td>
-        <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ?? '—'}</td>
+        <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ? formatVendorName(order.vendor_name) : '—'}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy)}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell)}</td>
 
