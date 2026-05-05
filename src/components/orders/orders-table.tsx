@@ -157,13 +157,13 @@ export function OrdersTable() {
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
-      <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3">
+    <div className="flex flex-col min-h-0 flex-1 gap-3">
+      <div className="shrink-0">
         <OrdersFilterBar filters={filters} onChange={handleFilterChange} onClearAll={handleClearAll} />
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="px-6">
+        <div className="shrink-0">
           <div className="flex items-center gap-3 rounded-md border bg-muted/40 px-3 py-2">
             <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
             <button onClick={handleEmailPosClick} disabled={emailingPos || emailingBols}
@@ -193,9 +193,9 @@ export function OrdersTable() {
         <p className="p-6 text-sm text-muted-foreground">No orders found.</p>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-md border mx-6">
+          <div className="overflow-auto rounded-md border flex-1 min-h-0">
             <table className="w-full text-sm">
-              <thead className="border-b bg-[#00205B]">
+              <thead className="sticky top-0 z-10 border-b bg-[#00205B]">
                 <tr>
                   <th className="w-8 px-2 py-2" aria-label="Expand" />
                   <th className="w-8 px-2 py-2">
