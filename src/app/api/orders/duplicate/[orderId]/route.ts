@@ -1,21 +1,9 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { orders, order_split_loads, users, vendors } from '@/lib/db/schema'
+import { orders, order_split_loads, users, vendors, order_type_configs } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { eq, sql } from 'drizzle-orm'
-
-function deriveCommissionStatus(orderType: string | null): string {
-  if (!orderType) return 'Not Eligible'
-  const eligible = ['New IBC', 'Bottle', 'Rebottle', 'Washout', 'Wash & Return']
-  return eligible.some(kw => orderType.includes(kw)) ? 'Eligible' : 'Not Eligible'
-}
-
-function deriveInitials(name: string | null | undefined): string {
-  if (!name?.trim()) return 'XX'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) return (parts[0][0] ?? 'X').toUpperCase() + 'X'
-  return ((parts[0][0] ?? 'X') + (parts[parts.length - 1][0] ?? 'X')).toUpperCase()
-}
+import { deriveLoadCommissionStatus, deriveInitials } from '@/lib/orders/commission-eligibility'
 
 export async function POST(
   _req: Request,
@@ -42,6 +30,9 @@ export async function POST(
 
     const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) })
     const initials = deriveInitials(user?.name)
+
+    const allConfigs = await db.select({ order_type: order_type_configs.order_type, is_commission_eligible: order_type_configs.is_commission_eligible }).from(order_type_configs)
+    const configMap = new Map(allConfigs.map(c => [c.order_type, c.is_commission_eligible]))
 
     const seqResult = await db.execute(sql`SELECT nextval('order_number_seq') AS num`)
     const num = (seqResult as unknown as Array<{ num: string | number }>)[0].num
@@ -82,7 +73,7 @@ export async function POST(
           flag:                  false,
           is_revised:            false,
           invoice_payment_status: 'Not Invoiced',
-          commission_status:     deriveCommissionStatus(source.order_type),
+          commission_status:     deriveLoadCommissionStatus(source.order_type, configMap),
           qb_invoice_number:     null,
           sales_order_number:    null,
           checklist:             vendor?.checklist_template ?? null,
@@ -99,7 +90,7 @@ export async function POST(
             bottle_qty:           load.bottle_qty,
             mph_freight_bottles:  load.mph_freight_bottles,
             order_type:           load.order_type,
-            commission_status:    deriveCommissionStatus(load.order_type),
+            commission_status:    deriveLoadCommissionStatus(load.order_type, configMap),
             order_number_override: null,
             customer_po:          null,
             ship_date:            null,
