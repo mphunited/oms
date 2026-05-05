@@ -144,16 +144,15 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
           onChange={v => onChange({ statuses: v })}
         />
 
-        {hasAnyFilter && (
-          <button
-            type="button"
-            onClick={onClearAll}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <X className="h-3.5 w-3.5" />
-            Clear all
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onClearAll}
+          disabled={!hasAnyFilter}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+        >
+          <X className="h-3.5 w-3.5" />
+          Clear
+        </button>
         <Link
           href="/orders/new"
           className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-[#00205B] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#B88A44] transition-colors"
