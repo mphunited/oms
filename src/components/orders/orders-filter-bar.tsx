@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Search, X } from 'lucide-react'
+import Link from 'next/link'
 import { FilterMultiSelect } from './filter-multi-select'
 import { formatVendorName } from '@/lib/utils/format-vendor-name'
 
@@ -153,6 +154,12 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
             Clear all
           </button>
         )}
+        <Link
+          href="/orders/new"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-[#00205B] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#B88A44] transition-colors"
+        >
+          + New Order
+        </Link>
       </div>
 
       {/* Row 2: Customer, Vendor, CSR, Salesperson, Ship Date */}

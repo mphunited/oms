@@ -193,7 +193,7 @@ export function OrdersTable() {
         <>
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full text-sm">
-              <thead className="border-b bg-muted/50 sticky top-[110px] z-10">
+              <thead className="sticky top-0 z-10 border-b bg-[#00205B]">
                 <tr>
                   <th className="w-8 px-2 py-2" aria-label="Expand" />
                   <th className="w-8 px-2 py-2">
@@ -202,21 +202,21 @@ export function OrdersTable() {
                       aria-label="Select all orders" />
                   </th>
                   <th className="w-8 px-2 py-2" aria-label="Flag" />
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">MPH PO</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Status</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Sales / CSR</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Customer</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Customer PO</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Description</th>
-                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">Qty</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Ship Date</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Wanted Date</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Vendor</th>
-                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">Buy</th>
-                  <th className="px-3 py-2 text-right font-medium text-muted-foreground">Sell</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Ship To</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Carrier</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Actions</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">MPH PO</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Status</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Sales / CSR</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Customer</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Customer PO</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Description</th>
+                  <th className="px-3 py-2 text-right font-medium text-white">Qty</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Ship Date</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Wanted Date</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Vendor</th>
+                  <th className="px-3 py-2 text-right font-medium text-white">Buy</th>
+                  <th className="px-3 py-2 text-right font-medium text-white">Sell</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Ship To</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Carrier</th>
+                  <th className="px-3 py-2 text-left font-medium text-white">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
