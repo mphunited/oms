@@ -201,6 +201,12 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 28. **PO email body is built by src/lib/email/build-po-email.ts** — pure function,
     takes order data, returns { subject, bodyHtml, to, cc }.
     Never inline PO email construction in a component or route.
+    - Intro string uses vendorName directly — do NOT prepend "MPH United / " as a hardcoded
+      prefix. Vendor names already contain their full display string.
+    - When all orders in the batch have is_revised = true, subject is prefixed with "REVISED: "
+      and orderWord becomes "1 REVISED order" / "N REVISED orders".
+    - is_revised must be included in OrderSnap (optional: boolean) and passed through
+      use-edit-order-form.ts and use-order-email-actions.ts to buildPoEmail.
 
 29. **Email buttons do NOT show a greeting modal.** The greeting name is derived
     automatically from vendor.name. Do not add a modal to any email flow.
@@ -244,6 +250,9 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     replaced by a DB lookup. commission_status and commission_paid_date live on
     order_split_loads. The order-level commission_status on orders is derived from
     split load statuses and kept for backward compatibility only.
+    The duplicate route (POST /api/orders/duplicate/[orderId]) also builds a
+    configMap from order_type_configs and passes it to deriveLoadCommissionStatus —
+    do not reintroduce local keyword matching there.
 
 36. **order_split_loads carries per-load fields** in addition to its pricing columns:
     customer_po (overrides order-level when set), order_type (drives commission
@@ -274,17 +283,22 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Managed on /team page by ADMIN. Distinct from can_view_commission (controls
     whether a user can see the commission nav item at all).
 
-42. **dropdown_configs.meta is a nullable JSONB column storing per-label badge colors.**
+41. **dropdown_configs.meta is a nullable JSONB column storing per-label badge colors.**
     Shape: { [label: string]: { color: string } }. The existing values column stays
     as string[]. Do not change the values shape. GET /api/dropdown-configs returns
     { type, values, meta }. PUT accepts optional meta and merges — never nulls it.
     Default colors seeded for ORDER_STATUS (17 values) and CARRIER (34 values).
     Colors editable in /settings via inline swatches on each item row.
 
-43. **The orders table expanded row uses card-style layout** inside a single colSpan cell.
+42. **The orders table expanded row uses card-style layout** inside a single colSpan cell.
     Do not attempt to align expanded row cells to parent column widths — column widths
     are dynamic and this pattern always misaligns. Each split load renders as a card:
     bg-muted/40 rounded-md p-3 border-l-4 border-[#B88A44], grid grid-cols-2 inside.
+
+43. **Expanded split load detail (chevron click on order row) shows per-load fields:**
+    Load PO | Customer PO | Description | Qty | Buy | Sell | Ship Date and Wanted Date
+    are NOT shown (already on main row). Order Type is NOT shown (redundant).
+    Customer PO is shown directly below Load PO, pulled from parent order data — no extra API call.
 
 44. **Order Summary Drawer** — clicking the MPH PO number in the orders table opens a
     Sheet drawer (side="right", w-[520px]) that fetches from GET /api/orders/[orderId].
@@ -298,11 +312,12 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     orders-filter-bar.tsx, use-edit-order-form.ts, use-new-order-form.ts.
 
 46. **Filter bar on /orders has two always-visible rows — no More Filters toggle.**
-    Row 1: Search | lifecycle pills (Active/Complete/Flagged/All) | Status multi-select.
+    Row 1: Search | lifecycle pills (Active/Complete/Flagged/All) | Status multi-select | Clear Filters button.
     Row 2: Customer | Vendor | CSR | Salesperson | Ship Date range.
+    Clear Filters resets all state: search empty, lifecycle → Active, status cleared, all Row 2 filters cleared.
     No Canceled lifecycle pill. Both rows flex-wrap for smaller screens.
 
-41. **New Order form layout rules:**
+47. **New Order form layout rules:**
     - Blind Shipment toggle is in the Customer & Vendor section, second row under Vendor.
     - Flag This Order and Revised PO are NOT on the New Order form — Edit page only.
     - Save Order button is at the bottom of the form, below Misc Notes.
@@ -316,21 +331,21 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       is_blind_shipment_default value. The toggle remains fully editable; re-selecting
       a vendor re-applies its default.
 
-47. **Color inputs in settings — Use `<input type="color">` directly as the visible swatch element.**
+48. **Color inputs in settings — Use `<input type="color">` directly as the visible swatch element.**
     Never use a hidden input triggered via a ref click — this pattern does not reliably fire onChange.
     The colorRefs ref pattern was removed from both order-statuses-section.tsx and carriers-section.tsx.
 
-48. **PATCH /api/orders/[orderId] — checklist is intentionally excluded from full-form saves.**
+49. **PATCH /api/orders/[orderId] — checklist is intentionally excluded from full-form saves.**
     It is only written when the PATCH body contains checklist as the sole field (sent by
     ChecklistPopup in order-row.tsx). Do not add checklist back to the edit page handleSave
     body in use-edit-order-form.ts.
 
-53. **DATE_FIELDS coercion on order_split_loads** — `ship_date`, `wanted_date`, and
+50. **DATE_FIELDS coercion on order_split_loads** — `ship_date`, `wanted_date`, and
     `commission_paid_date` must be coerced from empty string (`""`) or `undefined` to `null`
     before DB insert/update. PostgreSQL rejects empty string for date columns. This coercion
     runs alongside NUMERIC_FIELDS coercion in the PATCH /api/orders/[orderId] route handler.
 
-49. **customer_contacts JSONB shape on orders** | `[{name, email, is_primary: boolean}]` — `is_primary=true` → To recipient, `false` → Cc recipient for confirmation emails. Default first contact to `true`, rest to `false`. Treat missing `is_primary` as `true` for backward compatibility. Stored on the orders table, not the customers table.
+51. **customer_contacts JSONB shape on orders** | `[{name, email, is_primary: boolean}]` — `is_primary=true` → To recipient, `false` → Cc recipient for confirmation emails. Default first contact to `true`, rest to `false`. Treat missing `is_primary` as `true` for backward compatibility. Stored on the orders table, not the customers table.
 
     **Email Customer Confirmation** | `POST /api/orders/confirmation-email`. Accepts `orderIds[]`. Guards against multi-customer selection (400). CPU detection: `freight_carrier` contains "CPU" (case-insensitive). Opens Graph API draft via `createDraft`/`openDraft` — does not auto-send. HTML email uses Outlook-safe nested table layout (not div-based). Table columns: MPH PO | Customer PO | Description | Qty | Price | Ship Date | ETA Delivery Date. Below table: Ship Via, Payment Terms, Ship To block. CPU orders append vendor address, dock_info, and TONU verbiage. Non-CPU orders append closing line only. `orders@mphunited.com` is NOT added to confirmation email Cc — it belongs to PO emails only. Greeting uses first names of all `is_primary=true` contacts.
 
@@ -340,7 +355,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 
     **Ship To section on Edit Order** | Phone fields (Office, Ext, Cell) removed from Ship To only. Bill To retains all phone fields. These are rendered separately — not a shared component.
 
-50. **order_type_configs is the runtime source of truth for order types and commission eligibility.**
+52. **order_type_configs is the runtime source of truth for order types and commission eligibility.**
     - Do NOT use keyword matching to determine commission eligibility anywhere in the codebase.
     - Always join or query order_type_configs to get is_commission_eligible for a given order_type.
     - The ORDER_TYPES constant in schema.ts exists for TypeScript type safety only — it must be
@@ -349,7 +364,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - API route: GET /api/order-type-configs (auth required, all roles). POST adds entry, PUT replaces full list, DELETE /api/order-type-configs/[id] removes one (ADMIN only for writes).
     - Component: src/components/settings/order-types-section.tsx
 
-51. **product_weights table is managed via /settings (Product Weights section).**
+53. **product_weights table is managed via /settings (Product Weights section).**
     - ADMIN only. CRUD on product_name / weight_lbs rows.
     - product_name values must exactly match the text returned by bolDescription() from
       order descriptions (text before first "|"). See rule 19.
@@ -357,17 +372,36 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       DELETE /api/product-weights/[id] are ADMIN only.
     - Component: src/components/settings/product-weights-section.tsx
 
-52. **global_email_contacts is a standalone table — not linked to customers or vendors.**
+54. **global_email_contacts is a standalone table — not linked to customers or vendors.**
     It is a flat shared directory of name/email/company/type used for autocomplete on
     order forms. email is unique (enforced by DB constraint). type is a pgEnum:
     CONFIRMATION | BILL_TO | BOTH. Company is optional (nullable text).
     Do NOT add foreign keys from global_email_contacts to any other table.
     Do NOT attempt to sync or derive entries from the customers or vendors tables.
 
-54. **Canonical order status spelling is "Canceled" (one L).** "Cancelled" (two L's) was
+55. **Canonical order status spelling is "Canceled" (one L).** "Cancelled" (two L's) was
     removed from ORDER_STATUSES in schema.ts and normalized in the database via migration
-    in May 2026. Do not reintroduce "Cancelled" anywhere — not in code, queries, filters,
+    in May 2026. Do not reintroduce "Canceled" anywhere — not in code, queries, filters,
     seed data, or migrations. The lifecycle filter in GET /api/orders uses "Canceled" only.
+
+56. **GET /api/orders uses an explicit Drizzle .select({}) — it does NOT auto-include new columns.**
+    Any new field added to the orders table that needs to reach the client MUST be explicitly
+    added to the .select({}) in src/app/api/orders/route.ts. The [orderId] GET uses
+    db.query.orders.findFirst which returns all columns automatically — but the list route does not.
+    This has caused silent bugs (e.g. is_revised always undefined). Always check both routes
+    when adding a new orders table column.
+
+57. **Orders list default sort is ship_date ASC NULLS LAST.**
+    Sortable columns: ship_date, customer_name, ship_to_name (JSONB: ship_to->>'name'), vendor_name.
+    Sort state: sortBy / sortDir params on GET /api/orders. Default: sortBy=ship_date, sortDir=asc.
+    UI: ArrowUpDown (inactive), ArrowUp/ArrowDown (active) from lucide-react in column headers.
+    Non-sortable columns: MPH PO, Status, Sales/CSR, Description, Qty, Wanted Date.
+    Sort state does not persist across page refreshes.
+
+58. **Flagged orders visual treatment in orders list.**
+    When order.flag is true: <tr> gets bg-red-50 dark:bg-red-950/20, Flag icon renders
+    text-red-500 fill-red-500. Optimistic update is in orders-table.tsx — visual flips
+    immediately on click before API responds.
 
 ---
 
@@ -505,8 +539,8 @@ Do NOT hardcode eligible/ineligible type lists anywhere — always query order_t
 ## ORDER STATUS VALUES (STANDARD)
 
 Pending | Waiting On Vendor To Confirm | Waiting To Confirm To Customer |
-Confirmed To Customer | Rinse And Return Stage | Sent Order To Carrier |
-Ready To Ship | Ready To Invoice | Complete | Cancelled
+Confirmed To Customer | Wash And Return Stage | Sent Order To Carrier |
+Ready To Ship | Ready To Invoice | Complete | Canceled
 
 ## ORDER STATUS VALUES (RECYCLING)
 
@@ -801,3 +835,10 @@ Header: navy background, MPH logo left, white text/icons
 Login: navy gradient background, logo above card
 Primary buttons: navy bg, gold hover
 Status badges: color-coded lookup map in order-status-badge.tsx
+Orders page sticky layout rules:
+- orders/page.tsx wrapper must be ONLY <div className="p-6"> — no overflow-hidden, no h-full, no flex-col
+- layout.tsx <main> must be ONLY className="flex flex-1 flex-col" — no overflow-hidden
+- overflow-hidden on any ancestor of a sticky element will break sticky positioning entirely
+- orders-table.tsx filter bar uses sticky top-14 z-20 (accounts for h-14 navy header)
+- orders-table.tsx thead uses sticky z-10 with inline style top calculated from filterBarHeight via ResizeObserver
+- filterBarHeight initializes at 112 (two-row filter bar height) to prevent first-render overlap
