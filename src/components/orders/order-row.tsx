@@ -643,8 +643,8 @@ export function OrderTableRow({
                   <span className="text-muted-foreground">Load PO</span>
                   <span className="font-mono">{load.order_number_override ?? order.order_number}</span>
 
-                  <span className="text-muted-foreground">Order Type</span>
-                  <span>{load.order_type ?? '—'}</span>
+                  <span className="text-muted-foreground">Customer PO</span>
+                  <span>{load.customer_po ?? order.customer_po ?? '—'}</span>
 
                   <span className="col-span-2 text-muted-foreground text-xs font-medium">Description</span>
                   <span className="col-span-2 whitespace-pre-wrap">{load.description ?? '—'}</span>
@@ -657,12 +657,6 @@ export function OrderTableRow({
 
                   <span className="text-muted-foreground">Sell</span>
                   <span>{formatCurrency(load.sell)}</span>
-
-                  <span className="text-muted-foreground">Ship Date</span>
-                  <span>{formatDate(load.ship_date)}</span>
-
-                  <span className="text-muted-foreground">Wanted Date</span>
-                  <span>{formatDate(load.wanted_date)}</span>
                 </div>
               </div>
             ))}
