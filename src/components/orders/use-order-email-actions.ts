@@ -57,6 +57,7 @@ export function useOrderEmailActions(
         id: o.id,
         order_number: o.order_number,
         is_blind_shipment: o.is_blind_shipment,
+        is_revised: o.is_revised ?? false,
         customer_po: o.customer_po ?? null,
         sales_order_number: o.sales_order_number ?? null,
         freight_carrier: o.freight_carrier ?? null,

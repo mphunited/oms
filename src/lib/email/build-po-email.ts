@@ -40,6 +40,7 @@ type SplitLoad = {
 export type OrderWithRelations = {
   order_number: string
   is_blind_shipment: boolean
+  is_revised: boolean
   customer_po: string | null
   sales_order_number: string | null
   freight_carrier: string | null
@@ -75,6 +76,7 @@ export function buildPoEmail(
 
   const first = orders[0]
   const isBlind = orders.every(o => o.is_blind_shipment)
+  const isRevised = orders.every(o => o.is_revised)
   const count = orders.length
   const vendor = first.vendor
 
@@ -90,30 +92,33 @@ export function buildPoEmail(
 
   // ── Subject ──────────────────────────────────────────────────────────────────
   const shipFormatted = formatDate(first.ship_date)
+  const revisedPrefix = isRevised ? 'REVISED: ' : ''
   let subject: string
   if (count === 1) {
     subject = isBlind
-      ? `MPH United PO ${first.order_number} | Ship ${shipFormatted}`
-      : `MPH United PO ${first.order_number} -- ${first.customer?.name ?? ''} | Ship ${shipFormatted}`
+      ? `${revisedPrefix}MPH United PO ${first.order_number} | Ship ${shipFormatted}`
+      : `${revisedPrefix}MPH United PO ${first.order_number} -- ${first.customer?.name ?? ''} | Ship ${shipFormatted}`
   } else {
     const nums = orders.map(o => o.order_number).join(', ')
-    subject = `${count} MPH United POs ${nums} | Multiple Orders`
+    subject = `${revisedPrefix}${count} MPH United POs ${nums} | Multiple Orders`
   }
 
   // ── Intro paragraph ──────────────────────────────────────────────────────────
   const vendorName = vendor?.name ?? ''
   const vendorLoc = [vendor?.address?.city, vendor?.address?.state].filter(Boolean).join(', ')
-  const orderWord = count === 1 ? '1 order' : `${count} orders`
+  const orderWord = count === 1
+    ? `1${isRevised ? ' REVISED' : ''} order`
+    : `${count}${isRevised ? ' REVISED' : ''} orders`
   let intro: string
   if (isBlind) {
-    intro = `Please find ${orderWord} below for MPH United / ${vendorName}${vendorLoc ? ` -- ${vendorLoc}` : ''}.`
+    intro = `Please find ${orderWord} below for ${vendorName}${vendorLoc ? ` -- ${vendorLoc}` : ''}.`
   } else {
     const shipToLoc = [first.ship_to?.city, first.ship_to?.state].filter(Boolean).join(', ')
     const customerNames =
       count === 1
         ? (first.customer?.name ?? '')
         : [...new Set(orders.map(o => o.customer?.name).filter(Boolean))].join(', ')
-    intro = `Please find ${orderWord} below for MPH United / ${vendorName}${vendorLoc ? ` -- ${vendorLoc}` : ''}${shipToLoc ? ` -- ${shipToLoc}` : ''} for ${customerNames}.`
+    intro = `Please find ${orderWord} below for ${vendorName}${vendorLoc ? ` -- ${vendorLoc}` : ''}${shipToLoc ? ` -- ${shipToLoc}` : ''} for ${customerNames}.`
   }
 
   // ── Table ────────────────────────────────────────────────────────────────────
