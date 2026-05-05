@@ -158,28 +158,30 @@ export function OrdersTable() {
 
   return (
     <div className="space-y-3">
-      <OrdersFilterBar filters={filters} onChange={handleFilterChange} onClearAll={handleClearAll} />
+      <div className="sticky top-0 z-10 bg-background space-y-2 pb-2">
+        <OrdersFilterBar filters={filters} onChange={handleFilterChange} onClearAll={handleClearAll} />
 
-      {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 rounded-md border bg-muted/40 px-3 py-2">
-          <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
-          <button onClick={handleEmailPosClick} disabled={emailingPos || emailingBols}
-            className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
-            <Mail className="h-3.5 w-3.5" />
-            {emailingPos ? 'Creating…' : 'Email POs'}
-          </button>
-          <button onClick={handleEmailBolsClick} disabled={emailingPos || emailingBols}
-            className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
-            <Mail className="h-3.5 w-3.5" />
-            {emailingBols ? 'Creating…' : 'Email BOLs'}
-          </button>
-          <button onClick={handleEmailConfirmationClick} disabled={emailingPos || emailingBols || emailingConfirmation}
-            className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
-            <Mail className="h-3.5 w-3.5" />
-            {emailingConfirmation ? 'Creating…' : 'Email Confirmation'}
-          </button>
-        </div>
-      )}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-3 rounded-md border bg-muted/40 px-3 py-2">
+            <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
+            <button onClick={handleEmailPosClick} disabled={emailingPos || emailingBols}
+              className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
+              <Mail className="h-3.5 w-3.5" />
+              {emailingPos ? 'Creating…' : 'Email POs'}
+            </button>
+            <button onClick={handleEmailBolsClick} disabled={emailingPos || emailingBols}
+              className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
+              <Mail className="h-3.5 w-3.5" />
+              {emailingBols ? 'Creating…' : 'Email BOLs'}
+            </button>
+            <button onClick={handleEmailConfirmationClick} disabled={emailingPos || emailingBols || emailingConfirmation}
+              className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
+              <Mail className="h-3.5 w-3.5" />
+              {emailingConfirmation ? 'Creating…' : 'Email Confirmation'}
+            </button>
+          </div>
+        )}
+      </div>
 
       {loading ? (
         <p className="p-6 text-sm text-muted-foreground">Loading orders…</p>
@@ -191,7 +193,7 @@ export function OrdersTable() {
         <>
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full text-sm">
-              <thead className="border-b bg-muted/50">
+              <thead className="border-b bg-muted/50 sticky top-[110px] z-10">
                 <tr>
                   <th className="w-8 px-2 py-2" aria-label="Expand" />
                   <th className="w-8 px-2 py-2">
