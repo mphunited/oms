@@ -157,11 +157,13 @@ export function OrdersTable() {
   }
 
   return (
-    <div className="flex flex-col gap-3 min-h-0 flex-1">
-      <div className="sticky top-0 z-10 bg-background space-y-2 pb-2">
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="sticky top-0 z-20 bg-background px-6 pt-6 pb-3">
         <OrdersFilterBar filters={filters} onChange={handleFilterChange} onClearAll={handleClearAll} />
+      </div>
 
-        {selectedIds.size > 0 && (
+      {selectedIds.size > 0 && (
+        <div className="px-6">
           <div className="flex items-center gap-3 rounded-md border bg-muted/40 px-3 py-2">
             <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
             <button onClick={handleEmailPosClick} disabled={emailingPos || emailingBols}
@@ -180,8 +182,8 @@ export function OrdersTable() {
               {emailingConfirmation ? 'Creating…' : 'Email Confirmation'}
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {loading ? (
         <p className="p-6 text-sm text-muted-foreground">Loading orders…</p>
@@ -191,9 +193,9 @@ export function OrdersTable() {
         <p className="p-6 text-sm text-muted-foreground">No orders found.</p>
       ) : (
         <>
-          <div className="overflow-x-auto overflow-y-auto rounded-md border flex-1 min-h-0">
+          <div className="overflow-x-auto rounded-md border mx-6">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10 border-b bg-[#00205B]">
+              <thead className="border-b bg-[#00205B]">
                 <tr>
                   <th className="w-8 px-2 py-2" aria-label="Expand" />
                   <th className="w-8 px-2 py-2">
@@ -240,7 +242,9 @@ export function OrdersTable() {
               </tbody>
             </table>
           </div>
-          <OrdersPagination page={page} totalPages={totalPages} total={total} limit={LIMIT} onPage={setPage} />
+          <div className="px-6 pb-6">
+            <OrdersPagination page={page} totalPages={totalPages} total={total} limit={LIMIT} onPage={setPage} />
+          </div>
         </>
       )}
 

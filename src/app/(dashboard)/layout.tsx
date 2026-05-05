@@ -32,7 +32,7 @@ export default async function DashboardLayout({
       <AppSidebar currentUser={currentUser} />
       <SidebarInset>
         <Header title="" />
-        <main className="flex flex-1 flex-col gap-6 p-6">{children}</main>
+        <main className="flex flex-1 flex-col">{children}</main>
       </SidebarInset>
       <Toaster richColors />
     </SidebarProvider>
