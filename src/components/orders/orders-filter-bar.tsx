@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { FilterMultiSelect } from './filter-multi-select'
+import { formatVendorName } from '@/lib/utils/format-vendor-name'
 
 export type FilterState = {
   search: string
@@ -164,7 +165,7 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
         />
         <FilterMultiSelect
           label="Vendor"
-          options={vendors.map(v => ({ value: v.id, label: v.name }))}
+          options={vendors.map(v => ({ value: v.id, label: formatVendorName(v.name) }))}
           selected={filters.vendorIds}
           onChange={v => onChange({ vendorIds: v })}
         />
