@@ -192,12 +192,12 @@ export const vendors = pgTable("vendors", {
     scale: 2,
   }),
   default_load1_buy: numeric("default_load1_buy", {
-    precision: 10,
-    scale: 2,
+    precision: 12,
+    scale: 3,
   }),
   default_bottle_cost: numeric("default_bottle_cost", {
-    precision: 10,
-    scale: 2,
+    precision: 12,
+    scale: 3,
   }),
   default_bottle_qty: numeric("default_bottle_qty", {
     precision: 10,
@@ -392,8 +392,8 @@ export const order_split_loads = pgTable(
     // CSR convention: use "|" to separate product specs. BOL uses text before first "|".
     // Example: "275 Gal Washout IBC | Valve-ANY QD | Lid-ANY NON-VENTED"
     part_number: text("part_number"),
-    qty: numeric("qty", { precision: 10, scale: 2 }),
-    buy: numeric("buy", { precision: 10, scale: 2 }),
+    qty: numeric("qty", { precision: 12, scale: 3 }),
+    buy: numeric("buy", { precision: 12, scale: 3 }),
     sell: numeric("sell", { precision: 10, scale: 2 }),
     bottle_cost: numeric("bottle_cost", { precision: 10, scale: 2 }),
     bottle_qty: numeric("bottle_qty", { precision: 10, scale: 2 }),
