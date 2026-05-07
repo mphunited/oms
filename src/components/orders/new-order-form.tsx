@@ -56,6 +56,9 @@ export function NewOrderForm() {
     if (matched) {
       form.setValue('order_type', matched, { shouldValidate: true })
       setLoads(prev => prev.map((l, i) => i === 0 ? { ...l, order_type: matched } : l))
+    } else if (firstDescription.trim().length > 0) {
+      form.setValue('order_type', 'Other — Parts & Supplies', { shouldValidate: true })
+      setLoads(prev => prev.map((l, i) => i === 0 ? { ...l, order_type: 'Other — Parts & Supplies' } : l))
     }
   }, [firstDescription, orderTypeManuallySet]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -135,7 +138,7 @@ export function NewOrderForm() {
   }
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="flex gap-6 p-6">
+    <form onSubmit={form.handleSubmit(handleSubmit)} noValidate className="flex gap-6 p-6">
       <div className="flex-1 min-w-0 space-y-6">
 
         {/* Order Identity */}
@@ -201,6 +204,9 @@ export function NewOrderForm() {
               </Select>
             </div>
           </div>
+          {form.formState.errors.order_type && (
+            <p className="text-xs text-destructive">Order type could not be detected — enter a product description in the line items above to auto-set it</p>
+          )}
         </section>
 
         <Separator className="bg-[#B88A44]" />
