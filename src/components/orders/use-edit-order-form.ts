@@ -107,7 +107,7 @@ export function useEditOrderForm(orderId: string) {
         setStatus(data.status)
         setCustomerPo(data.customer_po ?? '')
         setFreightCarrier(data.freight_carrier ?? '')
-        setShipDate(data.ship_date ?? data.split_loads?.[0]?.ship_date ?? '')
+        setShipDate(data.split_loads?.[0]?.ship_date ?? data.ship_date ?? '')
         setWantedDate(data.wanted_date ?? data.split_loads?.[0]?.wanted_date ?? '')
         setFreightCost(data.freight_cost ?? '')
         setFreightToCustomer(data.freight_to_customer ?? '')
