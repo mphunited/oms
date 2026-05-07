@@ -78,7 +78,7 @@ export const orderFormSchema = z.object({
   csr_id:         z.string().min(1, 'Required'),
   csr2_id:        z.string().nullable().optional(),
   status:         z.string().min(1, 'Required'),
-  order_type:     z.string().min(1, 'Required'),
+  order_type:     z.string().optional(),
 
   customer_id:     z.string().min(1, 'Required'),
   vendor_id:       z.string().optional(),
