@@ -184,12 +184,12 @@ export function SplitLoadRow({
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs">Buy</Label>
-          <Input type="number" min="0" step="0.01" value={load.buy}
+          <Input type="number" min="0" step="0.001" value={load.buy}
             onChange={e => set('buy', e.target.value)} placeholder="0.00" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Sell</Label>
-          <Input type="number" min="0" step="0.01" value={load.sell}
+          <Input type="number" min="0" step="0.001" value={load.sell}
             onChange={e => set('sell', e.target.value)} placeholder="0.00" />
         </div>
         <div className="space-y-1.5">
