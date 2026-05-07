@@ -98,6 +98,7 @@ export async function sendPoEmail(
           description: l.description ?? null,
           part_number: l.part_number ?? null,
           qty: l.qty ?? null,
+          buy: l.buy ?? null,
           sell: l.sell ?? null,
           order_number_override: l.order_number_override ?? null,
         })),
