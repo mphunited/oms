@@ -83,7 +83,7 @@ export async function sendPoEmail(
         po_notes: string | null
         split_loads: Array<{
           description: string | null; part_number: string | null
-          qty: string | null; sell: string | null; order_number_override: string | null
+          qty: string | null; buy: string | null; sell: string | null; order_number_override: string | null
         }>
       }>
 
