@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, ChevronRight, Copy, Flag, Pencil, X, Loader2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Copy, Flag, Link2, Pencil, X, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { OrderStatusBadge } from './order-status-badge'
 import type { FullSplitLoad } from './split-load-sub-row'
@@ -50,6 +50,8 @@ export type OrderRow = {
   csr2_name: string | null
   ship_to: { name?: string | null; city?: string | null; state?: string | null } | null
   split_loads: FullSplitLoad[]
+  group_id: string | null
+  group_po_number: string | null
 }
 
 type Props = {
@@ -536,7 +538,17 @@ export function OrderTableRow({
           }
         </td>
 
-        <td className="px-3 py-2">{order.customer_name ?? '—'}</td>
+        <td className="px-3 py-2">
+          <div className="flex flex-col">
+            <span>{order.customer_name ?? '—'}</span>
+            {order.group_id && order.group_po_number && (
+              <span className="text-xs rounded px-1.5 py-0.5 font-medium mt-0.5 inline-flex items-center gap-1 bg-[#E6F1FB] text-[#0C447C]">
+                <Link2 className="h-3 w-3" />
+                {order.group_po_number}
+              </span>
+            )}
+          </div>
+        </td>
         <td className="px-3 py-2 text-muted-foreground">
           <div className="flex flex-col">
             <span>{order.split_loads[0]?.customer_po ?? order.customer_po ?? ''}</span>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { orders, order_split_loads, users, vendors, customers, order_type_configs, type NewOrderSplitLoad } from '@/lib/db/schema'
+import { orders, order_split_loads, users, vendors, customers, order_type_configs, order_groups, type NewOrderSplitLoad } from '@/lib/db/schema'
 import { eq, sql, desc, and, or, ilike, inArray, notInArray, gte, lte, count } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { createClient } from '@/lib/supabase/server'
@@ -208,6 +208,8 @@ export async function GET(req: Request) {
         invoice_payment_status: orders.invoice_payment_status,
         commission_status:      orders.commission_status,
         ship_to:                orders.ship_to,
+        group_id:               orders.group_id,
+        group_po_number:        order_groups.group_po_number,
         customer_name:          customers.name,
         vendor_name:            vendors.name,
         salesperson_name:       users.name,
@@ -220,6 +222,7 @@ export async function GET(req: Request) {
       .leftJoin(users,     eq(orders.salesperson_id, users.id))
       .leftJoin(csrUser,   eq(orders.csr_id, csrUser.id))
       .leftJoin(csr2User,  eq(orders.csr2_id, csr2User.id))
+      .leftJoin(order_groups, eq(orders.group_id, order_groups.id))
       .where(where)
       .orderBy(orderByClause)
       .limit(limit)

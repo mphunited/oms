@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, FileText, Truck, Copy, Mail, Trash2 } from 'lucide-react'
+import { ChevronLeft, FileText, Truck, Copy, Link2, Mail, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
@@ -16,6 +16,7 @@ import { EditOrderAddresses } from '@/components/orders/edit-order-addresses'
 import { EditOrderFreightSection } from '@/components/orders/edit-order-freight-section'
 import { EditOrderIdentitySection } from '@/components/orders/edit-order-identity-section'
 import { EditOrderDeleteModal } from '@/components/orders/edit-order-delete-modal'
+import { toast } from 'sonner'
 import { useEditOrderForm } from '@/components/orders/use-edit-order-form'
 import { formatVendorName } from '@/lib/utils/format-vendor-name'
 import { useGlobalContacts } from '@/components/orders/use-global-contacts'
@@ -61,6 +62,7 @@ export default function OrderDetailPage() {
     billToContacts, setBillToContacts,
     checklist, setChecklist,
     isAdmin,
+    groupData,
     handleSave, handleDuplicate,
     handleEmailPoClick, handleEmailBolClick, handleEmailConfirmationClick,
     csrInitials,
@@ -265,6 +267,52 @@ export default function OrderDetailPage() {
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">CSR Checklist</h2>
         <OrderChecklist items={checklist} onChange={setChecklist} />
       </section>
+
+      {/* Multi-Ship-To Group */}
+      {order.group_id && groupData && (
+        <>
+          <Separator className="bg-[#B88A44]" />
+          <section className="space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Multi-Ship-To Group</h2>
+            <div className="rounded-md border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-[#0C447C]" />
+                <span className="text-sm font-medium">Group PO: <span className="font-mono">{groupData.group_po_number}</span></span>
+              </div>
+              <ul className="space-y-1">
+                {groupData.orders.map(o => (
+                  <li key={o.id} className="text-sm">
+                    <a href={`/orders/${o.id}`} className="text-[#00205B] hover:underline font-mono">
+                      {o.order_number}
+                    </a>
+                    {o.customer_name && (
+                      <span className="text-muted-foreground ml-2">— {o.customer_name}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm('Remove this group? All orders will revert to standalone POs.')) return
+                    const res = await fetch(`/api/order-groups/${groupData.id}`, { method: 'DELETE' })
+                    if (res.ok) {
+                      toast.success('Group removed')
+                      window.location.reload()
+                    } else {
+                      toast.error('Failed to remove group')
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 rounded-md border border-destructive px-3 py-1.5 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                >
+                  Ungroup
+                </button>
+              )}
+            </div>
+          </section>
+        </>
+      )}
 
       {isAdmin && (
         <section className="space-y-3 pt-4">

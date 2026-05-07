@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { getMailToken } from '@/lib/email/msal-client'
 import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
 import { buildPoEmail, type OrderWithRelations } from '@/lib/email/build-po-email'
+import { buildMultiShipToEmail, type MultiShipToOrderForEmail } from '@/lib/email/build-multi-ship-to-email'
 import { getUserSignature } from '@/lib/email/get-user-signature'
 import { formatDate } from '@/lib/utils/format-date'
 
@@ -53,6 +54,64 @@ export function useOrderEmailActions(
     const toastId = toast.loading('Creating draft…')
     try {
       const { fullOrders, vendor } = await fetchOrdersAndVendor(ids)
+
+      // ── Group detection ──────────────────────────────────────────────────────
+      const firstOrder = fullOrders[0] as { group_id?: string | null } & typeof fullOrders[0]
+      if (firstOrder.group_id) {
+        const groupRes = await fetch(`/api/order-groups/${firstOrder.group_id}`)
+        if (!groupRes.ok) throw new Error('Failed to fetch group')
+        const group = await groupRes.json() as { group_po_number: string; order_ids: string[] }
+
+        toast.loading('Creating Multi-Ship-To draft…', { id: toastId })
+
+        const siblingDetails = await Promise.all(
+          group.order_ids.map(id =>
+            fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null)
+          )
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const validSiblings = siblingDetails.filter(Boolean) as any[]
+
+        const ordersForGroupEmail: MultiShipToOrderForEmail[] = validSiblings.map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (o: any) => ({
+            order_number: o.order_number,
+            customer_name: o.customer_name ?? null,
+            customer_po: o.customer_po ?? null,
+            ship_date: o.ship_date ?? null,
+            ship_to: o.ship_to ?? null,
+            po_notes: o.po_notes ?? null,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            split_loads: (o.split_loads ?? []).map((l: any) => ({
+              description: l.description ?? null,
+              part_number: l.part_number ?? null,
+              qty: l.qty ?? null,
+              sell: l.sell ?? null,
+              order_number_override: l.order_number_override ?? null,
+            })),
+          })
+        )
+
+        const vendorForEmail = {
+          name: vendor.name ?? '',
+          address: vendor.address as { city?: string; state?: string } | null ?? null,
+          po_contacts: (vendor.po_contacts ?? []) as Array<{ name: string; email: string; role?: 'to' | 'cc'; is_primary?: boolean }>,
+        }
+
+        const { subject, bodyHtml, to, cc } = buildMultiShipToEmail(group.group_po_number, vendorForEmail, ordersForGroupEmail)
+        const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+        const pdfRes = await fetch(`/api/orders/${firstOrder.id}/po-pdf`)
+        if (!pdfRes.ok) throw new Error('Failed to fetch combined PO PDF')
+        const base64 = await blobToBase64(await pdfRes.blob())
+        const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
+        await attachFileToDraft(token, messageId, `MPH PO ${group.group_po_number} Multi-Ship-To.pdf`, base64)
+        toast.success('Draft created — opening Outlook', { id: toastId })
+        openDraft(webLink)
+        onClearSelection()
+        return
+      }
+      // ── End group detection ──────────────────────────────────────────────────
+
       const ordersForEmail: FullOrderForEmail[] = fullOrders.map(o => ({
         id: o.id,
         order_number: o.order_number,

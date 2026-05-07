@@ -217,6 +217,21 @@ export const vendors = pgTable("vendors", {
 export type Vendor = typeof vendors.$inferSelect;
 export type NewVendor = typeof vendors.$inferInsert;
 
+// ─── order_groups ─────────────────────────────────────────────────────────────
+// Groups 2-4 orders from the same vendor into a single combined PO.
+
+export const order_groups = pgTable("order_groups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  group_po_number: text("group_po_number").notNull().unique(),
+  vendor_id: uuid("vendor_id").references(() => vendors.id),
+  notes: text("notes"),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type OrderGroup = typeof order_groups.$inferSelect;
+export type NewOrderGroup = typeof order_groups.$inferInsert;
+
 // ─── orders ───────────────────────────────────────────────────────────────────
 // Pricing fields (qty, buy, sell, description, part_number, bottle_*) live on
 // order_split_loads — every order has at least one split load row.
@@ -310,6 +325,9 @@ export const orders = pgTable(
     is_revised: boolean("is_revised").notNull().default(false),
     checklist: jsonb("checklist"),
     // [{ label, done }] — copied from vendor checklist_template on order creation
+
+    // Multi-ship-to group — null for standalone orders
+    group_id: uuid("group_id").references(() => order_groups.id),
 
     created_at: timestamp("created_at", { withTimezone: true })
       .notNull()

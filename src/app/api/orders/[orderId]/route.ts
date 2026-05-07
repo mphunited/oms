@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { orders, order_split_loads, customers, vendors, users, order_type_configs, type NewOrderSplitLoad } from '@/lib/db/schema'
+import { orders, order_split_loads, customers, vendors, users, order_groups, order_type_configs, type NewOrderSplitLoad } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { eq, sql } from 'drizzle-orm'
 import { deriveLoadCommissionStatus, deriveOrderCommissionStatus, deriveInitials } from '@/lib/orders/commission-eligibility'
@@ -45,6 +45,10 @@ export async function GET(
     ? await db.query.users.findFirst({ where: eq(users.id, order.csr2_id) })
     : null
 
+  const group = order.group_id
+    ? await db.query.order_groups.findFirst({ where: eq(order_groups.id, order.group_id) })
+    : null
+
   return NextResponse.json({
     ...order,
     split_loads: loads,
@@ -53,6 +57,7 @@ export async function GET(
     salesperson_name: salesperson?.name ?? null,
     csr_name: csr?.name ?? null,
     csr2_name: csr2?.name ?? null,
+    group_po_number: group?.group_po_number ?? null,
   })
 }
 

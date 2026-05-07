@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Mail, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
+import { Mail, ArrowUp, ArrowDown, ArrowUpDown, Link2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { OrdersFilterBar, DEFAULT_FILTERS, type FilterState } from './orders-filter-bar'
 import { OrdersPagination } from './orders-pagination'
@@ -38,6 +38,8 @@ export function OrdersTable() {
     useOrderEmailActions(selectedIds, () => setSelectedIds(new Set()))
 
   const [emailingConfirmation, setEmailingConfirmation] = useState(false)
+  const [grouping, setGrouping] = useState(false)
+  const [refreshTick, setRefreshTick] = useState(0)
 
   const filterBarRef = useRef<HTMLDivElement>(null)
   const [filterBarHeight, setFilterBarHeight] = useState(0)
@@ -107,7 +109,7 @@ export function OrdersTable() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, filters.lifecycle, filters.statuses, filters.flagOnly,
       filters.vendorIds, filters.customerIds, filters.shipDateFrom, filters.shipDateTo,
-      filters.salespersonIds, filters.csrIds, page, sortBy, sortDir])
+      filters.salespersonIds, filters.csrIds, page, sortBy, sortDir, refreshTick])
 
   function handleFilterChange(update: Partial<FilterState>) {
     setFilters(prev => ({ ...prev, ...update }))
@@ -172,6 +174,33 @@ export function OrdersTable() {
     void sendConfirmationEmail([...selectedIds], setEmailingConfirmation)
   }
 
+  async function handleGroupClick() {
+    const ids = [...selectedIds]
+    if (ids.length < 2 || ids.length > 4) {
+      toast.error('Select 2–4 orders to group')
+      return
+    }
+    setGrouping(true)
+    try {
+      const res = await fetch('/api/order-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: ids }),
+      })
+      if (!res.ok) {
+        const data = await res.json() as { error?: string }
+        throw new Error(data.error ?? `${res.status}`)
+      }
+      toast.success('Orders grouped as Multi-Ship-To')
+      setSelectedIds(new Set())
+      setRefreshTick(t => t + 1)
+    } catch (err) {
+      toast.error('Failed to group: ' + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setGrouping(false)
+    }
+  }
+
   function handleSortClick(col: typeof sortBy) {
     if (col === sortBy) {
       setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -212,6 +241,13 @@ export function OrdersTable() {
               <Mail className="h-3.5 w-3.5" />
               {emailingConfirmation ? 'Creating…' : 'Email Confirmation'}
             </button>
+            {(role === 'ADMIN' || role === 'CSR') && selectedIds.size >= 2 && selectedIds.size <= 4 && (
+              <button onClick={() => void handleGroupClick()} disabled={grouping}
+                className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50">
+                <Link2 className="h-3.5 w-3.5" />
+                {grouping ? 'Grouping…' : 'Group as Multi-Ship-To'}
+              </button>
+            )}
           </div>
         )}
       </div>

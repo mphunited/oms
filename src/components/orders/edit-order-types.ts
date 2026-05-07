@@ -46,4 +46,6 @@ export type OrderDetail = {
   salesperson_name: string | null
   csr_name: string | null
   csr2_name: string | null
+  group_id: string | null
+  group_po_number: string | null
 }
