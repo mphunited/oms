@@ -403,6 +403,22 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     text-red-500 fill-red-500. Optimistic update is in orders-table.tsx — visual flips
     immediately on click before API responds.
 
+59. - `noValidate` is required on all RHF form elements. @base-ui/react Select and Switch
+  components render hidden inputs that trigger browser-native validation and silently
+  block submission without it.
+- Buy/sell fields use numeric(12,3) precision. Display formatters must use
+  formatCurrency(val, true) for unit prices — never toFixed(2) directly on buy/sell.  
+
+60. **Multi-ship-to order groups** — `order_groups` table links 2–4 orders sharing
+    one physical vendor shipment. `group_po_number` is minted from
+    `nextval('order_number_seq')` — same sequence as `order_number`. Individual orders
+    keep their own `order_number` for invoicing, status, and commission tracking.
+    Combined PO PDF (`MultiShipToPDF`) and vendor email use `group_po_number`.
+    Customer confirmation emails are per-order with no group awareness.
+    Vendor PO email/PDF uses **buy price** for unit price — not sell.
+    Grouping blocked if any order status is past "Waiting On Vendor To Confirm" or
+    already grouped. Max 4 orders per group. RLS: service_role only on order_groups.  
+
 ---
 
 ## TECHNOLOGY STACK
@@ -717,6 +733,12 @@ src/lib/db/index.ts           — Drizzle client
 src/lib/email/msal-client.ts  — MSAL singleton + getMailToken()
 src/lib/email/graph-mail.ts   — createDraft(), attachFileToDraft(), openDraft()
 src/lib/email/build-po-email.ts — PO email subject/body builder (pure function)
+src/app/api/order-groups/route.ts         — POST: create group, mint group PO, link orders
+src/app/api/order-groups/[id]/route.ts    — GET: group + orders array; DELETE: ungroup (ADMIN)
+src/lib/email/build-multi-ship-to-email.ts — pure function, combined vendor PO email builder
+src/lib/orders/build-multi-ship-to-pdf.tsx — MultiShipToPDF component for combined PO PDF
+src/lib/orders/email-draft-helpers.ts      — sendPoEmail, sendBolEmail, sendConfirmationEmail (order detail page)
+src/components/orders/use-order-email-actions.ts — PO/BOL email actions hook for orders list toolbar
 src/lib/utils/format-date.ts  — formatDate() MM/DD/YYYY display helper
 src/lib/orders/badge-colors.ts — getBadgeColor(), getBadgeTextColor() helpers for colored pill badges
 src/components/orders/order-summary-drawer.tsx — Sheet drawer (right side), fetches from GET /api/orders/[orderId], triggered by PO number click in orders table
