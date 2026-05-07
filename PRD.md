@@ -887,9 +887,59 @@ When Harding National is onboarded as a second tenant:
   Shape: [{ name, email, role: "to"|"cc" }]. Managed alongside company name/address. |
 | frontline_schedule_contacts UI | Editable in /settings company settings section, 
   separate box below admin recipients. Same shape and UI pattern. |
+
 ---
 
-## 22. What the Current Prototype Is NOT
+## 22. Multi-Ship-To Order Groups
+
+Some vendors (currently EMP and Container Connectionz) ship one physical load
+to multiple different customers at different destinations. These are modeled as
+separate orders linked by an `order_groups` record.
+
+### Schema
+
+**`order_groups` table** — one row per multi-ship-to group:
+- `id` uuid PK
+- `group_po_number` text unique — minted from `nextval('order_number_seq')`,
+  same sequence as `order_number`. This is the PO number that appears on the
+  combined vendor PDF and vendor email.
+- `vendor_id` uuid FK vendors — all orders in a group must share this vendor.
+- `notes` text nullable
+- `created_at`, `updated_at`
+
+**`orders.group_id`** — nullable uuid FK to `order_groups`. Null on all
+standard orders. When set, the order is a member of a multi-ship-to group.
+Individual `order_number` values are unchanged — each order keeps its own
+sequence-generated number for invoicing, status, and commission tracking.
+
+### Behavior rules
+
+- Grouping happens from the orders list page: user selects 2–4 orders,
+  clicks "Group as Multi-Ship-To" in the selection toolbar.
+- All orders in a group must share the same `vendor_id`. The API rejects
+  mismatched vendors with a 400.
+- Grouping is blocked if any selected order already has a `group_id` set,
+  or if any order's status is past "Waiting On Vendor To Confirm".
+- When `group_id` is set on an order, the PO PDF route
+  (`/api/orders/[orderId]/po-pdf`) generates a combined multi-ship-to PDF
+  covering all orders in the group, using `group_po_number` as the PO number.
+  The single-order PDF path is unchanged for ungrouped orders.
+- The vendor PO email uses `group_po_number` in the subject and body and
+  attaches the combined PDF. One email goes to the vendor for the whole group.
+- Customer confirmation emails are unaffected — they operate at the individual
+  order level using each order's own `customer_contacts`. No changes to
+  confirmation email logic.
+- Ungrouping (ADMIN only) via order detail page: sets `group_id = null` on
+  all member orders and deletes the `order_groups` row. The consumed
+  `group_po_number` sequence number is not reused.
+- Orders list shows a badge inline with the customer name on grouped orders
+  displaying the `group_po_number`.
+- Maximum 4 orders per group (matches PO.html v3.1 constraint).
+- Recycling orders do not support grouping.
+
+---
+
+## 23. What the Current Prototype Is NOT
 
 The HTML prototype in `reference/` was built before the current schema. It uses different
 field names, different data structures, and different logic. Specifically:
@@ -905,7 +955,7 @@ data model reference or a logic reference.
 
 ---
 
-## 23. Development Workflow
+## 24. Development Workflow
 
 - Jack builds alone currently. Keith will return to the project eventually.
 - Claude Code creates git worktrees under `.claude/worktrees/` for each task.
@@ -922,7 +972,7 @@ When Keith eventually resumes:
 
 ---
 
-## 24. File Structure Reference
+## 25. File Structure Reference
 
 ```
 src/lib/db/schema.ts          — Drizzle schema, always read before writing queries
@@ -943,7 +993,7 @@ drizzle/                      — migration SQL files and snapshots
 
 ---
 
-## 25. Environment Variables
+## 26. Environment Variables
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://[project-ref].supabase.co
@@ -977,3 +1027,5 @@ PO email intro no longer prepends hardcoded "MPH United / " prefix; REVISED labe
 changed to ship_date ASC NULLS LAST with sortable columns (Ship Date, Customer, Vendor, Ship To); Clear Filters button added to filter bar Row 1; flagged orders 
 show red row highlight and red flag icon; expanded row updated (Order Type and dates removed, Customer PO added below Load PO); duplicate route commission matching 
 replaced with DB lookup.*
+
+*Last updated: May 7, 2026 — Multi-Ship-To Order Groups added (Section 21): order_groups table, group_id FK on orders, combined vendor PO PDF and email for grouped orders, Group as Multi-Ship-To button on orders list selection toolbar, badge display on orders list, ungroup action on order detail page (ADMIN only). Customer confirmation emails unchanged.*
