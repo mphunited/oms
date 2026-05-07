@@ -70,10 +70,15 @@ function fmtDateLong(d: string | null | undefined): string {
   })
 }
 
-function fmtCurrency(v: string | null | undefined): string {
+function fmtCurrency(v: string | null | undefined, unit = false): string {
   if (!v) return '--'
   const n = parseFloat(v)
-  return isNaN(n) ? '--' : `$${n.toFixed(2)}`
+  if (isNaN(n)) return '--'
+  if (unit) {
+    const s = n.toFixed(3)
+    return `$${s.endsWith('0') ? n.toFixed(2) : s}`
+  }
+  return `$${n.toFixed(2)}`
 }
 
 function calcTotal(qty: string | null, buy: string | null): string {
@@ -169,7 +174,7 @@ export function MultiShipToPDF({ group, orders, vendor, companySetting }: Props)
           <View style={S.row}>
             <View style={S.cell}>
               <Text style={S.lbl}>VENDOR</Text>
-              <Text style={S.valBold}>MPH United{vendor?.name ? ` / ${vendor.name}` : ''}</Text>
+              <Text style={S.valBold}>{vendor?.name ?? 'Unknown Vendor'}</Text>
               {!!va.street && <Text style={S.val}>{va.street}</Text>}
               {!!(va.city || va.state || va.zip) && (
                 <Text style={S.val}>{[va.city, va.state, va.zip].filter(Boolean).join(', ')}</Text>
@@ -235,7 +240,7 @@ export function MultiShipToPDF({ group, orders, vendor, companySetting }: Props)
                       {!!load.part_number && <Text style={S.pn}>P/N: {load.part_number}</Text>}
                     </View>
                     <Text style={[S.td, S.colQty]}>{load.qty ?? '--'}</Text>
-                    <Text style={[S.td, S.colPrice]}>{fmtCurrency(load.buy)}</Text>
+                    <Text style={[S.td, S.colPrice]}>{fmtCurrency(load.buy, true)}</Text> // was fmtCurrency(load.buy)
                     <Text style={[S.td, S.colTotal]}>{calcTotal(load.qty, load.buy)}</Text>
                   </View>
                 ))}

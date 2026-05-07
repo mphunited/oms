@@ -580,8 +580,8 @@ export function OrderTableRow({
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.ship_date)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.wanted_date)}</td>
         <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ? formatVendorName(order.vendor_name) : '—'}</td>
-        <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy)}</td>
-        <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell)}</td>
+        <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy, true)}</td>
+        <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell, true)}</td>
 
         {/* Ship To */}
         <td className="px-3 py-2">
@@ -665,10 +665,10 @@ export function OrderTableRow({
                   <span>{load.qty != null ? parseFloat(load.qty).toString() : '—'}</span>
 
                   <span className="text-muted-foreground">Buy</span>
-                  <span>{formatCurrency(load.buy)}</span>
+                  <span>{formatCurrency(load.buy, true)}</span>
 
                   <span className="text-muted-foreground">Sell</span>
-                  <span>{formatCurrency(load.sell)}</span>
+                  <span>{formatCurrency(load.sell, true)}</span>
                 </div>
               </div>
             ))}

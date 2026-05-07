@@ -82,7 +82,7 @@ export function buildMultiShipToEmail(
       const qty = load.qty != null ? parseFloat(load.qty) : null
       const sell = load.sell != null ? parseFloat(load.sell) : null
       const total = qty != null && sell != null ? fmtCurrency(qty * sell) : '--'
-      const mpoPo = load.order_number_override ?? order.order_number
+      const mpoPo = load.order_number_override || order.order_number || '' // was ??
       const pnLine = load.part_number
         ? `<br/><span style="color:#B88A44;font-size:11pt;">P/N: ${load.part_number}</span>`
         : ''
