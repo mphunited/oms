@@ -1029,3 +1029,13 @@ show red row highlight and red flag icon; expanded row updated (Order Type and d
 replaced with DB lookup.*
 
 *Last updated: May 7, 2026 — Multi-Ship-To Order Groups added (Section 21): order_groups table, group_id FK on orders, combined vendor PO PDF and email for grouped orders, Group as Multi-Ship-To button on orders list selection toolbar, badge display on orders list, ungroup action on order detail page (ADMIN only). Customer confirmation emails unchanged.*
+
+*Last updated: May 7, 2026 — Pre-launch hardening and bug fixes across 6 commits:
+- noValidate on new order form; silent order_type validation failure fixed; 
+  order_type fallback to "Other — Parts & Supplies" when description doesn't match
+- Buy/sell 3-decimal precision: DB column, schema, form input step, display 
+  formatting in orders list and PDF
+- Vendor name doubling in multi-ship-to PDF removed
+- Email MPH PO blanks fixed (|| vs ?? operator mismatch)
+- Edit form ship date now initializes from load level, not order level
+- Multi-ship-to order groups: full feature (see Section 21)*
