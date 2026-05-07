@@ -66,6 +66,11 @@ export function useEditOrderForm(orderId: string) {
   const [vendorOptions, setVendorOptions] = useState<Array<{ id: string; name: string }>>([])
   const [orderTypeManuallySet, setOrderTypeManuallySet] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [groupData, setGroupData] = useState<{
+    id: string
+    group_po_number: string
+    orders: Array<{ id: string; order_number: string; customer_name: string | null }>
+  } | null>(null)
 
   useEffect(() => {
     fetch('/api/me').then(r => r.json())
@@ -143,6 +148,14 @@ export function useEditOrderForm(orderId: string) {
           preview_po: '',
         })))
         setLoading(false)
+        if (data.group_id) {
+          fetch(`/api/order-groups/${data.group_id}`)
+            .then(r => r.ok ? r.json() : null)
+            .then((g: { id: string; group_po_number: string; orders: Array<{ id: string; order_number: string; customer_name: string | null }> } | null) => {
+              if (g) setGroupData(g)
+            })
+            .catch(() => {})
+        }
       })
       .catch(err => { setError(err.message); setLoading(false) })
   }, [orderId])
@@ -230,7 +243,8 @@ export function useEditOrderForm(orderId: string) {
         vendor_name: order.vendor_name, customer_name: order.customer_name,
         customer_po: order.customer_po, sales_order_number: order.sales_order_number,
         freight_carrier: freightCarrier || order.freight_carrier, ship_date: order.ship_date,
-        is_blind_shipment: order.is_blind_shipment, is_revised: order.is_revised },
+        is_blind_shipment: order.is_blind_shipment, is_revised: order.is_revised,
+        group_id: order.group_id ?? null },
       splitLoads, shipDate, shipTo, poNotes, setEmailingPo,
     )
   }
@@ -296,6 +310,7 @@ export function useEditOrderForm(orderId: string) {
     billToContacts, setBillToContacts,
     checklist, setChecklist,
     isAdmin,
+    groupData,
     handleSave,
     handleDuplicate,
     handleEmailPoClick,

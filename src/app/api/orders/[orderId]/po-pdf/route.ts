@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { orders, order_split_loads, vendors, company_settings } from '@/lib/db/schema'
+import { orders, order_split_loads, vendors, company_settings, order_groups, customers } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
-import { eq, asc } from 'drizzle-orm'
+import { eq, asc, inArray } from 'drizzle-orm'
 import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
 import { PurchaseOrderPDF } from '@/lib/orders/build-po-pdf'
+import { MultiShipToPDF, type MultiShipToOrder } from '@/lib/orders/build-multi-ship-to-pdf'
 
 export const runtime = 'nodejs'
 
@@ -23,17 +24,84 @@ export async function GET(
     const order = await db.query.orders.findFirst({ where: eq(orders.id, orderId) })
     if (!order) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const splitLoads = await db
-      .select()
-      .from(order_split_loads)
-      .where(eq(order_split_loads.order_id, orderId))
-      .orderBy(asc(order_split_loads.created_at))
-
     const vendor = order.vendor_id
       ? await db.query.vendors.findFirst({ where: eq(vendors.id, order.vendor_id) })
       : null
 
     const companySetting = await db.query.company_settings.findFirst()
+
+    // ── Multi-ship-to group path ──────────────────────────────────────────────
+    if (order.group_id) {
+      const group = await db.query.order_groups.findFirst({
+        where: eq(order_groups.id, order.group_id),
+      })
+      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 })
+
+      const siblingOrders = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.group_id, order.group_id))
+        .orderBy(asc(orders.created_at))
+
+      const siblingIds = siblingOrders.map(o => o.id)
+      const allLoads = siblingIds.length > 0
+        ? await db
+            .select()
+            .from(order_split_loads)
+            .where(inArray(order_split_loads.order_id, siblingIds))
+            .orderBy(asc(order_split_loads.created_at))
+        : []
+
+      const customerIds = siblingOrders.map(o => o.customer_id).filter(Boolean) as string[]
+      const customerRows = customerIds.length > 0
+        ? await db
+            .select({ id: customers.id, name: customers.name })
+            .from(customers)
+            .where(inArray(customers.id, customerIds))
+        : []
+      const customerMap = new Map(customerRows.map(c => [c.id, c.name]))
+
+      const multiOrders: MultiShipToOrder[] = siblingOrders.map(o => ({
+        id: o.id,
+        order_number: o.order_number,
+        customer_name: o.customer_id ? (customerMap.get(o.customer_id) ?? null) : null,
+        customer_po: o.customer_po ?? null,
+        ship_date: o.ship_date ?? null,
+        appointment_time: o.appointment_time ? o.appointment_time.toISOString() : null,
+        appointment_notes: o.appointment_notes ?? null,
+        po_notes: o.po_notes ?? null,
+        freight_carrier: o.freight_carrier ?? null,
+        ship_to: o.ship_to as MultiShipToOrder['ship_to'],
+        split_loads: allLoads.filter(l => l.order_id === o.id),
+      }))
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdf = await renderToBuffer(
+        React.createElement(MultiShipToPDF, {
+          group: { group_po_number: group.group_po_number },
+          orders: multiOrders,
+          vendor: vendor
+            ? { name: vendor.name, address: vendor.address as { city?: string; state?: string; street?: string; zip?: string } | null, lead_contact: vendor.lead_contact ?? null }
+            : null,
+          companySetting: companySetting ?? null,
+        }) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+      )
+
+      return new Response(new Uint8Array(pdf), {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="MPH PO ${group.group_po_number} Multi-Ship-To.pdf"`,
+          'X-Group-Po-Number': group.group_po_number,
+        },
+      })
+    }
+
+    // ── Single-order path ─────────────────────────────────────────────────────
+    const splitLoads = await db
+      .select()
+      .from(order_split_loads)
+      .where(eq(order_split_loads.order_id, orderId))
+      .orderBy(asc(order_split_loads.created_at))
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdf = await renderToBuffer(

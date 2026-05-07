@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { getMailToken } from '@/lib/email/msal-client'
 import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
 import { buildPoEmail, type OrderWithRelations } from '@/lib/email/build-po-email'
+import { buildMultiShipToEmail, type MultiShipToOrderForEmail } from '@/lib/email/build-multi-ship-to-email'
 import { getUserSignature } from '@/lib/email/get-user-signature'
 import { formatDate } from '@/lib/utils/format-date'
 import type { SplitLoadValue } from '@/lib/orders/order-form-schema'
@@ -27,6 +28,7 @@ type OrderSnap = {
   ship_date: string | null
   is_blind_shipment: boolean
   is_revised?: boolean
+  group_id?: string | null
 }
 
 type AddressSnap = {
@@ -54,6 +56,72 @@ export async function sendPoEmail(
   setEmailing(true)
   const toastId = toast.loading('Creating draft…')
   try {
+    // ── Group path ─────────────────────────────────────────────────────────────
+    if (order.group_id) {
+      const groupRes = await fetch(`/api/order-groups/${order.group_id}`)
+      if (!groupRes.ok) throw new Error('Failed to fetch group')
+      const group = await groupRes.json() as {
+        group_po_number: string
+        order_ids: string[]
+        orders: Array<{ id: string; order_number: string; customer_name: string | null }>
+      }
+
+      let vendor: VendorRow | null = null
+      if (order.vendor_id) {
+        const res = await fetch(`/api/vendors/${order.vendor_id}`)
+        if (res.ok) vendor = await res.json() as VendorRow
+      }
+
+      const siblingDetails = await Promise.all(
+        group.order_ids.map(id =>
+          fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null)
+        )
+      )
+      const validSiblings = siblingDetails.filter(Boolean) as Array<{
+        order_number: string; customer_name: string | null; customer_po: string | null
+        ship_date: string | null; ship_to: { city?: string; state?: string } | null
+        po_notes: string | null
+        split_loads: Array<{
+          description: string | null; part_number: string | null
+          qty: string | null; sell: string | null; order_number_override: string | null
+        }>
+      }>
+
+      const ordersForEmail: MultiShipToOrderForEmail[] = validSiblings.map(o => ({
+        order_number: o.order_number,
+        customer_name: o.customer_name,
+        customer_po: o.customer_po ?? null,
+        ship_date: o.ship_date ?? null,
+        ship_to: o.ship_to ?? null,
+        po_notes: o.po_notes ?? null,
+        split_loads: (o.split_loads ?? []).map(l => ({
+          description: l.description ?? null,
+          part_number: l.part_number ?? null,
+          qty: l.qty ?? null,
+          sell: l.sell ?? null,
+          order_number_override: l.order_number_override ?? null,
+        })),
+      }))
+
+      const vendorForEmail = {
+        name: vendor?.name ?? order.vendor_name ?? '',
+        address: vendor?.address as { city?: string; state?: string } | null ?? null,
+        po_contacts: (vendor?.po_contacts ?? []) as Array<{ name: string; email: string; role?: 'to' | 'cc'; is_primary?: boolean }>,
+      }
+
+      const { subject, bodyHtml, to, cc } = buildMultiShipToEmail(group.group_po_number, vendorForEmail, ordersForEmail)
+      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+      const pdfRes = await fetch(`/api/orders/${order.id}/po-pdf`)
+      if (!pdfRes.ok) throw new Error('Failed to fetch combined PO PDF')
+      const base64 = await blobToBase64(await pdfRes.blob())
+      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
+      await attachFileToDraft(token, messageId, `MPH PO ${group.group_po_number} Multi-Ship-To.pdf`, base64)
+      toast.success('Draft created — opening Outlook', { id: toastId })
+      openDraft(webLink)
+      return
+    }
+    // ── End group path ─────────────────────────────────────────────────────────
+
     let vendor: VendorRow | null = null
     if (order.vendor_id) {
       const res = await fetch(`/api/vendors/${order.vendor_id}`)
