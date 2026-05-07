@@ -36,6 +36,11 @@ function fmtCurrency(n: number): string {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 }
 
+function fmtUnitPrice(n: number): string {
+  const s = n.toFixed(3)
+  return `$${s.endsWith('0') ? n.toFixed(2) : s}`
+}
+
 function td(content: string, align: 'left' | 'right' = 'left'): string {
   return `<td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:${align};">${content}</td>`
 }
@@ -74,7 +79,7 @@ export function buildMultiShipToEmail(
   const intro = `Please find the Multi Ship-To PO below for ${vendor.name}${vendorLoc ? ` -- ${vendorLoc}` : ''} to ${drops}.`
 
   const headerRow = `<tr>
-    ${th('Split Load')}${th('MPH PO')}${th('Customer PO')}${th('Description')}${th('Qty', 'right')}${th('Unit Price', 'right')}${th('Total', 'right')}
+    ${th('Split Load')}${th('Customer PO')}${th('Description')}${th('Qty', 'right')}${th('Unit Price', 'right')}${th('Total', 'right')}
   </tr>`
 
   const dataRows = orders.flatMap((order, dropIndex) => {
@@ -83,18 +88,16 @@ export function buildMultiShipToEmail(
       const qty = load.qty != null ? parseFloat(load.qty) : null
       const price = load.buy != null ? parseFloat(load.buy) : null
       const total = qty != null && price != null ? fmtCurrency(qty * price) : '--'
-      const mpoPo = load.order_number_override || order.order_number || '' // was ??
       const pnLine = load.part_number
         ? `<br/><span style="color:#B88A44;font-size:11pt;">P/N: ${load.part_number}</span>`
         : ''
       const desc = `${load.description ?? ''}${pnLine}`
       return `<tr>
         ${td(loadIndex === 0 ? `<strong>${splitLabel}</strong>` : '')}
-        ${td(loadIndex === 0 ? mpoPo : '')}
         ${td(loadIndex === 0 ? (order.customer_po ?? '') : '')}
         ${td(desc)}
         ${td(qty != null ? String(qty) : '--', 'right')}
-        ${td(price != null ? fmtCurrency(price) : '--', 'right')}
+        ${td(price != null ? fmtUnitPrice(price) : '--', 'right')}
         ${td(total, 'right')}
       </tr>`
     })
@@ -109,10 +112,13 @@ export function buildMultiShipToEmail(
     }
   }
 
-  const notesOrders = orders.filter(o => o.po_notes)
-  const notesHtml = notesOrders.length === 1
-    ? `<p style="margin:6px 0;font-size:12pt;"><strong>PO Notes:</strong> ${notesOrders[0].po_notes}</p>`
-    : notesOrders.map(o => `<p style="margin:6px 0;font-size:12pt;"><strong>PO Notes (${o.order_number}):</strong> ${o.po_notes}</p>`).join('')
+  const notesHtml = orders
+    .map((o, i) => o.po_notes?.trim()
+      ? `<p style="margin:6px 0;font-size:12pt;"><strong>Split Load ${i + 1} PO Notes:</strong> ${o.po_notes}</p>`
+      : ''
+    )
+    .filter(Boolean)
+    .join('')
 
   const bodyHtml = `<div style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12pt;color:#1f2937;max-width:800px;line-height:1.5;">
   <p style="margin:0 0 16px;">Hello ${vendor.name},</p>
