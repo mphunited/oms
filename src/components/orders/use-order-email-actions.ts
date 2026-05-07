@@ -86,8 +86,9 @@ export function useOrderEmailActions(
               description: l.description ?? null,
               part_number: l.part_number ?? null,
               qty: l.qty ?? null,
+              buy: l.buy ?? null,        // add this line
               sell: l.sell ?? null,
-              order_number_override: l.order_number_override || null, // was ?? null
+              order_number_override: l.order_number_override || null,
             })),
           })
         )
@@ -129,6 +130,7 @@ export function useOrderEmailActions(
           description: l.description ?? null,
           part_number: l.part_number ?? null,
           qty: l.qty ?? null,
+          buy: l.buy ?? null,        // add this line
           sell: l.sell ?? null,
           order_number_override: l.order_number_override ?? null,
         })),

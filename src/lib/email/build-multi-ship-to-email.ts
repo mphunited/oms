@@ -23,12 +23,13 @@ export type MultiShipToOrderForEmail = {
   ship_to: { city?: string; state?: string } | null
   po_notes: string | null
   split_loads: Array<{
-    description: string | null
-    part_number: string | null
-    qty: string | null
-    sell: string | null
-    order_number_override: string | null
-  }>
+  description: string | null
+  part_number: string | null
+  qty: string | null
+  buy: string | null
+  sell: string | null
+  order_number_override: string | null
+}>
 }
 
 function fmtCurrency(n: number): string {
@@ -80,8 +81,8 @@ export function buildMultiShipToEmail(
     const splitLabel = `SPLIT LOAD ${dropIndex + 1}`
     return order.split_loads.map((load, loadIndex) => {
       const qty = load.qty != null ? parseFloat(load.qty) : null
-      const sell = load.sell != null ? parseFloat(load.sell) : null
-      const total = qty != null && sell != null ? fmtCurrency(qty * sell) : '--'
+      const price = load.buy != null ? parseFloat(load.buy) : null
+      const total = qty != null && price != null ? fmtCurrency(qty * price) : '--'
       const mpoPo = load.order_number_override || order.order_number || '' // was ??
       const pnLine = load.part_number
         ? `<br/><span style="color:#B88A44;font-size:11pt;">P/N: ${load.part_number}</span>`
@@ -93,7 +94,7 @@ export function buildMultiShipToEmail(
         ${td(loadIndex === 0 ? (order.customer_po ?? '') : '')}
         ${td(desc)}
         ${td(qty != null ? String(qty) : '--', 'right')}
-        ${td(sell != null ? fmtCurrency(sell) : '--', 'right')}
+        ${td(price != null ? fmtCurrency(price) : '--', 'right')}
         ${td(total, 'right')}
       </tr>`
     })
@@ -103,7 +104,7 @@ export function buildMultiShipToEmail(
   for (const order of orders) {
     for (const load of order.split_loads) {
       const q = load.qty ? parseFloat(load.qty) : null
-      const s = load.sell ? parseFloat(load.sell) : null
+      const s = load.buy ? parseFloat(load.buy) : null
       if (q != null && s != null) grandTotal += q * s
     }
   }
