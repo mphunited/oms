@@ -87,7 +87,7 @@ export function useOrderEmailActions(
               part_number: l.part_number ?? null,
               qty: l.qty ?? null,
               sell: l.sell ?? null,
-              order_number_override: l.order_number_override ?? null,
+              order_number_override: l.order_number_override || null, // was ?? null
             })),
           })
         )

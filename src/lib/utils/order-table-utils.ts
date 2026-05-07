@@ -1,6 +1,11 @@
-export function formatCurrency(val: string | null | undefined): string {
+export function formatCurrency(val: string | null | undefined, unit = false): string {
   const n = parseFloat(val ?? '')
-  return isNaN(n) ? '—' : `$${n.toFixed(2)}`
+  if (isNaN(n)) return '—'
+  if (unit) {
+    const s = n.toFixed(3)
+    return `$${s.endsWith('0') ? n.toFixed(2) : s}`
+  }
+  return `$${n.toFixed(2)}`
 }
 
 export function firstDescription(loads: { description: string | null }[]): string {
