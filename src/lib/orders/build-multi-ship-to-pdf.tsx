@@ -240,7 +240,7 @@ export function MultiShipToPDF({ group, orders, vendor, companySetting }: Props)
                       {!!load.part_number && <Text style={S.pn}>P/N: {load.part_number}</Text>}
                     </View>
                     <Text style={[S.td, S.colQty]}>{load.qty ?? '--'}</Text>
-                    <Text style={[S.td, S.colPrice]}>{fmtCurrency(load.buy, true)}</Text> // was fmtCurrency(load.buy)
+                    <Text style={[S.td, S.colPrice]}>{fmtCurrency(load.buy, true)}</Text>
                     <Text style={[S.td, S.colTotal]}>{calcTotal(load.qty, load.buy)}</Text>
                   </View>
                 ))}
