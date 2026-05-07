@@ -1039,3 +1039,10 @@ replaced with DB lookup.*
 - Email MPH PO blanks fixed (|| vs ?? operator mismatch)
 - Edit form ship date now initializes from load level, not order level
 - Multi-ship-to order groups: full feature (see Section 21)*
+
+*Last updated: May 7, 2026 — Pre-launch hardening across 7 commits (a1e489d–pending):
+Multi-ship-to order groups full feature (see Section 21). New order form: noValidate,
+silent order_type validation fixed, fallback to "Other — Parts & Supplies". Buy/sell
+3-decimal precision end to end. Edit form ship date initializes from load level.
+Vendor name doubling in PDF fixed. Email MPH PO blanks fixed. Vendor PO email uses
+buy price for unit price and total.*
