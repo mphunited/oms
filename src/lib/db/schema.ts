@@ -597,6 +597,19 @@ export const recycling_orders = pgTable(
     po_notes: text("po_notes"),
     misc_notes: text("misc_notes"),
 
+    // ── Phase 1 fields ────────────────────────────────────────────────────────
+    recycling_type: text("recycling_type").notNull().default("IBC"),
+    // 'IBC' | 'Drum'
+    qty: numeric("qty", { precision: 10, scale: 2 }),
+    buy: numeric("buy", { precision: 10, scale: 2 }),
+    sell: numeric("sell", { precision: 10, scale: 2 }),
+    description: text("description"),
+    part_number: text("part_number"),
+    appointment_notes: text("appointment_notes"),
+    po_contacts: jsonb("po_contacts"),
+    // [{ name, email, role: "to"|"cc" }] — PO email recipients (order-level, NOT vendor)
+    is_blind_shipment: boolean("is_blind_shipment").notNull().default(false),
+
     flag: boolean("flag").notNull().default(false),
     checklist: jsonb("checklist"),
     // [{ label, done }]
