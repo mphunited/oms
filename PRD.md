@@ -464,20 +464,37 @@ A CSR List button on each row of the orders list page opens a checklist popup. C
 ## 14. Recycling Orders
 
 Recycling orders are a **separate section** of the app (`/recycling`). They share
-customers, vendors, and users tables but have their own schema, routes, and status workflow.
-It may be better to have two separate tables for Recycling Drums and Recycling IBCs since these are also different.
+customers, vendors, and users tables but have their own table (recycling_orders),
+routes (/api/recycling-orders), and status workflow.
 
 ### Why separate
 Different financial structure (credits from vendors, not just costs), different date fields
 (Pick Up Date, Delivery Date vs Ship Date/Wanted Date), different statuses, different
 document requirements.
 
+### CRITICAL: Inverted Customer/Vendor Relationship
+
+Recycling orders use customer_id and vendor_id **inverted** from regular orders:
+- `customer_id` → the **IBC/drum source company** (sends product for recycling; PO recipient)
+  — shown as "Vendor" on the PO PDF, "IBC Source" in the IBC table header
+- `vendor_id` → the **processing/recycling facility** (does the recycling; PO destination)
+  — shown as "Ship To" on the PO PDF, "Processing Facility" in the IBC table header
+
+The PO PDF "Vendor" block (left) uses customer.name + customer.bill_to address.
+The PO PDF "Ship To" block (right) uses vendor.name + vendor.address.
+Blind shipment shows "CPU" instead of vendor address on the PDF.
+
+`po_contacts` on recycling orders lives on the ORDER itself (jsonb column),
+not on the vendor record. The email hook reads from order.po_contacts via
+x-email-to / x-email-cc / x-email-subject headers set by the po-pdf API route.
+
 ### Recycling Order Types
-- **IBC Recycling:** Empty IBCs picked up from customer, delivered to vendor for processing.
-  Financial flow may include a freight credit back from vendor (e.g., RRG credits MPH freight).
-- **Drum Recycling:** Drums picked up from customer, delivered to Coastal Container Services.
-  MPH receives payment from customer to take drums, then pays vendor to recycle.
-  Requires a Ship From field (pickup location) not present on regular orders.
+- **IBC Recycling** (`recycling_type = 'IBC'`): Empty IBCs picked up from customer, delivered
+  to vendor for processing. Fields: delivery_date, appointment_notes, ship_to (pickup location),
+  freight_credit_amount. No ship_from, bill_to, or customer_contacts.
+- **Drum Recycling** (`recycling_type = 'Drum'`): Drums picked up from customer, delivered to
+  Coastal Container Services (default vendor). Fields: ship_from (pickup), bill_to (billing),
+  customer_contacts (confirmation). No delivery_date, appointment_notes, ship_to, or freight_credit_amount.
 
 ### Recycling Vendors
 RRG (Rural Recycling Grinding) — Stanwood, IA
@@ -485,21 +502,47 @@ STS Superior Tote Solutions — Greenwood/Summitville, IN
 GPC Great Plains Container — Garden City, KS
 SEC SouthEast Container — Cleveland, MS
 UCG United Container Group — Hillsboro, TX
-Coastal Container Services — drums only
+Coastal Container Services — drums only (default for drum orders; id: 8ae0764b-c98d-4b4f-a71f-1e0111225a94)
 
-### Recycling Order Statuses
+### Recycling Order Statuses (RECYCLING_STATUSES in schema.ts)
 Acknowledged Order | PO Request To Accounting | Waiting On Vendor To Confirm |
 Credit Sent In | Confirmed To Customer | Waiting For Customer To Confirm |
 Ready To Pickup | Picked Up | Sent Order To Carrier | Ready To Ship |
 Ready To Invoice | Complete | Canceled
 
-### Additional Recycling Fields (beyond standard)
-- pick_up_date, delivery_date
-- ship_from (jsonb — customer pickup location, drum orders)
-- invoice_status: 'Credit' | 'Invoice' | 'No Charge'
-- invoice_customer_amount (numeric)
-- freight_credit_amount (numeric — credit received from vendor)
-- bol_number (text — tracked directly on recycling order)
+### Invoice Statuses (RECYCLING_INVOICE_STATUSES in schema.ts)
+No Charge | Credit | Invoice
+
+### Invoice Payment Statuses (INVOICE_PAYMENT_STATUSES in schema.ts)
+Not Invoiced | Invoiced | Paid
+
+### recycling_orders table — implemented columns (Phase 1)
+id, order_number (text, unique — same [Initials]-MPH[seq] format), order_date,
+status (RECYCLING_STATUSES), customer_id (FK→customers), vendor_id (FK→vendors),
+recycling_type (text, default 'IBC'), salesperson_id (FK→users, nullable),
+csr_id (FK→users, nullable), customer_po, is_blind_shipment (bool, default false),
+freight_carrier, pick_up_date (date, nullable), delivery_date (date, nullable — IBC only),
+appointment_notes (text — IBC only), ship_to (jsonb — IBC pickup location),
+ship_from (jsonb — Drum pickup location), bill_to (jsonb — Drum billing),
+customer_contacts (jsonb — Drum confirmation contacts [{name, email}]),
+freight_credit_amount (numeric(10,2) — IBC only), invoice_status (default 'No Charge'),
+invoice_customer_amount (numeric(10,2)), invoice_payment_status (default 'Not Invoiced'),
+po_contacts (jsonb — email recipients [{name, email, role: "to"|"cc"}]),
+po_notes, misc_notes, bol_number, flag (bool), qb_invoice_number,
+qty (numeric(10,2)), buy (numeric(10,2)), sell (numeric(10,2)),
+description (text), part_number (text), created_at, updated_at
+
+### Routes and Files
+- `GET /api/recycling-orders?type=IBC|Drum` — list with filters (lifecycle, status, customer, vendor, etc.)
+- `POST /api/recycling-orders` — create (SALES role forbidden)
+- `GET /api/recycling-orders/[id]` — single order detail
+- `PATCH /api/recycling-orders/[id]` — update (SALES role forbidden)
+- `GET /api/recycling-orders/[id]/po-pdf` — PDF + x-email-* headers (runtime='nodejs')
+- PDF builder: `src/lib/recycling/build-recycling-po-pdf.tsx`
+- Email hook: `src/lib/recycling/use-recycling-po-email.ts`
+- IBC list: `/recycling/ibcs` | Drum list: `/recycling/drums`
+- IBC edit: `/recycling/ibcs/[id]` | Drum edit: `/recycling/drums/[id]`
+- New IBC: `/recycling/ibcs/new` | New Drum: `/recycling/drums/new`
 
 ---
 

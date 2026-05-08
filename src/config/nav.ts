@@ -41,9 +41,22 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     title: "Recycling",
-    href: "/recycling",
     icon: RefreshCw,
-    roles: ["ADMIN", "CSR", "ACCOUNTING"],
+    roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
+    children: [
+      {
+        title: "IBCs",
+        href: "/recycling/ibcs",
+        icon: RefreshCw,
+        roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
+      },
+      {
+        title: "Drums",
+        href: "/recycling/drums",
+        icon: RefreshCw,
+        roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
+      },
+    ],
   },
   {
     title: "Customers",
