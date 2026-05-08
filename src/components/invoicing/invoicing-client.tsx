@@ -18,7 +18,11 @@ export function InvoicingClient() {
     params.set('tab', tab)
     // Clear queue-specific params when switching away
     if (tab !== 'queue') {
+      params.delete('search')
       params.delete('customerId')
+      params.delete('vendorId')
+      params.delete('csrId')
+      params.delete('salespersonId')
       params.delete('invoiceStatus')
       params.delete('shipDateFrom')
       params.delete('shipDateTo')
