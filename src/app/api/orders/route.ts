@@ -53,12 +53,14 @@ export async function GET(req: Request) {
           salesperson_commission_eligible: salesUser.is_commission_eligible,
           csr_name:                   csrAlias.name,
           csr2_name:                  csr2Alias.name,
+          group_po_number:            order_groups.group_po_number,
         })
         .from(orders)
         .leftJoin(customers, eq(orders.customer_id, customers.id))
         .leftJoin(salesUser, eq(orders.salesperson_id, salesUser.id))
         .leftJoin(csrAlias,  eq(orders.csr_id,        csrAlias.id))
         .leftJoin(csr2Alias, eq(orders.csr2_id,       csr2Alias.id))
+        .leftJoin(order_groups, eq(orders.group_id, order_groups.id))
         .where(and(
           sql`${orders.invoice_payment_status} != 'Paid'`,
           or(
@@ -147,12 +149,19 @@ export async function GET(req: Request) {
           ilike(order_split_loads.order_number_override, `%${search}%`),
         ))
 
+      const groupSubquery = db
+        .select({ id: orders.id })
+        .from(orders)
+        .leftJoin(order_groups, eq(orders.group_id, order_groups.id))
+        .where(ilike(order_groups.group_po_number, `%${search}%`))
+
       conditions.push(or(
         ilike(orders.order_number,  `%${search}%`),
         ilike(orders.customer_po,   `%${search}%`),
         ilike(customers.name,       `%${search}%`),
         ilike(vendors.name,         `%${search}%`),
         inArray(orders.id, descSubquery),
+        inArray(orders.id, groupSubquery),
       ))
     }
 

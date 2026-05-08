@@ -417,7 +417,12 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Customer confirmation emails are per-order with no group awareness.
     Vendor PO email/PDF uses **buy price** for unit price — not sell.
     Grouping blocked if any order status is past "Waiting On Vendor To Confirm" or
-    already grouped. Max 4 orders per group. RLS: service_role only on order_groups.  
+    already grouped. Max 4 orders per group. RLS: service_role only on order_groups.
+    group_po_number displays stacked below the individual order_number in the MPH PO cell
+    on both the Orders list and Invoicing page. It is not shown in the Customer column.
+    Searching for a group_po_number on either page returns all orders in the group.
+    On the orders list, search uses a groupSubquery with inArray. On the invoicing
+    path, search uses a LEFT JOIN on order_groups in GET /api/orders.
 
 ---
 
