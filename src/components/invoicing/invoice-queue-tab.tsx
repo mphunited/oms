@@ -18,7 +18,11 @@ export function InvoiceQueueTab() {
   const [refreshKey, setRefreshKey] = useState(0)
 
   const filters: FilterState = {
+    search:        searchParams.get('search') ?? '',
     customerId:    searchParams.get('customerId') ?? '',
+    vendorId:      searchParams.get('vendorId') ?? '',
+    csrId:         searchParams.get('csrId') ?? '',
+    salespersonId: searchParams.get('salespersonId') ?? '',
     invoiceStatus: searchParams.get('invoiceStatus')?.split(',').filter(Boolean) ?? ['Not Invoiced'],
     shipDateFrom:  searchParams.get('shipDateFrom') ?? '',
     shipDateTo:    searchParams.get('shipDateTo') ?? '',
@@ -28,10 +32,16 @@ export function InvoiceQueueTab() {
     const next = { ...filters, ...update }
     const params = new URLSearchParams(searchParams.toString())
     params.set('tab', 'queue')
-    if (next.customerId) { params.set('customerId', next.customerId) } else { params.delete('customerId') }
+
+    if (next.search)        { params.set('search', next.search) }             else { params.delete('search') }
+    if (next.customerId)    { params.set('customerId', next.customerId) }      else { params.delete('customerId') }
+    if (next.vendorId)      { params.set('vendorId', next.vendorId) }          else { params.delete('vendorId') }
+    if (next.csrId)         { params.set('csrId', next.csrId) }               else { params.delete('csrId') }
+    if (next.salespersonId) { params.set('salespersonId', next.salespersonId) } else { params.delete('salespersonId') }
     if (next.invoiceStatus.length) { params.set('invoiceStatus', next.invoiceStatus.join(',')) } else { params.delete('invoiceStatus') }
-    if (next.shipDateFrom) { params.set('shipDateFrom', next.shipDateFrom) } else { params.delete('shipDateFrom') }
-    if (next.shipDateTo) { params.set('shipDateTo', next.shipDateTo) } else { params.delete('shipDateTo') }
+    if (next.shipDateFrom)  { params.set('shipDateFrom', next.shipDateFrom) }  else { params.delete('shipDateFrom') }
+    if (next.shipDateTo)    { params.set('shipDateTo', next.shipDateTo) }      else { params.delete('shipDateTo') }
+
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
   }
 
@@ -46,7 +56,20 @@ export function InvoiceQueueTab() {
   useEffect(() => { fetchRows() }, [fetchRows, refreshKey])
 
   const filtered = rows.filter(row => {
-    if (filters.customerId && row.customer_id !== filters.customerId) return false
+    if (filters.search) {
+      const s = filters.search.toLowerCase()
+      const overrides = row.split_loads.map(l => l.order_number_override ?? '').join(' ')
+      if (
+        !row.order_number.toLowerCase().includes(s) &&
+        !(row.customer_po ?? '').toLowerCase().includes(s) &&
+        !(row.group_po_number ?? '').toLowerCase().includes(s) &&
+        !overrides.toLowerCase().includes(s)
+      ) return false
+    }
+    if (filters.customerId    && row.customer_id    !== filters.customerId)    return false
+    if (filters.vendorId      && row.vendor_id      !== filters.vendorId)      return false
+    if (filters.csrId         && row.csr_id         !== filters.csrId)         return false
+    if (filters.salespersonId && row.salesperson_id !== filters.salespersonId) return false
     if (filters.invoiceStatus.length && !filters.invoiceStatus.includes(row.invoice_payment_status)) return false
     if (filters.shipDateFrom && row.ship_date && row.ship_date < filters.shipDateFrom) return false
     if (filters.shipDateTo   && row.ship_date && row.ship_date > filters.shipDateTo)   return false

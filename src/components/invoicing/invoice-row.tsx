@@ -16,13 +16,17 @@ export type InvoiceQueueRow = {
   status: string
   customer_po: string | null
   customer_id: string
+  vendor_id: string | null
+  vendor_name: string | null
   ship_date: string | null
   invoice_payment_status: string
   qb_invoice_number: string | null
   invoice_paid_date: string | null
   customer_name: string | null
+  salesperson_id: string | null
   salesperson_name: string | null
   salesperson_commission_eligible: boolean | null
+  csr_id: string | null
   csr_name: string | null
   csr2_name: string | null
   group_po_number: string | null

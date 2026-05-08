@@ -48,15 +48,19 @@ export async function GET(req: Request) {
           invoice_paid_date:          orders.invoice_paid_date,
           customer_id:                orders.customer_id,
           customer_name:              customers.name,
+          vendor_id:                  orders.vendor_id,
+          vendor_name:                vendors.name,
           salesperson_id:             orders.salesperson_id,
           salesperson_name:           salesUser.name,
           salesperson_commission_eligible: salesUser.is_commission_eligible,
+          csr_id:                     orders.csr_id,
           csr_name:                   csrAlias.name,
           csr2_name:                  csr2Alias.name,
           group_po_number:            order_groups.group_po_number,
         })
         .from(orders)
         .leftJoin(customers, eq(orders.customer_id, customers.id))
+        .leftJoin(vendors,   eq(orders.vendor_id,   vendors.id))
         .leftJoin(salesUser, eq(orders.salesperson_id, salesUser.id))
         .leftJoin(csrAlias,  eq(orders.csr_id,        csrAlias.id))
         .leftJoin(csr2Alias, eq(orders.csr2_id,       csr2Alias.id))
