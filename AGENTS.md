@@ -384,6 +384,40 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     in May 2026. Do not reintroduce "Canceled" anywhere — not in code, queries, filters,
     seed data, or migrations. The lifecycle filter in GET /api/orders uses "Canceled" only.
 
+56. **Recycling orders have an INVERTED customer/vendor relationship** compared to regular
+    orders. This is the most critical recycling-specific rule:
+    - `customer_id` = the **IBC/drum source** company (the one sending product for recycling).
+      Shown as "Vendor" on the PO PDF. Is the PO recipient — po_contacts on the ORDER,
+      not on the vendor record. On the IBC list table, this column header is "IBC Source".
+    - `vendor_id` = the **processing/recycling facility** (the one doing the recycling).
+      Shown as "Ship To" on the PO PDF. On the IBC list table, this column header is "Processing Facility".
+    - This means: when building the PO PDF, use `customer.name` / `customer.bill_to` for the
+      "Vendor" block (left side), and `vendor.name` / `vendor.address` for the "Ship To" block
+      (right side). Do NOT swap these.
+    - `po_contacts` on recycling orders is stored on the ORDER itself (JSONB column), NOT
+      fetched from `vendor.po_contacts`. The email hook reads from the order's po_contacts via
+      x-email-to / x-email-cc headers set by the po-pdf route.
+    - Blind shipment: shows "CPU" for the Ship To block on the PDF instead of vendor address.
+
+57. **Recycling orders schema** — recycling_orders table key columns (Phase 1):
+    order_number, order_date, status (RECYCLING_STATUSES), customer_id (FK→customers),
+    vendor_id (FK→vendors), recycling_type ('IBC'|'Drum'), salesperson_id, csr_id,
+    customer_po, is_blind_shipment, freight_carrier, pick_up_date, delivery_date (IBC only),
+    appointment_notes (IBC only), ship_to (jsonb — IBC pickup location),
+    ship_from (jsonb — Drum pickup location), bill_to (jsonb — Drum billing address),
+    customer_contacts (jsonb — Drum confirmation contacts [{name, email}]),
+    freight_credit_amount (IBC only), invoice_status, invoice_customer_amount,
+    invoice_payment_status, po_contacts (jsonb — email recipients [{name, email, role: "to"|"cc"}]),
+    po_notes, misc_notes, bol_number, flag, qb_invoice_number, qty, buy, sell,
+    description, part_number, is_blind_shipment.
+    Routes: GET/POST /api/recycling-orders, GET/PATCH /api/recycling-orders/[id].
+    PDF: GET /api/recycling-orders/[id]/po-pdf (runtime='nodejs').
+    Email hook: src/lib/recycling/use-recycling-po-email.ts.
+    Statuses and invoice statuses defined as RECYCLING_STATUSES, RECYCLING_INVOICE_STATUSES,
+    INVOICE_PAYMENT_STATUSES in src/lib/db/schema.ts.
+    Default vendor for Drum orders: Coastal Container Services
+    (id: 8ae0764b-c98d-4b4f-a71f-1e0111225a94).
+
 56. **GET /api/orders uses an explicit Drizzle .select({}) — it does NOT auto-include new columns.**
     Any new field added to the orders table that needs to reach the client MUST be explicitly
     added to the .select({}) in src/app/api/orders/route.ts. The [orderId] GET uses
