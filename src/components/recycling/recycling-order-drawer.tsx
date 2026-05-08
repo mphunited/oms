@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
 import { Loader2, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils/format-date'
@@ -69,9 +68,9 @@ export function RecyclingOrderDrawer({ orderId, editHref, onClose }: Props) {
             <SheetHeader className="pb-4 border-b">
               <div className="flex items-center justify-between gap-2">
                 <SheetTitle className="text-[#00205B]">{order.order_number}</SheetTitle>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={editHref}><Pencil className="h-3.5 w-3.5 mr-1" />Edit Order</Link>
-                </Button>
+                <Link href={editHref} className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-accent transition-colors">
+                  <Pencil className="h-3.5 w-3.5" />Edit Order
+                </Link>
               </div>
             </SheetHeader>
 
