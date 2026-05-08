@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, ChevronRight, Copy, Flag, Link2, Pencil, X, Loader2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Copy, Flag, Pencil, X, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { OrderStatusBadge } from './order-status-badge'
 import type { FullSplitLoad } from './split-load-sub-row'
@@ -489,6 +489,13 @@ export function OrderTableRow({
               )}
             </span>
 
+            {/* Group PO number */}
+            {order.group_po_number && (
+              <span className="text-xs text-muted-foreground font-mono">
+                Group: {order.group_po_number}
+              </span>
+            )}
+
             {/* Action buttons */}
             <div className="flex items-center gap-1">
               <button
@@ -541,12 +548,6 @@ export function OrderTableRow({
         <td className="px-3 py-2">
           <div className="flex flex-col">
             <span>{order.customer_name ?? '—'}</span>
-            {order.group_id && order.group_po_number && (
-              <span className="text-xs rounded px-1.5 py-0.5 font-medium mt-0.5 inline-flex items-center gap-1 bg-[#E6F1FB] text-[#0C447C]">
-                <Link2 className="h-3 w-3" />
-                {order.group_po_number}
-              </span>
-            )}
           </div>
         </td>
         <td className="px-3 py-2 text-muted-foreground">

@@ -25,6 +25,7 @@ export type InvoiceQueueRow = {
   salesperson_commission_eligible: boolean | null
   csr_name: string | null
   csr2_name: string | null
+  group_po_number: string | null
   split_loads: Array<{ order_type: string | null; customer_po: string | null; order_number_override: string | null }>
 }
 
@@ -112,12 +113,19 @@ export function InvoiceRow({ row, onOpenDrawer, onSaved }: Props) {
     <>
       <tr className={`group border-b hover:bg-muted/20 transition-colors${isPastShipDate && row.status !== 'Ready To Invoice' ? ' bg-amber-50/60 dark:bg-amber-950/30' : ''}`}>
         <td className="px-3 py-2">
-          <button
-            onClick={() => onOpenDrawer(row.id)}
-            className="font-mono text-sm font-medium text-[#00205B] hover:underline dark:text-[#E5C678]"
-          >
-            {row.order_number}
-          </button>
+          <div className="flex flex-col gap-0.5">
+            <button
+              onClick={() => onOpenDrawer(row.id)}
+              className="font-mono text-sm font-medium text-[#00205B] hover:underline dark:text-[#E5C678] text-left"
+            >
+              {row.order_number}
+            </button>
+            {row.group_po_number && (
+              <span className="text-xs text-muted-foreground font-mono">
+                Group: {row.group_po_number}
+              </span>
+            )}
+          </div>
         </td>
         <td className="px-3 py-2 text-sm">{row.customer_name ?? '—'}</td>
         <td className="px-3 py-2 text-sm text-muted-foreground">{displayCustPo ?? '—'}</td>
