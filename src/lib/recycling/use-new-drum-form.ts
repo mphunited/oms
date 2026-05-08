@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
 // Coastal Container Services vendor ID — hardcoded for drum orders default
-const COASTAL_VENDOR_ID = '8ae0764b-c98d-4b4f-a71f-1e0111225a94'
+const COASTAL_VENDOR_ID = '8ae0764b-c98d-4b4f-a71f-1e0111225a94'; // MPH United / Coastal Container Services -- Alvin, TX
 
 type Contact = { name: string; email: string; role: 'to' | 'cc' }
 type CustomerContact = { name: string; email: string }
