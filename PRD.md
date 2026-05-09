@@ -473,13 +473,33 @@ vendor to MPH.
 
 **IBC-only fields** (not shown on drum form):
 `delivery_date`, `appointment_notes` (plain text — NOT a timestamp), `ship_to`
-(pickup/drop-off location), `freight_credit_amount`
+(pickup/drop-off location), `freight_credit_amount`, `po_notes` (labeled
+"Credit/Freight Notes" in UI — rendered inside the Financial section)
 
 ### Drum Recycling (`recycling_type = 'Drum'`)
 Drums collected from customer, delivered to Coastal Container Services for processing.
 MPH receives payment from customer (sell) and pays vendor to recycle (buy).
 Default vendor: Coastal Container Services (id: `8ae0764b-c98d-4b4f-a71f-1e0111225a94`).
 Pre-filled in new drum form; field remains a dropdown.
+
+### Recycling Form Defaults
+- **Default CSR:** Matt Cozik on all new IBC and Drum recycling order forms. Resolved
+  by finding the user with `name = "Matt Cozik"` in the CSR users list fetched for the
+  dropdown. Applied only when `csr_id` is null. Edit forms: only applied if the loaded
+  order's `csr_id` is null — never overwrites an existing assignment.
+- **part_number:** Not rendered on any recycling form (IBC or Drum). Always `null` on
+  POST for new recycling orders.
+
+**Invoice behavior (Drum only):** `invoice_status` is never shown in the drum UI and
+always saves as `'Invoice'`. `invoice_customer_amount` is never shown and always saves
+as `null`. Neither field is user-editable on drum forms.
+
+**Coastal default sell:** `COASTAL_DEFAULT_SELL = "12.00"` constant in
+`use-new-drum-form.ts`. Pre-fills `sell` when vendor = Coastal and `sell` is currently
+empty. CSR can edit freely. Edit form applies only when `sell` is null on load.
+
+**Drum-only fields** (not shown on IBC form):
+`ship_from` (customer pickup location), `bill_to`, `customer_contacts` (confirmation emails)
 
 **Drum-only fields** (not shown on IBC form):
 `ship_from` (customer pickup location), `bill_to`, `customer_contacts` (confirmation emails)
@@ -489,6 +509,16 @@ Acknowledged Order | PO Request To Accounting | Waiting On Vendor To Confirm |
 Credit Sent In | Confirmed To Customer | Waiting For Customer To Confirm |
 Ready To Pickup | Picked Up | Sent Order To Carrier | Ready To Ship |
 Ready To Invoice | Complete | Canceled
+
+### Recycling List Page Filter Bar
+Both `/recycling/ibcs` and `/recycling/drums` use a two-row filter bar:
+- Row 1: Search | lifecycle pills (Active / Complete / All) | Status single-select
+         dropdown (RECYCLING_STATUSES) | Clear Filters
+- Row 2: Customer | Vendor | CSR | Salesperson (all single-select, matching Orders page
+         dropdown pattern)
+No Flagged pill. No multi-select status. Status is single-select only.
+Clear Filters resets all five filters simultaneously.
+API params: `customer_id`, `vendor_id`, `csr_id`, `salesperson_id`, `status`.
 
 ### Recycling Invoice Statuses
 No Charge | Credit | Invoice (default: No Charge)
@@ -769,7 +799,12 @@ Currently applies to Renee Sauvageau only.
 | Date display format | MM/DD/YYYY throughout UI. YYYY-MM-DD in DB. Format on display only. |
 | Credit memo numbers | Entered manually — QBO owns the sequence. Do not create Postgres sequence. |
 | Wash & Return Stage | Canonical status spelling (replaced Rinse & Return Stage). |
-
+| COASTAL_DEFAULT_SELL | "12.00" hardcoded in use-new-drum-form.ts. Pre-fills sell when vendor = Coastal and sell is empty. Edit form: only when sell is null on load. |
+| Drum invoice_status | Always saves as 'Invoice'. Not shown in drum UI. invoice_customer_amount always null — not calculated or stored. |
+| Recycling part_number | Not rendered on any recycling form. Always null on POST for new IBC and Drum orders. DB column retained for historical data. |
+| Recycling default CSR | Matt Cozik. Resolved by name lookup from CSR users list. New forms: always if csr_id empty. Edit forms: only if loaded order csr_id is null. |
+| Recycling form layout (IBC) | Financial section sits directly after Order Details. Credit/Freight Notes (po_notes) is inside Financial. BOL # is in Dates & Logistics. No separate BOL section. Notes section contains only misc_notes. |
+| Recycling form layout (Drum) | Same as IBC layout minus Credit/Freight Notes and BOL (IBC-only). P/N removed. Qty next to Customer PO. Buy/Sell same row. |
 ---
 
 ## 23. Multi-Ship-To Order Groups
@@ -838,7 +873,9 @@ src/lib/orders/build-multi-ship-to-pdf.tsx — Combined multi-ship-to PO PDF bui
 src/lib/invoicing/build-credit-memo-pdf.tsx — Credit memo PDF builder
 src/lib/recycling/build-recycling-po-pdf.tsx — Recycling PO PDF (inverted layout)
 src/lib/recycling/use-new-ibc-form.ts
-src/lib/recycling/use-new-drum-form.ts   — contains COASTAL_VENDOR_ID constant
+src/lib/recycling/use-new-drum-form.ts  — new drum form hook; COASTAL_VENDOR_ID const
+  (8ae0764b-c98d-4b4f-a71f-1e0111225a94); COASTAL_DEFAULT_SELL const ("12.00" — default
+  sell pre-fill when vendor = Coastal and sell is empty)
 src/lib/recycling/use-edit-ibc-form.ts
 src/lib/recycling/use-edit-drum-form.ts
 src/lib/recycling/use-recycling-po-email.ts — Graph API PO email hook

@@ -315,10 +315,12 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Recycling forms also use .values extraction for CARRIER dropdown.
 
 46. **Filter bar on /orders has two always-visible rows — no More Filters toggle.**
-    Row 1: Search | lifecycle pills (Active/Complete/Flagged/All) | Status multi-select
-           | Clear Filters button.
-    Row 2: Customer | Vendor | CSR | Salesperson | Ship Date range.
-    Recycling list pages use the same two-row pattern without the Flagged pill.
+    Recycling list pages (/recycling/ibcs and /recycling/drums) use the same two-row
+    pattern without the Flagged pill:
+    - Row 1: Search | lifecycle pills (Active/Complete/All) | Status single-select dropdown
+         (RECYCLING_STATUSES — NOT multi-select) | Clear Filters
+    - Row 2: Customer | Vendor | CSR | Salesperson (all single-select)
+    API params: customer_id, vendor_id, csr_id, salesperson_id, status.
     No Canceled lifecycle pill on any filter bar.
 
 47. **New Order form layout rules:**
@@ -435,6 +437,9 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       Services -- Alvin, TX)
     - Stored as COASTAL_VENDOR_ID constant in src/lib/recycling/use-new-drum-form.ts.
     - Pre-fills vendor_id on the new drum form. Field remains a dropdown — editable.
+    - COASTAL_DEFAULT_SELL = "12.00" is also in use-new-drum-form.ts. Pre-fills the sell
+    field when vendor = Coastal and sell is currently empty. CSR can edit freely. Edit
+    form applies only when sell is null on load — never overwrites an existing value.
 
 62. **Recycling orders use the same order_number_seq as regular orders.**
     - Same [Initials]-MPH[Number] format. No separate sequence.
@@ -462,6 +467,27 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       freight_credit_amount, ship_to.
     - Drum-only fields (hide from IBC forms): ship_from, bill_to, customer_contacts.
 
+66. **Default CSR on recycling order forms is Matt Cozik.**
+    - Applies to both IBC and Drum new and edit forms.
+    - Implementation: after fetching CSR users list for the dropdown, find the user
+      with name === "Matt Cozik" and set csr_id to that user's id.
+    - New forms: apply whenever csr_id is null/empty at initialization.
+    - Edit forms: apply only if the loaded order's csr_id is null. Never overwrite
+      an existing CSR assignment.
+    - If Matt Cozik is not found in the list (e.g. deactivated), leave csr_id empty.
+
+67. **Drum recycling orders: invoice_status and invoice_customer_amount are not
+    user-editable and are not rendered in the drum form UI.**
+    - POST and PATCH for drum orders always send invoice_status: 'Invoice'.
+    - invoice_customer_amount is always null for drum orders — it is not calculated
+      or stored.
+    - These fields remain in the schema and are fully used by IBC orders.
+    - Do not re-add these fields to drum forms.
+
+68. **part_number is not rendered on any recycling order form (IBC or Drum).**
+    - New IBC and Drum forms always send part_number: null on POST.
+    - The column is retained in recycling_orders for historical data only.
+    - Do not re-add part_number to any recycling form UI.
 ---
 
 ## TECHNOLOGY STACK

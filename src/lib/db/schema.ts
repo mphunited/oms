@@ -582,10 +582,14 @@ export const recycling_orders = pgTable(
 
     invoice_status: text("invoice_status").default("No Charge"),
     // See RECYCLING_INVOICE_STATUSES constant above.
+    // IBC orders: user-selectable (No Charge | Credit | Invoice).
+    // Drum orders: always saved as 'Invoice' — not shown in drum UI.
     invoice_customer_amount: numeric("invoice_customer_amount", {
       precision: 10,
       scale: 2,
     }),
+    // Drum orders: always null — not calculated or stored. Not shown in drum UI.
+    // IBC orders: available for manual entry if invoice_status = 'Invoice'.
     invoice_payment_status: text("invoice_payment_status")
       .notNull()
       .default("Not Invoiced"),
@@ -605,6 +609,8 @@ export const recycling_orders = pgTable(
     sell: numeric("sell", { precision: 10, scale: 2 }),
     description: text("description"),
     part_number: text("part_number"),
+    // Not rendered on any recycling form UI — always null on new IBC and Drum orders.
+    // Retained for historical data only. Do not re-add to forms.
     appointment_notes: text("appointment_notes"),
     po_contacts: jsonb("po_contacts"),
     // [{ name, email, role: "to"|"cc" }] — PO email recipients (order-level, NOT vendor)
