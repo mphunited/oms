@@ -282,7 +282,6 @@ export function OrdersTable() {
                   <th className="px-3 py-2 text-left font-medium text-white">Description</th>
                   <th className="px-3 py-2 text-right font-medium text-white">Qty</th>
                   <th className="px-3 py-2 text-left font-medium text-white cursor-pointer select-none hover:text-[#E5C678] transition-colors" onClick={() => handleSortClick('ship_date')}>Ship Date<SortIcon col="ship_date" /></th>
-                  <th className="px-3 py-2 text-left font-medium text-white">Wanted Date</th>
                   <th className="px-3 py-2 text-left font-medium text-white cursor-pointer select-none hover:text-[#E5C678] transition-colors" onClick={() => handleSortClick('vendor_name')}>Vendor<SortIcon col="vendor_name" /></th>
                   <th className="px-3 py-2 text-right font-medium text-white">Buy</th>
                   <th className="px-3 py-2 text-right font-medium text-white">Sell</th>
