@@ -275,7 +275,7 @@ export function OrdersTable() {
                   </th>
                   <th className="w-8 px-2 py-2" aria-label="Flag" />
                   <th className="px-3 py-2 text-left font-medium text-white">MPH PO</th>
-                  <th className="w-[140px] px-3 py-2 text-left font-medium text-white">Status</th>
+                  <th className="w-[148px] min-w-[148px] max-w-[148px] px-3 py-2 text-left font-medium text-white">Status</th>
                   <th className="px-3 py-2 text-left font-medium text-white">Sales / CSR</th>
                   <th className="px-3 py-2 text-left font-medium text-white cursor-pointer select-none hover:text-[#E5C678] transition-colors" onClick={() => handleSortClick('customer_name')}>Customer<SortIcon col="customer_name" /></th>
                   <th className="px-3 py-2 text-left font-medium text-white">Customer PO</th>

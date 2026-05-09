@@ -551,9 +551,14 @@ export function OrderTableRow({
         </td>
 
         {/* Status — colored select for non-SALES, colored badge for SALES */}
-        <td className="w-[140px] max-w-[140px] px-3 py-2">
+        <td className="w-[148px] min-w-[148px] max-w-[148px] px-3 py-2 align-middle">
           {role === 'SALES' ? (
-            <OrderStatusBadge status={order.status as OrderStatus} color={statusColor} />
+            <div
+              className="w-full rounded-md px-2.5 py-1 text-[11px] font-medium text-center whitespace-normal break-words leading-snug"
+              style={{ backgroundColor: statusColor, color: statusTextColor }}
+            >
+              {order.status}
+            </div>
           ) : (
             <select
               value={order.status}
@@ -563,7 +568,7 @@ export function OrderTableRow({
                 color: statusTextColor,
                 borderColor: statusColor,
               }}
-              className="text-xs rounded border px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#00205B] max-w-[180px] font-medium cursor-pointer"
+              className="w-full text-xs rounded border px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#00205B] font-medium cursor-pointer"
             >
               {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
