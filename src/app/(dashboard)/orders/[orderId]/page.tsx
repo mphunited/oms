@@ -153,7 +153,10 @@ export default function OrderDetailPage() {
       <Separator className="bg-[#B88A44]" />
 
       <section className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Customer & Vendor</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+          <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Customer & vendor</h3>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>Customer</Label>
@@ -243,7 +246,10 @@ export default function OrderDetailPage() {
 
       {/* Notes */}
       <section className="space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Notes</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+          <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Notes</h3>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>PO Notes</Label>
@@ -264,7 +270,10 @@ export default function OrderDetailPage() {
 
       {/* Checklist */}
       <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">CSR Checklist</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+          <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">CSR checklist</h3>
+        </div>
         <OrderChecklist items={checklist} onChange={setChecklist} />
       </section>
 
@@ -273,7 +282,10 @@ export default function OrderDetailPage() {
         <>
           <Separator className="bg-[#B88A44]" />
           <section className="space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Multi-Ship-To Group</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+              <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Multi-ship-to group</h3>
+            </div>
             <div className="rounded-md border bg-muted/30 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Link2 className="h-4 w-4 text-[#0C447C]" />
