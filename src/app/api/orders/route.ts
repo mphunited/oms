@@ -223,6 +223,7 @@ export async function GET(req: Request) {
         misc_notes:             orders.misc_notes,
         po_notes:               orders.po_notes,
         freight_invoice_notes:  orders.freight_invoice_notes,
+        checklist:              orders.checklist,
         ship_to:                orders.ship_to,
         group_id:               orders.group_id,
         group_po_number:        order_groups.group_po_number,
