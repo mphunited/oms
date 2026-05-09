@@ -608,12 +608,11 @@ export function OrderTableRow({
             })()}
           </div>
         </td>
-        <td className="px-3 py-2 text-muted-foreground" title={order.split_loads[0]?.description ?? ''}>
+        <td className="px-3 py-2 text-muted-foreground whitespace-normal break-words">
           {firstDescription(order.split_loads)}
         </td>
         <td className="px-3 py-2 text-right tabular-nums">{firstQty(order.split_loads)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.ship_date)}</td>
-        <td className="px-3 py-2 text-muted-foreground">{formatDate(order.wanted_date)}</td>
         <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ? formatVendorName(order.vendor_name) : '—'}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy, true)}</td>
         <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell, true)}</td>
