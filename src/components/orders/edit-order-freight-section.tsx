@@ -37,7 +37,10 @@ export function EditOrderFreightSection({
 }: Props) {
   return (
     <section className="space-y-4">
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Freight & Logistics</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+        <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Freight & logistics</h3>
+      </div>
       <div className="grid grid-cols-4 gap-4">
         <div className="space-y-1.5">
           <Label>Freight Carrier</Label>

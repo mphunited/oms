@@ -129,7 +129,10 @@ export function EditOrderAddresses({
 }: EditOrderAddressesProps) {
   return (
     <section className="space-y-4">
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Addresses & Contacts</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+        <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Addresses & contacts</h3>
+      </div>
       <div className="grid grid-cols-2 gap-6">
         {/* Left column: Ship To + Customer Contacts */}
         <div>

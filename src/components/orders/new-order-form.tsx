@@ -143,7 +143,10 @@ export function NewOrderForm() {
 
         {/* Order Identity */}
         <section className="space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Order Identity</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+            <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Order identity</h3>
+          </div>
           {canUseManualPO && (
             <div className="space-y-3">
               <div className="flex items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2">
@@ -213,7 +216,10 @@ export function NewOrderForm() {
 
         {/* Customer & Vendor */}
         <section className="space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Customer & Vendor</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+            <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Customer & vendor</h3>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Customer *</Label>
@@ -260,7 +266,10 @@ export function NewOrderForm() {
 
         {/* Freight & Logistics */}
         <section className="space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Freight & Logistics</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+            <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Freight & logistics</h3>
+          </div>
           <div className="grid grid-cols-4 gap-4">
             <div className="space-y-1.5">
               <Label>Freight Carrier</Label>
@@ -283,7 +292,10 @@ export function NewOrderForm() {
 
         {/* Addresses & Contacts */}
         <section className="space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Addresses & Contacts</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+            <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Addresses & contacts</h3>
+          </div>
           <div className="grid grid-cols-2 gap-6">
             <div><p className="text-sm font-medium mb-3">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /><hr className="border-[#B88A44] my-6" /><OrderContactFields control={form.control} register={form.register} setValue={form.setValue} globalContacts={confirmationContacts} /></div>
             <div className="space-y-3"><p className="text-sm font-medium">Bill To</p><OrderAddressFields prefix="bill_to" register={form.register} notesLabel="Bill To Notes" hideEmailFields /><BillToContactFields control={form.control} register={form.register} setValue={form.setValue} globalContacts={globalBillToContacts} /></div>
@@ -295,7 +307,10 @@ export function NewOrderForm() {
         {/* Notes */}
         <Collapsible open={notesOpen} onOpenChange={setNotesOpen}>
           <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between py-1 transition-opacity hover:opacity-70">
-            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Notes</span>
+            <div className="flex items-center gap-2">
+              <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
+              <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Notes</h3>
+            </div>
             {notesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-4 pt-4">
