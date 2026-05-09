@@ -50,28 +50,24 @@ export const NAV_ITEMS: NavItem[] = [
         href: "/recycling/ibcs",
         icon: RefreshCw,
         roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
-        children: [
-          {
-            title: "New Order",
-            href: "/recycling/ibcs/new",
-            icon: PlusCircle,
-            roles: ["ADMIN", "CSR"],
-          },
-        ],
+      },
+      {
+        title: "New IBC Order",
+        href: "/recycling/ibcs/new",
+        icon: FilePlus,
+        roles: ["ADMIN", "CSR"],
       },
       {
         title: "Drums",
         href: "/recycling/drums",
         icon: RefreshCw,
         roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
-        children: [
-          {
-            title: "New Order",
-            href: "/recycling/drums/new",
-            icon: PlusCircle,
-            roles: ["ADMIN", "CSR"],
-          },
-        ],
+      },
+      {
+        title: "New Drum Order",
+        href: "/recycling/drums/new",
+        icon: FilePlus,
+        roles: ["ADMIN", "CSR"],
       },
     ],
   },
