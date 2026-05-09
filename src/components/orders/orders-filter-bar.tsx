@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 import { FilterMultiSelect } from './filter-multi-select'
 import { formatVendorName } from '@/lib/utils/format-vendor-name'
 
@@ -120,21 +121,35 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
           />
         </div>
 
-        <div className="flex overflow-hidden rounded-md border">
-          {PILLS.map(pill => (
-            <button
-              key={pill.label}
-              type="button"
-              onClick={() => pill.action(onChange)}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                pill.isActive(filters)
-                  ? 'bg-[#00205B] text-white'
-                  : 'bg-background text-foreground hover:bg-muted'
-              }`}
-            >
-              {pill.label}
-            </button>
-          ))}
+        <div className="flex gap-1">
+          {PILLS.map(pill => {
+            const active = pill.isActive(filters)
+            const isFlagged = pill.label === 'Flagged'
+            return (
+              <button
+                key={pill.label}
+                type="button"
+                onClick={() => pill.action(onChange)}
+                className={cn(
+                  'px-3.5 py-[5px] rounded-full text-[13px] font-medium transition-colors',
+                  active
+                    ? 'text-white bg-[#1a2744]'
+                    : isFlagged
+                      ? 'text-[#991b1b] bg-[#fee2e2]'
+                      : 'text-[#374151] bg-white'
+                )}
+                style={
+                  active
+                    ? undefined
+                    : isFlagged
+                      ? { boxShadow: '0px 0px 0px 1px rgba(153,27,27,0.15)' }
+                      : { boxShadow: '0px 0px 0px 1px rgba(0,0,0,0.08)' }
+                }
+              >
+                {pill.label}
+              </button>
+            )
+          })}
         </div>
 
         <FilterMultiSelect
