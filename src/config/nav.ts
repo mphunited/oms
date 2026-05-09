@@ -12,6 +12,7 @@ import {
   Receipt,
   Settings,
   Mail,
+  PlusCircle,
 } from "lucide-react";
 
 export type NavItem = {
@@ -49,12 +50,28 @@ export const NAV_ITEMS: NavItem[] = [
         href: "/recycling/ibcs",
         icon: RefreshCw,
         roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
+        children: [
+          {
+            title: "New Order",
+            href: "/recycling/ibcs/new",
+            icon: PlusCircle,
+            roles: ["ADMIN", "CSR"],
+          },
+        ],
       },
       {
         title: "Drums",
         href: "/recycling/drums",
         icon: RefreshCw,
         roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
+        children: [
+          {
+            title: "New Order",
+            href: "/recycling/drums/new",
+            icon: PlusCircle,
+            roles: ["ADMIN", "CSR"],
+          },
+        ],
       },
     ],
   },
