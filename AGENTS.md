@@ -19,6 +19,8 @@ MAKE ALL FIXES AND CODE CHANGES AS SIMPLE AS HUMANLY POSSIBLE. THEY SHOULD ONLY 
    to understand the SSO→public.users sync mechanism. Do NOT use inviteUserByEmail
    or manually insert rows into public.users — see ## USER ONBOARDING section.
 6. Then proceed with the task
+7. Read DESIGN.md before writing any UI code. Follow its component specs exactly.
+    For OMS-specific patterns, Section 10 takes precedence over the base Vercel spec.
 
 **Do not skip any of these steps. Do not rely on memory from a previous session.**
 
