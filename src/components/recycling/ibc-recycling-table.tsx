@@ -31,6 +31,8 @@ type Row = {
   flag: boolean
 }
 
+type NamedOption = { id: string; name: string }
+
 type Props = {
   initialRows: Row[]
   userRole: string
@@ -41,15 +43,41 @@ export function IbcRecyclingTable({ initialRows, userRole }: Props) {
   const [rows, setRows]           = useState<Row[]>(initialRows)
   const [search, setSearch]       = useState('')
   const [lifecycle, setLifecycle] = useState<'Active' | 'Complete' | 'All'>('Active')
-  const [statusFilter, setStatusFilter] = useState<string[]>([])
+  const [statusFilter, setStatusFilter] = useState('')
+  const [customerId, setCustomerId] = useState('')
+  const [vendorId, setVendorId]   = useState('')
+  const [csrId, setCsrId]         = useState('')
+  const [salespersonId, setSalespersonId] = useState('')
+  const [customerOptions, setCustomerOptions] = useState<NamedOption[]>([])
+  const [vendorOptions, setVendorOptions]     = useState<NamedOption[]>([])
+  const [csrOptions, setCsrOptions]           = useState<NamedOption[]>([])
+  const [salesOptions, setSalesOptions]       = useState<NamedOption[]>([])
   const [drawerId, setDrawerId]   = useState<string | null>(null)
   const [loading, setLoading]     = useState(false)
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/customers').then(r => r.json()),
+      fetch('/api/vendors').then(r => r.json()),
+      fetch('/api/users?permission=CSR').then(r => r.json()),
+      fetch('/api/users?permission=SALES').then(r => r.json()),
+    ]).then(([custs, vends, csrs, sales]) => {
+      setCustomerOptions(custs ?? [])
+      setVendorOptions(vends ?? [])
+      setCsrOptions(csrs ?? [])
+      setSalesOptions(sales ?? [])
+    })
+  }, [])
 
   const fetchRows = useCallback(async () => {
     setLoading(true)
     const p = new URLSearchParams({ type: 'IBC', lifecycle })
-    if (search)              p.set('search', search)
-    if (statusFilter.length) p.set('status', statusFilter.join(','))
+    if (search)       p.set('search', search)
+    if (statusFilter) p.set('status', statusFilter)
+    if (customerId)   p.set('customerId', customerId)
+    if (vendorId)     p.set('vendorId', vendorId)
+    if (csrId)        p.set('csrId', csrId)
+    if (salespersonId) p.set('salespersonId', salespersonId)
     try {
       const res = await fetch(`/api/recycling-orders?${p}`)
       const data = await res.json()
@@ -57,7 +85,7 @@ export function IbcRecyclingTable({ initialRows, userRole }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [search, lifecycle, statusFilter])
+  }, [search, lifecycle, statusFilter, customerId, vendorId, csrId, salespersonId])
 
   useEffect(() => { fetchRows() }, [fetchRows])
 
@@ -85,10 +113,18 @@ export function IbcRecyclingTable({ initialRows, userRole }: Props) {
   }
 
   function clearFilters() {
-    setSearch(''); setLifecycle('Active'); setStatusFilter([])
+    setSearch('')
+    setLifecycle('Active')
+    setStatusFilter('')
+    setCustomerId('')
+    setVendorId('')
+    setCsrId('')
+    setSalespersonId('')
   }
 
   const drawerRow = rows.find(r => r.id === drawerId) ?? null
+
+  const selectCls = 'h-8 rounded border border-border bg-background text-xs px-2'
 
   return (
     <div className="p-6">
@@ -119,13 +155,25 @@ export function IbcRecyclingTable({ initialRows, userRole }: Props) {
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            multiple
-            value={statusFilter}
-            onChange={e => setStatusFilter(Array.from(e.target.selectedOptions, o => o.value))}
-            className="h-8 rounded border border-border bg-background text-xs px-2"
-          >
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={selectCls}>
+            <option value="">All Statuses</option>
             {RECYCLING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={customerId} onChange={e => setCustomerId(e.target.value)} className={selectCls}>
+            <option value="">All Customers</option>
+            {customerOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <select value={vendorId} onChange={e => setVendorId(e.target.value)} className={selectCls}>
+            <option value="">All Vendors</option>
+            {vendorOptions.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+          </select>
+          <select value={csrId} onChange={e => setCsrId(e.target.value)} className={selectCls}>
+            <option value="">All CSRs</option>
+            {csrOptions.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+          <select value={salespersonId} onChange={e => setSalespersonId(e.target.value)} className={selectCls}>
+            <option value="">All Salespeople</option>
+            {salesOptions.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
         </div>
       </div>

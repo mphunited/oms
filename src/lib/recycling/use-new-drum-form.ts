@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 // Coastal Container Services vendor ID — hardcoded for drum orders default
 const COASTAL_VENDOR_ID = '8ae0764b-c98d-4b4f-a71f-1e0111225a94'; // MPH United / Coastal Container Services -- Alvin, TX
+const COASTAL_DEFAULT_SELL = '12.00';
 
 type Contact = { name: string; email: string; role: 'to' | 'cc' }
 type CustomerContact = { name: string; email: string }
@@ -20,7 +21,6 @@ export type NewDrumFormState = {
   salesperson_id: string
   csr_id: string
   customer_po: string
-  part_number: string
   description: string
   qty: string
   buy: string
@@ -30,8 +30,6 @@ export type NewDrumFormState = {
   ship_from: Address
   bill_to: Address
   customer_contacts: CustomerContact[]
-  invoice_status: string
-  invoice_customer_amount: string
   invoice_payment_status: string
   po_contacts: Contact[]
   po_notes: string
@@ -65,18 +63,15 @@ export function useNewDrumForm() {
     salesperson_id:          '',
     csr_id:                  '',
     customer_po:             '',
-    part_number:             '',
     description:             '',
     qty:                     '',
     buy:                     '',
-    sell:                    '',
+    sell:                    COASTAL_DEFAULT_SELL,
     pick_up_date:            '',
     freight_carrier:         '',
     ship_from:               emptyAddress(),
     bill_to:                 emptyAddress(),
     customer_contacts:       [],
-    invoice_status:          'No Charge',
-    invoice_customer_amount: '',
     invoice_payment_status:  'Not Invoiced',
     po_contacts:             [],
     po_notes:                '',
@@ -97,8 +92,19 @@ export function useNewDrumForm() {
       setCsrList(csrs ?? [])
       setCustomers(custs ?? [])
       setVendorList(vends ?? [])
+      const mattCozik = (csrs as { id: string; name: string }[]).find(u => u.name === 'Matt Cozik')
+      if (mattCozik) {
+        setForm(f => f.csr_id ? f : { ...f, csr_id: mattCozik.id })
+      }
     })
   }, [])
+
+  // Auto-populate sell with Coastal default when vendor changes to Coastal and sell is empty
+  useEffect(() => {
+    if (form.vendor_id === COASTAL_VENDOR_ID && !form.sell) {
+      setForm(f => ({ ...f, sell: COASTAL_DEFAULT_SELL }))
+    }
+  }, [form.vendor_id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function set<K extends keyof NewDrumFormState>(key: K, value: NewDrumFormState[K]) {
     setForm(f => ({ ...f, [key]: value }))
@@ -149,10 +155,12 @@ export function useNewDrumForm() {
         body: JSON.stringify({
           ...form,
           recycling_type: 'Drum',
+          part_number: null,
+          invoice_status: 'Invoice',
+          invoice_customer_amount: null,
           qty: form.qty || null,
           buy: form.buy || null,
           sell: form.sell || null,
-          invoice_customer_amount: form.invoice_customer_amount || null,
           pick_up_date: form.pick_up_date || null,
           salesperson_id: form.salesperson_id || null,
           csr_id: form.csr_id || null,

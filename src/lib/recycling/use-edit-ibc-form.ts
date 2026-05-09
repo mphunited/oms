@@ -16,7 +16,6 @@ export type EditIbcFormState = {
   salesperson_id:          string
   csr_id:                  string
   customer_po:             string
-  part_number:             string
   description:             string
   qty:                     string
   buy:                     string
@@ -66,7 +65,7 @@ export function useEditIbcForm(id: string) {
   const [form, setForm] = useState<EditIbcFormState>({
     order_number: '', order_date: '', status: 'Acknowledged Order',
     customer_id: '', vendor_id: '', is_blind_shipment: false,
-    salesperson_id: '', csr_id: '', customer_po: '', part_number: '',
+    salesperson_id: '', csr_id: '', customer_po: '',
     description: '', qty: '', buy: '', sell: '', pick_up_date: '',
     delivery_date: '', appointment_notes: '', freight_carrier: '',
     ship_to: emptyAddress(), freight_credit_amount: '', invoice_status: 'No Charge',
@@ -89,6 +88,8 @@ export function useEditIbcForm(id: string) {
       setCsrs(csrs ?? [])
       setCusts(custs ?? [])
       setVends(vends ?? [])
+      const mattCozik = (csrs as { id: string; name: string }[]).find(u => u.name === 'Matt Cozik')
+      const defaultCsrId = order.csr_id ?? (mattCozik?.id ?? '')
       setForm({
         order_number:            order.order_number ?? '',
         order_date:              order.order_date ?? '',
@@ -97,9 +98,8 @@ export function useEditIbcForm(id: string) {
         vendor_id:               order.vendor_id ?? '',
         is_blind_shipment:       order.is_blind_shipment ?? false,
         salesperson_id:          order.salesperson_id ?? '',
-        csr_id:                  order.csr_id ?? '',
+        csr_id:                  defaultCsrId,
         customer_po:             order.customer_po ?? '',
-        part_number:             order.part_number ?? '',
         description:             order.description ?? '',
         qty:                     order.qty ?? '',
         buy:                     order.buy ?? '',

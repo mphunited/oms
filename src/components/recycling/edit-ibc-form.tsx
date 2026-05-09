@@ -132,57 +132,21 @@ export function EditIbcForm({ id }: { id: string }) {
           <Field label="Customer PO">
             <Input value={form.customer_po} onChange={e => set('customer_po', e.target.value)} />
           </Field>
-          <Field label="Product (P/N)">
-            <Input value={form.part_number} onChange={e => set('part_number', e.target.value)} />
+          <Field label="Qty">
+            <Input type="number" step="1" value={form.qty} onChange={e => set('qty', e.target.value)} />
           </Field>
         </Row>
         <Field label="Description">
           <Input value={form.description} onChange={e => set('description', e.target.value)} />
         </Field>
         <Row>
-          <Field label="Qty">
-            <Input type="number" step="1" value={form.qty} onChange={e => set('qty', e.target.value)} />
-          </Field>
           <Field label="Buy">
             <Input type="number" step="0.01" value={form.buy} onChange={e => set('buy', e.target.value)} />
           </Field>
-        </Row>
-        <Field label="Sell">
-          <Input type="number" step="0.01" value={form.sell} onChange={e => set('sell', e.target.value)} />
-        </Field>
-      </Section>
-
-      {/* Dates & Logistics */}
-      <Section title="Dates & Logistics">
-        <Row>
-          <Field label="Ship Date">
-            <Input type="date" value={form.pick_up_date} onChange={e => set('pick_up_date', e.target.value)} />
-          </Field>
-          <Field label="Delivery Date">
-            <Input type="date" value={form.delivery_date} onChange={e => set('delivery_date', e.target.value)} />
+          <Field label="Sell">
+            <Input type="number" step="0.01" value={form.sell} onChange={e => set('sell', e.target.value)} />
           </Field>
         </Row>
-        <Row>
-          <Field label="Appointment">
-            <Input value={form.appointment_notes} onChange={e => set('appointment_notes', e.target.value)} />
-          </Field>
-          <Field label="Freight Carrier">
-            <select value={form.freight_carrier} onChange={e => set('freight_carrier', e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              <option value="">Select carrier…</option>
-              {carriers.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </Field>
-        </Row>
-      </Section>
-
-      {/* Ship To */}
-      <Section title="Ship To / Pick-Up Location">
-        {(['name','street','city','state','zip'] as const).map(k => (
-          <Field key={k} label={k.charAt(0).toUpperCase() + k.slice(1)}>
-            <Input value={form.ship_to[k]} onChange={e => setAddress(k, e.target.value)} />
-          </Field>
-        ))}
       </Section>
 
       {/* Financial */}
@@ -212,6 +176,46 @@ export function EditIbcForm({ id }: { id: string }) {
         <Field label="QB Invoice Number">
           <Input value={form.qb_invoice_number} onChange={e => set('qb_invoice_number', e.target.value)} />
         </Field>
+        <Field label="Credit/Freight Notes">
+          <textarea value={form.po_notes} onChange={e => set('po_notes', e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px]" />
+        </Field>
+      </Section>
+
+      {/* Dates & Logistics */}
+      <Section title="Dates & Logistics">
+        <Row>
+          <Field label="Ship Date">
+            <Input type="date" value={form.pick_up_date} onChange={e => set('pick_up_date', e.target.value)} />
+          </Field>
+          <Field label="Delivery Date">
+            <Input type="date" value={form.delivery_date} onChange={e => set('delivery_date', e.target.value)} />
+          </Field>
+        </Row>
+        <Row>
+          <Field label="Appointment">
+            <Input value={form.appointment_notes} onChange={e => set('appointment_notes', e.target.value)} />
+          </Field>
+          <Field label="Freight Carrier">
+            <select value={form.freight_carrier} onChange={e => set('freight_carrier', e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <option value="">Select carrier…</option>
+              {carriers.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </Field>
+        </Row>
+        <Field label="BOL #">
+          <Input value={form.bol_number} onChange={e => set('bol_number', e.target.value)} />
+        </Field>
+      </Section>
+
+      {/* Ship To */}
+      <Section title="Ship To / Pick-Up Location">
+        {(['name','street','city','state','zip'] as const).map(k => (
+          <Field key={k} label={k.charAt(0).toUpperCase() + k.slice(1)}>
+            <Input value={form.ship_to[k]} onChange={e => setAddress(k, e.target.value)} />
+          </Field>
+        ))}
       </Section>
 
       {/* PO Email Recipients */}
@@ -237,20 +241,9 @@ export function EditIbcForm({ id }: { id: string }) {
 
       {/* Notes */}
       <Section title="Notes">
-        <Field label="Credit/Freight Notes">
-          <textarea value={form.po_notes} onChange={e => set('po_notes', e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px]" />
-        </Field>
         <Field label="Misc Notes">
           <textarea value={form.misc_notes} onChange={e => set('misc_notes', e.target.value)}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px]" />
-        </Field>
-      </Section>
-
-      {/* BOL */}
-      <Section title="BOL">
-        <Field label="BOL #">
-          <Input value={form.bol_number} onChange={e => set('bol_number', e.target.value)} />
         </Field>
       </Section>
     </div>

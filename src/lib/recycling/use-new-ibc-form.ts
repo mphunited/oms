@@ -16,7 +16,6 @@ export type NewIbcFormState = {
   salesperson_id: string
   csr_id: string
   customer_po: string
-  part_number: string
   description: string
   qty: string
   buy: string
@@ -62,7 +61,6 @@ export function useNewIbcForm() {
     salesperson_id:          '',
     csr_id:                  '',
     customer_po:             '',
-    part_number:             '',
     description:             '',
     qty:                     '',
     buy:                     '',
@@ -95,6 +93,10 @@ export function useNewIbcForm() {
       setCsrList(csrs ?? [])
       setCustomers(custs ?? [])
       setVendorList(vends ?? [])
+      const mattCozik = (csrs as { id: string; name: string }[]).find(u => u.name === 'Matt Cozik')
+      if (mattCozik) {
+        setForm(f => f.csr_id ? f : { ...f, csr_id: mattCozik.id })
+      }
     })
   }, [])
 
@@ -132,6 +134,7 @@ export function useNewIbcForm() {
         body: JSON.stringify({
           ...form,
           recycling_type: 'IBC',
+          part_number: null,
           qty: form.qty || null,
           buy: form.buy || null,
           sell: form.sell || null,
