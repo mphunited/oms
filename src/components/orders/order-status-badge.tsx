@@ -25,7 +25,7 @@ export function OrderStatusBadge({ status, color }: { status: OrderStatus | stri
     const textColor = getBadgeTextColor(color)
     return (
       <span
-        className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+        className="inline-block rounded-md px-2 py-0.5 text-xs font-medium text-center"
         style={{ backgroundColor: color, color: textColor }}
       >
         {status}
@@ -35,7 +35,7 @@ export function OrderStatusBadge({ status, color }: { status: OrderStatus | stri
 
   const classes = statusColors[status] ?? "bg-slate-100 text-slate-600 border-slate-200"
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${classes}`}>
+    <span className={`inline-block rounded-md px-2.5 py-0.5 text-xs font-medium border text-center ${classes}`}>
       {status}
     </span>
   )

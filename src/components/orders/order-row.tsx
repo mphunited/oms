@@ -551,7 +551,7 @@ export function OrderTableRow({
         </td>
 
         {/* Status — colored select for non-SALES, colored badge for SALES */}
-        <td className="px-3 py-2">
+        <td className="w-[140px] max-w-[140px] px-3 py-2">
           {role === 'SALES' ? (
             <OrderStatusBadge status={order.status as OrderStatus} color={statusColor} />
           ) : (
