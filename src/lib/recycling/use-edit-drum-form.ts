@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 
+const COASTAL_VENDOR_ID = '8ae0764b-c98d-4b4f-a71f-1e0111225a94'
+const COASTAL_DEFAULT_SELL = '12.00'
+
 type Contact = { name: string; email: string; role: 'to' | 'cc' }
 type CustomerContact = { name: string; email: string }
 type Address  = { name: string; street: string; city: string; state: string; zip: string }
@@ -17,7 +20,6 @@ export type EditDrumFormState = {
   salesperson_id:          string
   csr_id:                  string
   customer_po:             string
-  part_number:             string
   description:             string
   qty:                     string
   buy:                     string
@@ -27,8 +29,6 @@ export type EditDrumFormState = {
   ship_from:               Address
   bill_to:                 Address
   customer_contacts:       CustomerContact[]
-  invoice_status:          string
-  invoice_customer_amount: string
   invoice_payment_status:  string
   po_contacts:             Contact[]
   po_notes:                string
@@ -60,11 +60,10 @@ export function useEditDrumForm(id: string) {
   const [form, setForm] = useState<EditDrumFormState>({
     order_number: '', order_date: '', status: 'Acknowledged Order',
     customer_id: '', vendor_id: '', is_blind_shipment: false,
-    salesperson_id: '', csr_id: '', customer_po: '', part_number: '',
+    salesperson_id: '', csr_id: '', customer_po: '',
     description: '', qty: '', buy: '', sell: '', pick_up_date: '',
     freight_carrier: '', ship_from: emptyAddress(), bill_to: emptyAddress(),
-    customer_contacts: [], invoice_status: 'No Charge',
-    invoice_customer_amount: '', invoice_payment_status: 'Not Invoiced',
+    customer_contacts: [], invoice_payment_status: 'Not Invoiced',
     po_contacts: [], po_notes: '', misc_notes: '', bol_number: '',
     flag: false, qb_invoice_number: '',
   })
@@ -83,6 +82,11 @@ export function useEditDrumForm(id: string) {
       setCsrs(csrs ?? [])
       setCusts(custs ?? [])
       setVends(vends ?? [])
+      const mattCozik = (csrs as { id: string; name: string }[]).find(u => u.name === 'Matt Cozik')
+      const defaultCsrId = order.csr_id ?? (mattCozik?.id ?? '')
+      const loadedSell = order.sell ?? ''
+      const isCoastal = (order.vendor_id ?? '') === COASTAL_VENDOR_ID
+      const defaultSell = (!loadedSell && isCoastal) ? COASTAL_DEFAULT_SELL : loadedSell
       setForm({
         order_number:            order.order_number ?? '',
         order_date:              order.order_date ?? '',
@@ -91,20 +95,17 @@ export function useEditDrumForm(id: string) {
         vendor_id:               order.vendor_id ?? '',
         is_blind_shipment:       order.is_blind_shipment ?? false,
         salesperson_id:          order.salesperson_id ?? '',
-        csr_id:                  order.csr_id ?? '',
+        csr_id:                  defaultCsrId,
         customer_po:             order.customer_po ?? '',
-        part_number:             order.part_number ?? '',
         description:             order.description ?? '',
         qty:                     order.qty ?? '',
         buy:                     order.buy ?? '',
-        sell:                    order.sell ?? '',
+        sell:                    defaultSell,
         pick_up_date:            order.pick_up_date ?? '',
         freight_carrier:         order.freight_carrier ?? '',
         ship_from:               coerceAddr(order.ship_from),
         bill_to:                 coerceAddr(order.bill_to),
         customer_contacts:       (order.customer_contacts ?? []) as CustomerContact[],
-        invoice_status:          order.invoice_status ?? 'No Charge',
-        invoice_customer_amount: order.invoice_customer_amount ?? '',
         invoice_payment_status:  order.invoice_payment_status ?? 'Not Invoiced',
         po_contacts:             (order.po_contacts ?? []) as Contact[],
         po_notes:                order.po_notes ?? '',
@@ -163,8 +164,9 @@ export function useEditDrumForm(id: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          invoice_status: 'Invoice',
+          invoice_customer_amount: null,
           qty: form.qty || null, buy: form.buy || null, sell: form.sell || null,
-          invoice_customer_amount: form.invoice_customer_amount || null,
           pick_up_date: form.pick_up_date || null,
           salesperson_id: form.salesperson_id || null,
           csr_id: form.csr_id || null,

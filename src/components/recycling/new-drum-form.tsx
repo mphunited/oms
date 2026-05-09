@@ -1,7 +1,7 @@
 'use client'
 
 import { useNewDrumForm } from '@/lib/recycling/use-new-drum-form'
-import { RECYCLING_STATUSES, RECYCLING_INVOICE_STATUSES, INVOICE_PAYMENT_STATUSES } from '@/lib/db/schema'
+import { RECYCLING_STATUSES, INVOICE_PAYMENT_STATUSES } from '@/lib/db/schema'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -101,24 +101,21 @@ export function NewDrumForm() {
           <Field label="Customer PO">
             <Input value={form.customer_po} onChange={e => set('customer_po', e.target.value)} />
           </Field>
-          <Field label="Product (P/N)">
-            <Input value={form.part_number} onChange={e => set('part_number', e.target.value)} />
+          <Field label="Qty">
+            <Input type="number" step="1" value={form.qty} onChange={e => set('qty', e.target.value)} />
           </Field>
         </Row>
         <Field label="Description">
           <Input value={form.description} onChange={e => set('description', e.target.value)} />
         </Field>
         <Row>
-          <Field label="Qty">
-            <Input type="number" step="1" value={form.qty} onChange={e => set('qty', e.target.value)} />
-          </Field>
           <Field label="Buy">
             <Input type="number" step="0.01" value={form.buy} onChange={e => set('buy', e.target.value)} />
           </Field>
+          <Field label="Sell">
+            <Input type="number" step="0.01" value={form.sell} onChange={e => set('sell', e.target.value)} />
+          </Field>
         </Row>
-        <Field label="Sell (optional)">
-          <Input type="number" step="0.01" value={form.sell} onChange={e => set('sell', e.target.value)} />
-        </Field>
       </Section>
 
       {/* Dates & Logistics */}
@@ -157,17 +154,6 @@ export function NewDrumForm() {
 
       {/* Financial */}
       <Section title="Financial">
-        <Row>
-          <Field label="Invoice Status">
-            <select value={form.invoice_status} onChange={e => set('invoice_status', e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              {RECYCLING_INVOICE_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </Field>
-          <Field label="Invoice Customer Amount">
-            <Input type="number" step="0.01" value={form.invoice_customer_amount} onChange={e => set('invoice_customer_amount', e.target.value)} />
-          </Field>
-        </Row>
         <Field label="Invoice Payment Status">
           <select value={form.invoice_payment_status} onChange={e => set('invoice_payment_status', e.target.value)}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
