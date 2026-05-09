@@ -2,8 +2,9 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, ChevronRight, Copy, Flag, Pencil, X, Loader2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, ClipboardList, Copy, Flag, NotebookText, Pencil, X, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 import { OrderStatusBadge } from './order-status-badge'
 import type { FullSplitLoad } from './split-load-sub-row'
 import { formatDate } from '@/lib/utils/format-date'
@@ -52,6 +53,9 @@ export type OrderRow = {
   split_loads: FullSplitLoad[]
   group_id: string | null
   group_po_number: string | null
+  misc_notes: string | null
+  po_notes: string | null
+  freight_invoice_notes: string | null
 }
 
 type Props = {
@@ -438,6 +442,11 @@ export function OrderTableRow({
   const showLoadLabels = order.split_loads.length > 1
   const statusColor = getBadgeColor(statusMeta, order.status)
   const statusTextColor = getBadgeTextColor(statusColor)
+  const hasNotes = !!(
+    (order.misc_notes && order.misc_notes.trim()) ||
+    (order.po_notes && order.po_notes.trim()) ||
+    (order.freight_invoice_notes && order.freight_invoice_notes.trim())
+  )
 
   return (
     <>
@@ -497,20 +506,32 @@ export function OrderTableRow({
             )}
 
             {/* Action buttons */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setChecklistOpen(true)}
-                className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-[#00205B]/10 text-[#00205B] hover:bg-[#00205B]/20 transition-colors dark:bg-[#00205B]/30 dark:text-blue-300 dark:hover:bg-[#00205B]/50"
+                className="w-6 h-6 rounded-[6px] bg-white flex items-center justify-center text-[#9ca3af] hover:text-[#374151] transition-colors"
+                style={{ boxShadow: '0px 0px 0px 1px rgba(0,0,0,0.08), 0px 1px 2px rgba(0,0,0,0.04)' }}
+                title="CSR List"
+                aria-label="Open CSR checklist"
               >
-                CSR List
+                <ClipboardList size={13} />
               </button>
               <button
                 type="button"
                 onClick={() => setNotesOpen(true)}
-                className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors"
+                className={cn(
+                  "w-6 h-6 rounded-[6px] bg-white flex items-center justify-center transition-colors",
+                  hasNotes ? "text-[#f59e0b]" : "text-[#9ca3af] hover:text-[#374151]"
+                )}
+                style={{ boxShadow: hasNotes
+                  ? '0px 0px 0px 1px rgba(245,158,11,0.4), 0px 1px 2px rgba(0,0,0,0.04)'
+                  : '0px 0px 0px 1px rgba(0,0,0,0.08), 0px 1px 2px rgba(0,0,0,0.04)'
+                }}
+                title="Notes"
+                aria-label="Open notes"
               >
-                Notes
+                <NotebookText size={13} />
               </button>
             </div>
           </div>
