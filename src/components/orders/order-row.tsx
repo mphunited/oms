@@ -448,10 +448,15 @@ export function OrderTableRow({
     (order.po_notes && order.po_notes.trim()) ||
     (order.freight_invoice_notes && order.freight_invoice_notes.trim())
   )
+  const hasIncompleteChecklist = !!(
+    order.checklist &&
+    order.checklist.length > 0 &&
+    order.checklist.some(item => !item.done)
+  )
 
   return (
     <>
-      <tr className={`group hover:bg-muted/30 transition-colors${order.flag ? ' bg-red-50 dark:bg-red-950/20' : selected ? ' bg-muted/20' : ''}`}>
+      <tr className={`group h-[52px] hover:bg-muted/30 transition-colors${order.flag ? ' bg-red-50 dark:bg-red-950/20' : selected ? ' bg-muted/20' : ''}`}>
         {/* Expand */}
         <td className="px-2 py-2">
           <button type="button" onClick={onToggleExpand}
@@ -503,18 +508,25 @@ export function OrderTableRow({
               <button
                 type="button"
                 onClick={() => setChecklistOpen(true)}
-                className="w-6 h-6 rounded-[6px] bg-white flex items-center justify-center text-[#9ca3af] hover:text-[#374151] transition-colors"
-                style={{ boxShadow: '0px 0px 0px 1px rgba(0,0,0,0.08), 0px 1px 2px rgba(0,0,0,0.04)' }}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-[6px] bg-white transition-colors",
+                  hasIncompleteChecklist ? "text-[#f59e0b]" : "text-[#9ca3af] hover:text-[#374151]"
+                )}
+                style={{ boxShadow: hasIncompleteChecklist
+                  ? '0px 0px 0px 1px rgba(245,158,11,0.4), 0px 1px 2px rgba(0,0,0,0.04)'
+                  : '0px 0px 0px 1px rgba(0,0,0,0.08), 0px 1px 2px rgba(0,0,0,0.04)'
+                }}
                 title="CSR List"
                 aria-label="Open CSR checklist"
               >
-                <ClipboardList size={13} />
+                <ClipboardList size={12} />
+                <span className="text-[9px] font-medium leading-none">CSR List</span>
               </button>
               <button
                 type="button"
                 onClick={() => setNotesOpen(true)}
                 className={cn(
-                  "w-6 h-6 rounded-[6px] bg-white flex items-center justify-center transition-colors",
+                  "flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-[6px] bg-white transition-colors",
                   hasNotes ? "text-[#f59e0b]" : "text-[#9ca3af] hover:text-[#374151]"
                 )}
                 style={{ boxShadow: hasNotes
@@ -524,7 +536,8 @@ export function OrderTableRow({
                 title="Notes"
                 aria-label="Open notes"
               >
-                <NotebookText size={13} />
+                <NotebookText size={12} />
+                <span className="text-[9px] font-medium leading-none">Notes</span>
               </button>
             </div>
 
