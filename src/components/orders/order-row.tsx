@@ -56,6 +56,7 @@ export type OrderRow = {
   misc_notes: string | null
   po_notes: string | null
   freight_invoice_notes: string | null
+  checklist: { label: string; done: boolean }[] | null
 }
 
 type Props = {
@@ -480,33 +481,25 @@ export function OrderTableRow({
 
         {/* MPH PO — order number + CSR List + Notes buttons */}
         <td className="px-3 py-2">
-          <div className="flex flex-col gap-1">
-            {/* Order number link */}
-            <span className="font-mono font-medium">
-              {onOpenSummary ? (
-                <button
-                  type="button"
-                  onClick={() => onOpenSummary(order.id)}
-                  className="hover:underline cursor-pointer text-primary"
-                >
-                  {order.order_number}
-                </button>
-              ) : (
-                <Link href={`/orders/${order.id}`} className="hover:underline text-primary">
-                  {order.order_number}
-                </Link>
-              )}
-            </span>
-
-            {/* Group PO number */}
-            {order.group_po_number && (
-              <span className="text-xs text-muted-foreground font-mono">
-                Group: {order.group_po_number}
-              </span>
-            )}
-
-            {/* Action buttons */}
+          <div className="flex flex-col gap-0.5">
+            {/* First row: PO number + icon buttons inline */}
             <div className="flex items-center gap-1.5">
+              <span className="font-mono font-medium">
+                {onOpenSummary ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenSummary(order.id)}
+                    className="hover:underline cursor-pointer text-primary"
+                  >
+                    {order.order_number}
+                  </button>
+                ) : (
+                  <Link href={`/orders/${order.id}`} className="hover:underline text-primary">
+                    {order.order_number}
+                  </Link>
+                )}
+              </span>
+
               <button
                 type="button"
                 onClick={() => setChecklistOpen(true)}
@@ -534,6 +527,13 @@ export function OrderTableRow({
                 <NotebookText size={13} />
               </button>
             </div>
+
+            {/* Group PO number below */}
+            {order.group_po_number && (
+              <span className="text-xs text-muted-foreground font-mono">
+                Group: {order.group_po_number}
+              </span>
+            )}
           </div>
         </td>
 
