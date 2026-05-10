@@ -5,13 +5,12 @@ import { useRouter } from 'next/navigation'
 import { ChevronDown, ChevronRight, ClipboardList, Copy, Flag, NotebookText, Pencil, X, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { OrderStatusBadge } from './order-status-badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { FullSplitLoad } from './split-load-sub-row'
 import { formatDate } from '@/lib/utils/format-date'
 import { formatCurrency, firstDescription, firstQty } from '@/lib/utils/order-table-utils'
 import { formatVendorName } from '@/lib/utils/format-vendor-name'
 import { getBadgeColor, getBadgeTextColor } from '@/lib/orders/badge-colors'
-import type { OrderStatus } from '@/types/order'
 
 function firstName(full: string | null | undefined): string {
   if (!full) return '—'
@@ -551,7 +550,7 @@ export function OrderTableRow({
         </td>
 
         {/* Status — colored select for non-SALES, colored badge for SALES */}
-        <td className="w-[148px] min-w-[148px] max-w-[148px] px-3 py-2 align-middle">
+        <td className="w-[148px] min-w-[148px] max-w-[148px] px-3 py-2 align-top">
           {role === 'SALES' ? (
             <div
               className="w-full rounded-md px-2.5 py-1 text-[11px] font-medium text-center whitespace-normal break-words leading-snug"
@@ -560,18 +559,17 @@ export function OrderTableRow({
               {order.status}
             </div>
           ) : (
-            <select
-              value={order.status}
-              onChange={e => onPatchStatus(e.target.value)}
-              style={{
-                backgroundColor: statusColor,
-                color: statusTextColor,
-                borderColor: statusColor,
-              }}
-              className="w-full text-xs rounded border px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#00205B] font-medium cursor-pointer"
-            >
-              {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <Select value={order.status} onValueChange={v => { if (v) onPatchStatus(v) }}>
+              <SelectTrigger
+                className="!h-auto min-h-[32px] w-full whitespace-normal text-xs font-medium cursor-pointer px-1.5 py-1 rounded focus:ring-1 focus:ring-[#00205B] focus:ring-offset-0"
+                style={{ backgroundColor: statusColor, color: statusTextColor, borderColor: statusColor }}
+              >
+                <SelectValue className="!line-clamp-none whitespace-normal break-words leading-snug" />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
           )}
         </td>
 
