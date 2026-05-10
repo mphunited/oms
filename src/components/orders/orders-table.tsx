@@ -291,10 +291,11 @@ export function OrdersTable() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {orderRows.map(order => (
+                {orderRows.map((order, idx) => (
                   <OrderTableRow
                     key={order.id}
                     order={order}
+                    rowIndex={idx}
                     expanded={expandedIds.has(order.id)}
                     selected={selectedIds.has(order.id)}
                     role={role}
