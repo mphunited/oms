@@ -60,6 +60,7 @@ export type OrderRow = {
 
 type Props = {
   order: OrderRow
+  rowIndex: number
   expanded: boolean
   selected: boolean
   role: string | null
@@ -418,7 +419,7 @@ function NotesPopup({
 // ─── Main Row ─────────────────────────────────────────────────────────────────
 
 export function OrderTableRow({
-  order, expanded, selected, role, statusOptions, statusMeta, carrierMeta,
+  order, rowIndex, expanded, selected, role, statusOptions, statusMeta, carrierMeta,
   onToggleExpand, onToggleSelect, onToggleFlag, onPatchStatus, onOpenSummary,
 }: Props) {
   const [checklistOpen, setChecklistOpen] = useState(false)
@@ -455,7 +456,10 @@ export function OrderTableRow({
 
   return (
     <>
-      <tr className={`group h-[52px] hover:bg-muted/30 transition-colors${order.flag ? ' bg-red-50 dark:bg-red-950/20' : selected ? ' bg-muted/20' : ''}`}>
+      <tr className={cn(
+        'group h-[52px] hover:bg-muted/30 transition-colors',
+        order.flag ? '!bg-[#fef2f2]' : rowIndex % 2 === 0 ? 'bg-[#f3f4f6]' : 'bg-white',
+      )}>
         {/* Expand */}
         <td className="px-2 py-2">
           <button type="button" onClick={onToggleExpand}
