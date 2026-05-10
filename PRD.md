@@ -79,6 +79,8 @@ and permissions afterward via /team page.
 
 **Do NOT introduce new dependencies without a clear reason. Do NOT add Prisma.**
 
+**DESIGN.md** in the project root defines the full visual design system (Vercel-based with MPH United adaptations). Section 10 contains all OMS-specific token overrides. All UI work must follow DESIGN.md. For OMS-specific patterns, Section 10 takes precedence over the base Vercel spec.
+
 ---
 
 ## 4. Architecture Rules (Non-Negotiable)
@@ -551,13 +553,23 @@ edit form before using the invoicing workflow on recycling orders.
 
 Default visible columns (in order):
 Flag | MPH PO | Status | Sales/CSR | Customer | Customer PO | Description | Qty |
-Ship Date | Wanted Date | Vendor | Buy | Sell | Ship To | Carrier | Actions
+Ship Date | Vendor | Buy | Sell | Ship To | Carrier | Actions
+
+Note: Wanted Date column was removed from the list table to give more space to Description.
+The wanted_date field is still fetched and available on the order detail/edit page.
+
+Row spec:
+- Row height: 52px minimum.
+- Zebra striping: odd rows #f3f4f6, even rows white. Implemented via rowIndex prop passed from orders-table.tsx (index-based, NOT CSS odd: selector). Any new row-level background logic must use cn() with rowIndex.
+- Flagged rows: !bg-[#fef2f2] overrides the stripe when order.flag is true (using ! important prefix).
 
 Rules:
-- Flag: red filled (text-red-500 fill-red-500) when true, outline when false. Flagged rows: bg-red-50 dark:bg-red-950/20.
-- MPH PO number cell is a button — opens Order Summary Drawer (Sheet, right side). Does NOT navigate. Edit link is inside drawer header. Never use Button asChild here — use styled native Link.
+- Flag: red filled (text-red-500 fill-red-500) when true, outline when false. Flagged rows: !bg-[#fef2f2] (overrides zebra stripe).
+- MPH PO cell contains: (1) the PO number as a clickable link that opens the Order Summary Drawer, (2) a CSR List icon button (clipboard-list icon, 24×24px), (3) a Notes icon button (notes icon, 24×24px). All three elements are inline in a flex-row. Each button has a text label below the icon ("CSR List", "Notes"). The cell opens the Order Summary Drawer (Sheet, right side). Does NOT navigate. Edit link is inside drawer header. Never use Button asChild here — use styled native Link.
+  - CSR List amber indicator: amber ring + amber icon when order.checklist has any item where done === false.
+  - Notes amber indicator: amber ring + amber icon when any of misc_notes, po_notes, or freight_invoice_notes is non-empty.
 - Actions cell: Pencil icon on hover (group-hover, navigates to /orders/[orderId]). Duplicate copy icon always visible.
-- Status: colored pill badge. Non-SALES: inline-editable Select. SALES: read-only badge.
+- Status: colored pill badge. Non-SALES: inline-editable Select. SALES: read-only badge. Status column is constrained to 148px (min-w, max-w, and w all set). Status badge text wraps to multiple lines within this width. The shadcn Select for non-SALES users uses !h-auto and !line-clamp-none on SelectValue to allow text wrapping. Row vertical alignment is align-top when status wraps to two lines.
 - Carrier: colored pill badge. Dash if null.
 - Sales/CSR: "FirstName / FirstName" format. Two CSRs: "First / First2".
 - Customer PO cell: "Wash & Return" badge (gold) when any split load has W&R type; "Split Load" (muted) for 2+ loads with no W&R; nothing otherwise.
@@ -567,10 +579,34 @@ Rules:
 - Expandable rows: chevron click → card per split load. Fields: Load PO, Customer PO, Description, Qty, Buy, Sell.
 - Order Summary Drawer: Sheet, side="right", w-[520px]. Fetches GET /api/orders/[orderId] on open.
 
+### Live Margin Panel
+Component: `order-margin-card.tsx`. Renders a sticky dark navy card on the new/edit order form.
+- Background: #1a2744, rounded-lg, p-4, sticky top-4.
+- Labels: text-white/60, 11px, font-weight 500.
+- Values: text-white/90, 15px, font-weight 500.
+- Net margin value: 22px, font-weight 600.
+  - Green (#10b981) when margin % >= 8%.
+  - Red (#ef4444) when margin % < 8%.
+  - Neutral text-white/90 when revenue is zero.
+
+### Form Section Headers
+All form section headers use a flex-row container with:
+- A 2px wide × 20px tall #1a2744 left-bar accent (rounded-full).
+- 13px semibold #171717 label text in sentence case.
+- No all-caps labels anywhere in the application.
+This pattern applies across all 13 section headers in 7 form files.
+
 Filter bar — two always-visible rows:
 - Row 1: Search | lifecycle pills (Active / Complete / Flagged / All) | Status multi-select | Clear Filters
 - Row 2: Customer | Vendor | CSR | Salesperson | Ship Date range
 Default sort: Ship Date ASC, nulls last.
+
+Lifecycle pill visual spec (Vercel pill pattern):
+- Shape: 9999px border-radius, px-3.5 py-[5px], 13px font-size, font-weight 500.
+- Active state: #1a2744 background, white text.
+- Inactive state: white background, #374151 text, shadow-border (box-shadow border).
+- Flagged inactive: #fee2e2 background, #991b1b text.
+- Gap between pills: 4px.
 
 ---
 
@@ -956,3 +992,13 @@ table, group_id FK on orders, combined vendor PO PDF and email for grouped order
 *Last updated: May 5–7, 2026 — Pre-launch hardening: buy/sell 3-decimal precision,
 Wash & Return Stage canonical status, PO email REVISED label, Clear Filters button,
 flagged row highlight, noValidate on new order form, order_type fallback.*
+
+*Last updated: May 9, 2026 — UI design session shipped changes documented in Section 15:
+Wanted Date column removed from orders list table (field still fetched, available on detail/edit);
+row height updated to 52px; zebra striping updated to #f3f4f6/white via index-based rowIndex prop;
+flagged row override changed to !bg-[#fef2f2]; MPH PO cell spec updated with CSR List and Notes
+icon buttons (amber indicators for incomplete checklist and non-empty notes); Status column
+constrained to 148px with text-wrap support; lifecycle pill visual spec added (Vercel pill pattern,
+#1a2744 active, #fee2e2 Flagged inactive); Live Margin panel spec added (order-margin-card.tsx,
+#1a2744 background, green/red margin thresholds); form section header spec added (2px navy left-bar,
+13px semibold, sentence case, no all-caps); DESIGN.md reference added to Section 3.*
