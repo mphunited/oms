@@ -388,6 +388,8 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     GET uses db.query.orders.findFirst which returns all columns automatically — but the
     list route does not. This has caused silent bugs. Always check both routes when adding
     a new orders table column. Apply the same discipline to GET /api/recycling-orders.
+    When adding a new row-level feature (popup, indicator, computed value), check the list
+    route .select({}) first — the detail route does not need changes for popups or drawers.
 
 57. **Orders list default sort is ship_date ASC NULLS LAST.**
     Sortable columns: ship_date, customer_name, ship_to_name, vendor_name.
@@ -900,6 +902,14 @@ Primary buttons: navy bg, gold hover
 Never use Button asChild — @base-ui/react does not support this prop.
 Use styled native Link elements wherever a link needs button styling.
 
+shadcn override patterns — when a shadcn component ignores whitespace or layout overrides
+on parent elements, use browser devtools to find the baked-in utility class on the inner
+element. Common patterns:
+- [&>span]: targets the inner span of SelectTrigger
+- !line-clamp-none overrides SelectValue's baked-in line-clamp-1
+- !h-auto overrides SelectTrigger's baked-in h-8
+- Use the ! (important) prefix when shadcn utilities cannot be overridden from a parent element
+
 Orders page sticky layout rules:
 - orders/page.tsx wrapper: ONLY <div className="p-6"> — no overflow-hidden
 - layout.tsx <main>: ONLY className="flex flex-1 flex-col" — no overflow-hidden
@@ -907,3 +917,7 @@ Orders page sticky layout rules:
 - orders-table.tsx filter bar: sticky top-14 z-20
 - orders-table.tsx thead: sticky z-10 with inline style top from filterBarHeight
 - filterBarHeight initializes at 112 (two-row filter bar height)
+
+Orders table row striping uses index-based logic (rowIndex % 2), not CSS odd: selectors.
+The rowIndex prop is passed from orders-table.tsx. Any new row-level background logic must
+use cn() with this prop.
