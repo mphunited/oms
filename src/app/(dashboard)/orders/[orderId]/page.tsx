@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, FileText, Truck, Copy, Link2, Mail, Trash2 } from 'lucide-react'
@@ -26,6 +26,7 @@ import type { NewContactEntry } from '@/components/orders/new-contact-prompt'
 
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
+  const router = useRouter()
 
   const {
     order, loading, error, saving, saved,
@@ -103,9 +104,15 @@ export default function OrderDetailPage() {
       {/* Header — order number + action buttons */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/orders" className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent transition-colors text-muted-foreground">
+          <button
+            onClick={() => {
+              if (isDirty && !window.confirm('You have unsaved changes. Leave anyway?')) return
+              router.push('/orders')
+            }}
+            className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent transition-colors text-muted-foreground"
+          >
             <ChevronLeft className="h-4 w-4" />
-          </Link>
+          </button>
           <div>
             <p className="text-lg font-mono font-semibold">{order.order_number}</p>
             <p className="text-sm text-muted-foreground">

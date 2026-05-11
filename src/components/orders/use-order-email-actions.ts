@@ -142,6 +142,7 @@ export function useOrderEmailActions(
         await attachFileToDraftResilient(token, messageId, `MPH PO ${group.group_po_number} Multi-Ship-To.pdf`, base64)
         toast.success('Draft created — opening Outlook', { id: toastId })
         setEmailStatus('success')
+        setTimeout(() => setEmailStatus('idle'), 3000)
         openDraft(webLink)
         onClearSelection()
         return
@@ -207,10 +208,12 @@ export function useOrderEmailActions(
       }
       toast.success('Draft created — opening Outlook', { id: toastId })
       setEmailStatus('success')
+      setTimeout(() => setEmailStatus('idle'), 3000)
       openDraft(webLink)
       onClearSelection()
     } catch (err) {
       setEmailStatus('error')
+      setTimeout(() => setEmailStatus('idle'), 5000)
       setEmailError(err instanceof Error ? err.message : String(err))
       await logEmailError('handleEmailPosClick', err)
       const msg = err instanceof Error ? err.message : String(err)
@@ -283,6 +286,7 @@ export function useOrderEmailActions(
       }
       toast.success('Draft created — opening Outlook', { id: toastId })
       setEmailStatus('success')
+      setTimeout(() => setEmailStatus('idle'), 3000)
       openDraft(webLink)
       onClearSelection()
     } catch (err) {
@@ -290,6 +294,7 @@ export function useOrderEmailActions(
       console.error('[BOL Email] error stack:', err instanceof Error ? err.stack : 'no stack available')
       console.error('[BOL Email] full error:', err)
       setEmailStatus('error')
+      setTimeout(() => setEmailStatus('idle'), 5000)
       setEmailError(err instanceof Error ? err.message : String(err))
       await logEmailError('handleEmailBolsClick', err)
       const msg = err instanceof Error ? err.message : String(err)

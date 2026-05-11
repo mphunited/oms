@@ -249,8 +249,10 @@ export function OrdersTable() {
                 {grouping ? 'Grouping…' : 'Group as Multi-Ship-To'}
               </button>
             )}
-            <EmailStatusIndicator status={emailStatus} error={emailError} />
           </div>
+        )}
+        {emailStatus !== 'idle' && (
+          <EmailStatusIndicator status={emailStatus} error={emailError} />
         )}
       </div>
 
