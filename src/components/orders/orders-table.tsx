@@ -13,35 +13,52 @@ import { OrderSummaryDrawer } from './order-summary-drawer'
 import { EmailStatusIndicator } from '@/components/orders/email-status-indicator'
 
 const LIMIT = 50
+const SESSION_KEY = 'orders_filters'
 
 type BadgeMeta = Record<string, { color: string }> | null
+
+function buildInitialFilters(sp: { get(k: string): string | null; has(k: string): boolean }): FilterState {
+  const URL_FILTER_KEYS = ['search', 'lifecycle', 'flag', 'status', 'vendor_id',
+    'customer_id', 'salesperson_id', 'csr_id', 'ship_date_from', 'ship_date_to']
+  if (!URL_FILTER_KEYS.some(k => sp.has(k))) {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY)
+      if (raw) return { ...DEFAULT_FILTERS, ...(JSON.parse(raw) as Partial<FilterState>) }
+    } catch {}
+  }
+  return {
+    search:         sp.get('search') ?? '',
+    lifecycle:      (sp.get('lifecycle') as FilterState['lifecycle']) ?? 'active',
+    statuses:       sp.get('status') ? sp.get('status')!.split(',') : [],
+    flagOnly:       sp.get('flag') === 'true',
+    vendorIds:      sp.get('vendor_id') ? sp.get('vendor_id')!.split(',') : [],
+    customerIds:    sp.get('customer_id') ? sp.get('customer_id')!.split(',') : [],
+    salespersonIds: sp.get('salesperson_id') ? sp.get('salesperson_id')!.split(',') : [],
+    csrIds:         sp.get('csr_id') ? sp.get('csr_id')!.split(',') : [],
+    shipDateFrom:   sp.get('ship_date_from') ?? '',
+    shipDateTo:     sp.get('ship_date_to') ?? '',
+  }
+}
 
 export function OrdersTable() {
   const searchParams = useSearchParams()
   const router       = useRouter()
   const pathname     = usePathname()
 
+  // Computed once on first render; feeds both filters and debouncedSearch below.
+  const initRef = useRef<FilterState | null>(null)
+  if (initRef.current === null) initRef.current = buildInitialFilters(searchParams)
+
   const [orderRows, setOrderRows] = useState<OrderRow[]>([])
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-  const [filters, setFilters]     = useState<FilterState>(() => ({
-    search:         searchParams.get('search') ?? '',
-    lifecycle:      (searchParams.get('lifecycle') as FilterState['lifecycle']) ?? 'active',
-    statuses:       searchParams.get('status') ? searchParams.get('status')!.split(',') : [],
-    flagOnly:       searchParams.get('flag') === 'true',
-    vendorIds:      searchParams.get('vendor_id') ? searchParams.get('vendor_id')!.split(',') : [],
-    customerIds:    searchParams.get('customer_id') ? searchParams.get('customer_id')!.split(',') : [],
-    salespersonIds: searchParams.get('salesperson_id') ? searchParams.get('salesperson_id')!.split(',') : [],
-    csrIds:         searchParams.get('csr_id') ? searchParams.get('csr_id')!.split(',') : [],
-    shipDateFrom:   searchParams.get('ship_date_from') ?? '',
-    shipDateTo:     searchParams.get('ship_date_to') ?? '',
-  }))
+  const [filters, setFilters]     = useState<FilterState>(initRef.current)
   const [page, setPage]           = useState(1)
   const [total, setTotal]         = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') ?? '')
+  const [debouncedSearch, setDebouncedSearch] = useState(initRef.current.search)
   const [role, setRole]           = useState<string | null>(null)
   const [statusOptions, setStatusOptions] = useState<string[]>([])
   const [statusMeta, setStatusMeta] = useState<BadgeMeta>(null)
@@ -106,6 +123,24 @@ export function OrdersTable() {
     if (filters.shipDateTo)               params.set('ship_date_to', filters.shipDateTo)
     const qs = params.toString()
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    try {
+      if (params.size > 0) {
+        const stored: Partial<FilterState> = {}
+        if (filters.search)                    stored.search = filters.search
+        if (filters.lifecycle !== 'active')    stored.lifecycle = filters.lifecycle
+        if (filters.statuses.length > 0)      stored.statuses = filters.statuses
+        if (filters.flagOnly)                  stored.flagOnly = filters.flagOnly
+        if (filters.vendorIds.length > 0)     stored.vendorIds = filters.vendorIds
+        if (filters.customerIds.length > 0)   stored.customerIds = filters.customerIds
+        if (filters.salespersonIds.length > 0) stored.salespersonIds = filters.salespersonIds
+        if (filters.csrIds.length > 0)        stored.csrIds = filters.csrIds
+        if (filters.shipDateFrom)             stored.shipDateFrom = filters.shipDateFrom
+        if (filters.shipDateTo)               stored.shipDateTo = filters.shipDateTo
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(stored))
+      } else {
+        sessionStorage.removeItem(SESSION_KEY)
+      }
+    } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters])
 
@@ -156,6 +191,7 @@ export function OrdersTable() {
     setDebouncedSearch('')
     setPage(1)
     setExpandedIds(new Set())
+    try { sessionStorage.removeItem(SESSION_KEY) } catch {}
   }
 
   function toggleExpand(id: string) {
