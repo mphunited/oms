@@ -712,6 +712,10 @@ qb_invoice_number, checklist (fresh from vendor template), buy/sell, group_id (n
 | /api/global-emails/[id] | PUT update; DELETE (ADMIN only) | 1 — Done |
 | /api/product-weights | GET all; POST/PUT/DELETE (ADMIN only for writes) | 1 — Done |
 | /api/dashboard | GET dashboard stats | 1 — Done |
+| GET /api/financials/product-totals | Returns product totals + vendor totals for regular orders by ship_date range |
+| GET /api/financials/customer-orders | Returns order counts per customer by period (monthly or quarterly) |
+| GET /api/financials/recycling-totals | Returns IBC and Drum totals from recycling_orders by pick_up_date range |
+| GET /api/financials/pdf | Generates landscape A4 PDF of all financial data tables |
 
 ---
 
@@ -986,7 +990,85 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-us-west-2.pooler.supab
 
 DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 
+## 28. Financial Section
+
+Route: /financials
+Access: ADMIN and ACCOUNTING roles only. Server-side redirect for all other roles.
+All four API routes return 403 for unauthorized roles.
+Nav icon: BarChart2. Recharts is installed as of this sprint.
+
+### Features
+
+**Product Totals (regular orders)**
+- Data source: order_split_loads JOIN orders
+- Date filter: order_split_loads.ship_date
+- Left table: Product | Total QTY | Total Shipments (sorted by product name)
+- Right table: Vendor | Product | Total QTY | Total Shipments (grouped by vendor_id)
+- Vendor totals ALWAYS join by vendor_id — never group by vendor name text
+- Total QTY = SUM(order_split_loads.qty)
+- Total Shipments = COUNT(DISTINCT order_id) per product type
+- Shipment counting rule: one order = one truck = one shipment per product type.
+  If one truck carries two product types, each gets independent shipment credit.
+  Total shipments across all product rows will exceed actual trucks dispatched.
+  This is intentional and matches the existing Excel workbook behavior.
+- Null order_type rows are grouped under "Other — Parts & Supplies"
+- Both tables are sortable by column header click
+
+**Aggregate Summary Cards**
+Computed client-side from product-totals API response. No separate query.
+
+| Card | order_type values included |
+|---|---|
+| Total New Poly Drums | 55 Gal New OH Poly Drum, 55 Gal New TH Poly Drum |
+| Total Washout Drums | 55 Gal Washout OH Poly Drum, 55 Gal Washout TH Poly Drum |
+| Total Steel Drums | 55 Gal New OH Steel Drum, 55 Gal New TH Steel Drum |
+| Total All Drums | All 6 drum types above |
+| Total 275 Gal IBCs | All order_types containing "275 Gal" |
+| Total 330 Gal IBCs | All order_types containing "330 Gal" |
+| Total 135 Gal IBCs | All order_types containing "135 Gal" |
+
+Each card shows Total QTY and Total Shipments.
+Washout Drums are intentionally separate from Total New Poly Drums — they are not
+included in the poly drum card.
+
+**Customer Order Frequency**
+- Data source: orders JOIN order_split_loads JOIN customers
+- Date filter: order_split_loads.ship_date
+- Count unit: COUNT(DISTINCT orders.id) — one order = one data point
+- Granularity: Monthly (DATE_TRUNC('month')) or Quarterly (DATE_TRUNC('quarter'))
+- "By Customer" tab: customer selector + Recharts BarChart (navy bars) + data table
+- "All Customers" tab: sortable pivot table, default sort Total Orders DESC
+
+**Recycling Totals (separate section, not combined with product totals)**
+- Data source: recycling_orders
+- Date filter: pick_up_date (UI label is "Ship Date"; backend column is pick_up_date)
+- Each recycling_orders row = one shipment (no split loads on recycling)
+- IBC sub-table: recycling_type = 'IBC', grouped by vendor_id
+- Drum sub-table: recycling_type = 'Drum', grouped by vendor_id
+- Columns: Vendor | Total QTY | Total Orders
+- Disclaimer note rendered on page: "Recycling totals are not included in Product Totals above."
+
+**PDF Export**
+- Route: GET /api/financials/pdf?startDate=&endDate=&customerId=
+- export const runtime = 'nodejs' (required — crashes silently on Edge without it)
+- Landscape A4, 2 pages
+- Page 1: MPH logo header + date range + aggregate cards + product totals tables
+- Page 2: customer order pivot table + recycling totals tables
+- No charts in PDF — data tables only
+- Logo PNG: https://oms-jade.vercel.app/mph-logo.png
+
+### Future Considerations (not built)
+- Salesperson access: deferred. Requires deliberate decision on whether buy/margin
+  data should be visible to SALES role before any access is granted.
+- Seasonal alerts: deferred to Phase 3. Requires recurrence pattern logic, minimum
+  sample size definition, alert delivery mechanism, and dismissal state.
 ---
+
+*Last updated: May 2026 — Financial section built (Section 28): /financials route added
+for ADMIN + ACCOUNTING roles; product totals with vendor breakdown; 7 aggregate summary
+cards; customer order frequency with Recharts bar chart (monthly/quarterly); recycling
+totals as separate section using pick_up_date filter; landscape A4 PDF export (data tables
+only); Recharts installed; seasonal alerts deferred to Phase 3.*
 
 *Last updated: May 8, 2026 — Recycling section fully designed and built:
 analyzed IBC and Drum Excel source files; designed single-table architecture
@@ -1007,7 +1089,7 @@ Drum list pages, new/edit forms, inverted PO PDF builder, Graph API email hook b
 COASTAL_VENDOR_ID: 8ae0764b-c98d-4b4f-a71f-1e0111225a94; qb_invoice_number gap on
 recycling_orders noted as known issue. Section 17 routes fully updated. Section 22
 Known Issues updated with recycling, order_groups, and operational decisions.
-Duplicate Section 20 numbering fixed. /financials deleted (Phase 2).*
+Duplicate Section 20 numbering fixed. /financials added as Section 28 (built May 2026).*
 
 *Last updated: May 7, 2026 — Multi-Ship-To Order Groups added (Section 23): order_groups
 table, group_id FK on orders, combined vendor PO PDF and email for grouped orders.*

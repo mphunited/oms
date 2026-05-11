@@ -558,6 +558,23 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       React tree. Browser back cannot be reliably prevented in Next.js App Router
       without a third-party library. Sidebar links and in-page back buttons are
       the reliable interception points.
+
+71. **Financials section (/financials) is ADMIN + ACCOUNTING only.**
+    Role check is enforced in two places: server-side redirect in page.tsx and 403
+    guard in all four API routes under /api/financials/.
+    Do NOT add salesperson-level access until a deliberate decision is made to expose
+    aggregate company data to SALES role — this requires reviewing what buy/margin
+    data may be visible and adjusting the API responses accordingly.
+    Recharts is used for the customer frequency bar chart. It IS installed (added in
+    this sprint). Do not add it again.
+    Aggregate drum/IBC cards are computed client-side from the product-totals API
+    response. They do not require a separate query.
+    Shipment counting rule: COUNT(DISTINCT order_id) per product type. One order = one
+    truck regardless of split load count. Mixed-type orders give each product type
+    independent shipment credit. This matches existing Excel behavior.
+    Recycling orders use pick_up_date as the date filter, not ship_date (recycling_orders
+    has no ship_date column). The UI labels this field "Ship Date".
+    PDF route must always include: export const runtime = 'nodejs'
 ---
 
 ## TECHNOLOGY STACK
@@ -899,6 +916,33 @@ src/components/settings/company-settings-section.tsx
 src/components/settings/order-number-section.tsx
 src/components/settings/order-types-section.tsx
 src/components/settings/product-weights-section.tsx
+src/app/(dashboard)/financials/page.tsx — Financials page (ADMIN + ACCOUNTING only);
+  server-side role redirect; default date range = current calendar year
+src/components/financials/financials-client.tsx — main shell; owns shared date range
+  state passed to all three sections
+src/components/financials/product-totals-section.tsx — two sortable tables: Product Totals
+  (left) and Vendor Product Totals (right); vendor totals always join by vendor_id
+src/components/financials/aggregate-cards.tsx — 7 computed summary cards (new poly drums,
+  washout drums, steel drums, all drums, 275/330/135 Gal IBCs); computed client-side from
+  product-totals API response, no separate query
+src/components/financials/customer-frequency-section.tsx — "By Customer" tab (Recharts
+  BarChart, navy bars, monthly/quarterly toggle) + "All Customers" tab (sortable pivot
+  table); count unit is COUNT(DISTINCT orders.id)
+src/components/financials/recycling-totals-section.tsx — IBC and Drum sub-tables from
+  recycling_orders; gold left-bar border; disclaimer note that recycling is excluded
+  from product totals above
+src/lib/financials/build-financials-pdf.tsx — landscape A4 PDF, 2 pages: page 1 = header
+  + aggregate cards + product tables; page 2 = customer pivot + recycling totals;
+  export const runtime = 'nodejs' required on pdf route
+src/app/api/financials/product-totals/route.ts — GET; filter: order_split_loads.ship_date;
+  returns productTotals[] + vendorTotals[]; shipment count = COUNT(DISTINCT order_id)
+src/app/api/financials/customer-orders/route.ts — GET; params: startDate, endDate,
+  granularity=monthly|quarterly, customerId (optional); returns periods + per-customer counts
+src/app/api/financials/recycling-totals/route.ts — GET; filter: pick_up_date (this is
+  the backend column for what the UI calls Ship Date on recycling orders); returns
+  ibcTotals[] + drumTotals[] grouped by vendor_id
+src/app/api/financials/pdf/route.ts — GET; export const runtime = 'nodejs'; queries DB
+  directly via Drizzle; returns landscape A4 PDF with all data tables (no charts in PDF)
 src/components/global-emails/global-emails-client.tsx
 src/components/layout/        — sidebar, header, nav
 src/app/(dashboard)/          — all authenticated pages
