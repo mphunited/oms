@@ -11,8 +11,8 @@ export async function POST(
 ) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { orderId } = await params
 
@@ -28,8 +28,8 @@ export async function POST(
       ? await db.query.vendors.findFirst({ where: eq(vendors.id, source.vendor_id) })
       : null
 
-    const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) })
-    const initials = deriveInitials(user?.name)
+    const dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) })
+    const initials = deriveInitials(dbUser?.name)
 
     const allConfigs = await db.select({ order_type: order_type_configs.order_type, is_commission_eligible: order_type_configs.is_commission_eligible }).from(order_type_configs)
     const configMap = new Map(allConfigs.map(c => [c.order_type, c.is_commission_eligible]))

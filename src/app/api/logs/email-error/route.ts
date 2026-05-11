@@ -5,8 +5,8 @@ import { email_errors } from "@/lib/db/schema";
 
 export async function POST(req: Request) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   try {
     await db.insert(email_errors).values({
-      user_id: session.user.id,
+      user_id: user.id,
       context,
       message,
       status_code: status_code ?? null,

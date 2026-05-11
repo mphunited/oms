@@ -8,14 +8,14 @@ import { Plus } from 'lucide-react'
 
 export default async function IbcRecyclingPage() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
   let userRole = 'CSR'
-  if (session?.user?.id) {
+  if (user?.id) {
     const [dbUser] = await db
       .select({ role: users.role })
       .from(users)
-      .where(eq(users.id, session.user.id))
+      .where(eq(users.id, user.id))
       .limit(1)
     if (dbUser) userRole = dbUser.role
   }

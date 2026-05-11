@@ -6,8 +6,8 @@ import { eq } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return new NextResponse('Unauthorized', { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return new NextResponse('Unauthorized', { status: 401 })
 
   const number = req.nextUrl.searchParams.get('number')?.trim()
   if (!number) return NextResponse.json({ error: 'number is required' }, { status: 400 })

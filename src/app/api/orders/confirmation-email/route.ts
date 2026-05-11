@@ -12,8 +12,8 @@ import type { ConfirmationOrder } from '@/lib/orders/build-confirmation-email'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json() as { orderIds?: string[] }
   const orderIds = body.orderIds

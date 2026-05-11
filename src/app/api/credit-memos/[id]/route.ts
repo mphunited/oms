@@ -4,12 +4,12 @@ import { credit_memos, credit_memo_line_items, users } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 
-async function requireAccountingOrAdmin(session: { user: { id: string } } | null) {
-  if (!session) return null
+async function requireAccountingOrAdmin(user: { id: string } | null) {
+  if (!user) return null
   const [dbUser] = await db
     .select({ id: users.id, role: users.role })
     .from(users)
-    .where(eq(users.id, session.user.id))
+    .where(eq(users.id, user.id))
     .limit(1)
   if (!dbUser || (dbUser.role !== 'ADMIN' && dbUser.role !== 'ACCOUNTING')) return null
   return dbUser
@@ -21,8 +21,8 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    const dbUser = await requireAccountingOrAdmin(session)
+    const { data: { user } } = await supabase.auth.getUser()
+    const dbUser = await requireAccountingOrAdmin(user)
     if (!dbUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { id } = await params
@@ -54,8 +54,8 @@ export async function PUT(
 ) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    const dbUser = await requireAccountingOrAdmin(session)
+    const { data: { user } } = await supabase.auth.getUser()
+    const dbUser = await requireAccountingOrAdmin(user)
     if (!dbUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { id } = await params
@@ -127,8 +127,8 @@ export async function DELETE(
 ) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    const dbUser = await requireAccountingOrAdmin(session)
+    const { data: { user } } = await supabase.auth.getUser()
+    const dbUser = await requireAccountingOrAdmin(user)
     if (!dbUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { id } = await params

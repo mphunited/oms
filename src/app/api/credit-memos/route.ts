@@ -4,12 +4,12 @@ import { credit_memos, credit_memo_line_items, customers, users } from '@/lib/db
 import { eq, desc, sql } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 
-async function requireAccountingOrAdmin(session: { user: { id: string } } | null) {
-  if (!session) return null
+async function requireAccountingOrAdmin(user: { id: string } | null) {
+  if (!user) return null
   const [dbUser] = await db
     .select({ id: users.id, role: users.role })
     .from(users)
-    .where(eq(users.id, session.user.id))
+    .where(eq(users.id, user.id))
     .limit(1)
   if (!dbUser || (dbUser.role !== 'ADMIN' && dbUser.role !== 'ACCOUNTING')) return null
   return dbUser
@@ -18,8 +18,8 @@ async function requireAccountingOrAdmin(session: { user: { id: string } } | null
 export async function GET(req: Request) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    const dbUser = await requireAccountingOrAdmin(session)
+    const { data: { user } } = await supabase.auth.getUser()
+    const dbUser = await requireAccountingOrAdmin(user)
     if (!dbUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const rows = await db
@@ -53,8 +53,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    const dbUser = await requireAccountingOrAdmin(session)
+    const { data: { user } } = await supabase.auth.getUser()
+    const dbUser = await requireAccountingOrAdmin(user)
     if (!dbUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json() as {

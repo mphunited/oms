@@ -14,13 +14,13 @@ function parseList(p: string | null): string[] {
 export async function GET(req: Request) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const [dbUser] = await db
       .select({ id: users.id, role: users.role })
       .from(users)
-      .where(eq(users.id, session.user.id))
+      .where(eq(users.id, user.id))
       .limit(1)
     if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 403 })
 
@@ -149,13 +149,13 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const [dbUser] = await db
       .select({ id: users.id, role: users.role, name: users.name })
       .from(users)
-      .where(eq(users.id, session.user.id))
+      .where(eq(users.id, user.id))
       .limit(1)
     if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 403 })
     if (dbUser.role === 'SALES') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

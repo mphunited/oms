@@ -9,8 +9,8 @@ export async function GET(
   { params }: { params: Promise<{ customerId: string }> }
 ) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { customerId } = await params
   const row = await db.query.customers.findFirst({
@@ -25,8 +25,8 @@ export async function PATCH(
   { params }: { params: Promise<{ customerId: string }> }
 ) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { customerId } = await params
   try {

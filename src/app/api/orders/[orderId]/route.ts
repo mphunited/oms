@@ -10,8 +10,8 @@ export async function GET(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { orderId } = await params
 
@@ -66,14 +66,14 @@ export async function PATCH(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { orderId } = await params
 
   try {
-    const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) })
-    const initials = deriveInitials(user?.name)
+    const dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) })
+    const initials = deriveInitials(dbUser?.name)
 
     const body = await req.json()
     const { split_loads, ...orderFields } = body
@@ -165,11 +165,11 @@ export async function DELETE(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) })
-  if (user?.role !== 'ADMIN') {
+  const dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) })
+  if (dbUser?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

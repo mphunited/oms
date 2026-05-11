@@ -9,8 +9,8 @@ export async function GET(
   { params }: { params: Promise<{ vendorId: string }> }
 ) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { vendorId } = await params
   const row = await db.query.vendors.findFirst({
@@ -25,8 +25,8 @@ export async function PATCH(
   { params }: { params: Promise<{ vendorId: string }> }
 ) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { vendorId } = await params
   try {

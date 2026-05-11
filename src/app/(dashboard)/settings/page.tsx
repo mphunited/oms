@@ -12,13 +12,13 @@ import { ProductWeightsSection } from "@/components/settings/product-weights-sec
 
 export default async function SettingsPage() {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/login");
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   const [me] = await db
     .select({ role: users.role })
     .from(users)
-    .where(eq(users.id, session.user.id))
+    .where(eq(users.id, user.id))
     .limit(1);
 
   if (!me || me.role !== "ADMIN") redirect("/");

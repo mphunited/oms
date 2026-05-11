@@ -14,15 +14,15 @@ function parseList(param: string | null): string[] {
 export async function GET(req: Request) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const [dbUser] = await db
       .select({ id: users.id, role: users.role })
       .from(users)
-      .where(eq(users.id, session.user.id))
+      .where(eq(users.id, user.id))
       .limit(1)
 
     const { searchParams } = new URL(req.url)
@@ -309,13 +309,13 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) })
-    const initials = deriveInitials(user?.name)
+    const dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) })
+    const initials = deriveInitials(dbUser?.name)
 
     const body = await req.json()
     const { split_loads, manual_order_number, ...orderFields } = body

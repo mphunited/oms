@@ -17,8 +17,8 @@ const EARLY_STATUSES = new Set([
 export async function POST(req: Request) {
   try {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json() as { orderIds?: unknown }
     const orderIds = body.orderIds
@@ -68,8 +68,8 @@ export async function POST(req: Request) {
       )
     }
 
-    const user = await db.query.users.findFirst({ where: eq(users.id, session.user.id) })
-    const initials = deriveInitials(user?.name)
+    const dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) })
+    const initials = deriveInitials(dbUser?.name)
 
     const seqResult = await db.execute(sql`SELECT nextval('order_number_seq') AS num`)
     const num = (seqResult as unknown as Array<{ num: string | number }>)[0].num
