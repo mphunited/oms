@@ -692,16 +692,13 @@ export function OrderTableRow({
                     Load {index + 1}
                   </p>
                 )}
-                <div className="flex flex-wrap gap-x-6 gap-y-1 mb-2">
+                <div className="flex flex-wrap gap-x-6 gap-y-1">
                   <span><span className="text-xs text-muted-foreground mr-1">Load PO</span><span className="text-sm font-medium font-mono">{load.order_number_override ?? order.order_number}</span></span>
                   <span><span className="text-xs text-muted-foreground mr-1">Customer PO</span><span className="text-sm font-medium">{load.customer_po ?? order.customer_po ?? '—'}</span></span>
                   <span><span className="text-xs text-muted-foreground mr-1">Qty</span><span className="text-sm font-medium">{load.qty != null ? parseFloat(load.qty).toString() : '—'}</span></span>
                   <span><span className="text-xs text-muted-foreground mr-1">Buy</span><span className="text-sm font-medium">{formatCurrency(load.buy, true)}</span></span>
                   <span><span className="text-xs text-muted-foreground mr-1">Sell</span><span className="text-sm font-medium">{formatCurrency(load.sell, true)}</span></span>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground mr-1">Description</span>
-                  <span className="text-sm">{load.description ?? '—'}</span>
+                  <span><span className="text-xs text-muted-foreground mr-1">Description</span><span className="text-sm font-medium">{load.description ?? '—'}</span></span>
                 </div>
               </div>
             ))}
