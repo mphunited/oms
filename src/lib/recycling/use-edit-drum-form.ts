@@ -51,6 +51,7 @@ function coerceAddr(v: unknown): Address {
 export function useEditDrumForm(id: string) {
   const [saving, setSaving]     = useState(false)
   const [loading, setLoading]   = useState(true)
+  const [isDirty, setIsDirty]   = useState(false)
   const [carriers, setCarriers] = useState<string[]>([])
   const [salespeople, setSales] = useState<{ id: string; name: string }[]>([])
   const [csrList, setCsrs]      = useState<{ id: string; name: string }[]>([])
@@ -114,6 +115,7 @@ export function useEditDrumForm(id: string) {
         flag:                    order.flag ?? false,
         qb_invoice_number:       order.qb_invoice_number ?? '',
       })
+      setIsDirty(false)
     }).finally(() => setLoading(false))
   }, [id])
 
@@ -178,6 +180,7 @@ export function useEditDrumForm(id: string) {
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error ?? 'Failed') }
       toast.success('Order saved')
+      setIsDirty(false)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save')
     } finally {
@@ -188,5 +191,6 @@ export function useEditDrumForm(id: string) {
   return { form, set, setShipFrom, setBillTo,
     addContact, updateContact, removeContact,
     addCustContact, updateCustContact, removeCustContact,
-    save, saving, loading, carriers, salespeople, csrList, customers, vendorList }
+    save, saving, loading, carriers, salespeople, csrList, customers, vendorList,
+    isDirty, markDirty: () => setIsDirty(true) }
 }

@@ -46,6 +46,7 @@ function emptyAddress(): Address {
 export function useNewIbcForm() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
+  const [isDirty, setIsDirty]       = useState(false)
   const [carriers, setCarriers]     = useState<string[]>([])
   const [salespeople, setSalespeople] = useState<{ id: string; name: string }[]>([])
   const [csrList, setCsrList]       = useState<{ id: string; name: string }[]>([])
@@ -160,5 +161,6 @@ export function useNewIbcForm() {
   }
 
   return { form, set, setAddress, addContact, updateContact, removeContact,
-    submit, submitting, carriers, salespeople, csrList, customers, vendorList }
+    submit, submitting, carriers, salespeople, csrList, customers, vendorList,
+    isDirty, markDirty: () => setIsDirty(true) }
 }
