@@ -56,6 +56,7 @@ function coerceAddr(v: unknown): Address {
 export function useEditIbcForm(id: string) {
   const [saving, setSaving]       = useState(false)
   const [loading, setLoading]     = useState(true)
+  const [isDirty, setIsDirty]     = useState(false)
   const [carriers, setCarriers]   = useState<string[]>([])
   const [salespeople, setSales]   = useState<{ id: string; name: string }[]>([])
   const [csrList, setCsrs]        = useState<{ id: string; name: string }[]>([])
@@ -120,6 +121,7 @@ export function useEditIbcForm(id: string) {
         flag:                    order.flag ?? false,
         qb_invoice_number:       order.qb_invoice_number ?? '',
       })
+      setIsDirty(false)
     }).finally(() => setLoading(false))
   }, [id])
 
@@ -170,6 +172,7 @@ export function useEditIbcForm(id: string) {
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error ?? 'Failed') }
       toast.success('Order saved')
+      setIsDirty(false)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save')
     } finally {
@@ -178,5 +181,6 @@ export function useEditIbcForm(id: string) {
   }
 
   return { form, set, setAddress, addContact, updateContact, removeContact,
-    save, saving, loading, carriers, salespeople, csrList, customers, vendorList }
+    save, saving, loading, carriers, salespeople, csrList, customers, vendorList,
+    isDirty, markDirty: () => setIsDirty(true) }
 }

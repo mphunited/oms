@@ -48,6 +48,7 @@ function emptyAddress(): Address {
 export function useNewDrumForm() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
+  const [isDirty, setIsDirty]       = useState(false)
   const [carriers, setCarriers]     = useState<string[]>([])
   const [salespeople, setSalespeople] = useState<{ id: string; name: string }[]>([])
   const [csrList, setCsrList]       = useState<{ id: string; name: string }[]>([])
@@ -186,5 +187,6 @@ export function useNewDrumForm() {
     addCustomerContact, updateCustomerContact, removeCustomerContact,
     submit, submitting, carriers, salespeople, csrList, customers, vendorList,
     COASTAL_VENDOR_ID,
+    isDirty, markDirty: () => setIsDirty(true),
   }
 }

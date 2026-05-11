@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { navigationGuard } from "@/lib/navigation-guard";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/config/nav";
@@ -40,7 +40,13 @@ type MeData = {
 
 export function AppSidebar({ currentUser }: AppSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { setOpen } = useSidebar();
+
+  function guardedNavigate(href: string) {
+    if (!navigationGuard.confirm()) return
+    router.push(href)
+  }
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [me, setMe] = useState<MeData>(null);
 
@@ -134,7 +140,7 @@ export function AppSidebar({ currentUser }: AppSidebarProps) {
                 return (
                   <SidebarMenuSubItem key={child.title}>
                     <SidebarMenuSubButton
-                      render={child.href ? <Link href={child.href} /> : <button />}
+                      render={<button onClick={() => child.href && guardedNavigate(child.href)} />}
                       isActive={childActive}
                       className={cn(
                         "text-[14px] font-medium",
@@ -164,7 +170,7 @@ export function AppSidebar({ currentUser }: AppSidebarProps) {
     return (
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton
-          render={item.href ? <Link href={item.href} /> : <button />}
+          render={<button onClick={() => item.href && guardedNavigate(item.href)} />}
           isActive={isActive}
           className={cn(
             "text-[15px] font-medium rounded-none",

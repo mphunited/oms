@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useEditDrumForm } from '@/lib/recycling/use-edit-drum-form'
 import { useRecyclingPoEmail } from '@/lib/recycling/use-recycling-po-email'
 import { RECYCLING_STATUSES, INVOICE_PAYMENT_STATUSES } from '@/lib/db/schema'
@@ -31,13 +32,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export function EditDrumForm({ id }: { id: string }) {
+export function EditDrumForm({ id, onDirtyChange }: { id: string; onDirtyChange?: (v: boolean) => void }) {
   const {
     form, set, setShipFrom, setBillTo,
     addContact, updateContact, removeContact,
     addCustContact, updateCustContact, removeCustContact,
     save, saving, loading, carriers, salespeople, csrList, customers, vendorList,
+    isDirty, markDirty,
   } = useEditDrumForm(id)
+
+  useEffect(() => { onDirtyChange?.(isDirty) }, [isDirty, onDirtyChange])
 
   const { handleEmailPo, emailingPo } = useRecyclingPoEmail(id, form.order_number)
 
@@ -76,7 +80,7 @@ export function EditDrumForm({ id }: { id: string }) {
         </Row>
         <Row>
           <Field label="Status">
-            <select value={form.status} onChange={e => set('status', e.target.value)}
+            <select value={form.status} onChange={e => { set('status', e.target.value); markDirty() }}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
               {RECYCLING_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -92,14 +96,14 @@ export function EditDrumForm({ id }: { id: string }) {
       <Section title="Customer & Processing Facility">
         <Row>
           <Field label="Customer">
-            <select value={form.customer_id} onChange={e => set('customer_id', e.target.value)}
+            <select value={form.customer_id} onChange={e => { set('customer_id', e.target.value); markDirty() }}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
               <option value="">Select customer…</option>
               {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </Field>
           <Field label="Processing Facility">
-            <select value={form.vendor_id} onChange={e => set('vendor_id', e.target.value)}
+            <select value={form.vendor_id} onChange={e => { set('vendor_id', e.target.value); markDirty() }}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
               <option value="">Select vendor…</option>
               {vendorList.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
@@ -139,7 +143,7 @@ export function EditDrumForm({ id }: { id: string }) {
           </Field>
         </Row>
         <Field label="Description">
-          <Input value={form.description} onChange={e => set('description', e.target.value)} />
+          <Input value={form.description} onChange={e => { set('description', e.target.value); markDirty() }} />
         </Field>
         <Row>
           <Field label="Buy">
@@ -244,7 +248,7 @@ export function EditDrumForm({ id }: { id: string }) {
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px]" />
         </Field>
         <Field label="Misc Notes">
-          <textarea value={form.misc_notes} onChange={e => set('misc_notes', e.target.value)}
+          <textarea value={form.misc_notes} onChange={e => { set('misc_notes', e.target.value); markDirty() }}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[72px]" />
         </Field>
       </Section>
