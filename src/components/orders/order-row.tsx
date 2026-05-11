@@ -693,7 +693,7 @@ export function OrderTableRow({
                   </p>
                 )}
                 <div className="flex flex-wrap gap-x-6 gap-y-1">
-                  <span><span className="text-xs text-muted-foreground mr-1">Load PO</span><span className="text-sm font-medium font-mono">{load.order_number_override ?? order.order_number}</span></span>
+                  <span><span className="text-xs text-muted-foreground mr-1">Load PO</span><span className="text-sm font-medium font-mono">{load.order_number_override || order.order_number}</span></span>
                   <span><span className="text-xs text-muted-foreground mr-1">Customer PO</span><span className="text-sm font-medium">{load.customer_po ?? order.customer_po ?? '—'}</span></span>
                   <span><span className="text-xs text-muted-foreground mr-1">Qty</span><span className="text-sm font-medium">{load.qty != null ? parseFloat(load.qty).toString() : '—'}</span></span>
                   <span><span className="text-xs text-muted-foreground mr-1">Buy</span><span className="text-sm font-medium">{formatCurrency(load.buy, true)}</span></span>
