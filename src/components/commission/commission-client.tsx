@@ -5,14 +5,20 @@ import { toast } from 'sonner'
 import { CommissionFiltersBar, type CommissionFilters } from './commission-filters'
 import { CommissionTable, type CommissionRow } from './commission-table'
 
+type NamedItem = { id: string; name: string }
+type OrderTypeConfig = { id: string; order_type: string; is_commission_eligible: boolean }
+
 const DEFAULT_FILTERS: CommissionFilters = {
   salespersonId: '',
   startDate: '',
   endDate: '',
-  commissionStatus: 'unpaid',
-  invoicePaymentStatus: '',
+  commissionStatus: '',
+  invoiceStatus: '',
   commissionPaidDateFrom: '',
   commissionPaidDateTo: '',
+  search: '',
+  customerId: '',
+  vendorId: '',
 }
 
 export function CommissionClient() {
@@ -23,6 +29,9 @@ export function CommissionClient() {
   const [markingPaid, setMarkingPaid] = useState(false)
   const [role, setRole] = useState<string | null>(null)
   const [salespersons, setSalespersons] = useState<{ id: string; name: string | null }[]>([])
+  const [customers, setCustomers] = useState<NamedItem[]>([])
+  const [vendors, setVendors] = useState<NamedItem[]>([])
+  const [orderTypeConfigs, setOrderTypeConfigs] = useState<OrderTypeConfig[]>([])
   const [paidDate, setPaidDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -30,11 +39,23 @@ export function CommissionClient() {
     Promise.all([
       fetch('/api/me').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
       fetch('/api/users?commission_eligible=true').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
-    ]).then(([me, sps]: [{ role: string }, { id: string; name: string | null }[]]) => {
+      fetch('/api/customers').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
+      fetch('/api/vendors').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
+      fetch('/api/order-type-configs').then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() }),
+    ]).then(([me, sps, custs, vends, otcs]: [
+      { role: string },
+      { id: string; name: string | null }[],
+      { id: string; name: string }[],
+      { id: string; name: string }[],
+      OrderTypeConfig[],
+    ]) => {
       const userRole = me?.role ?? null
       const userList = Array.isArray(sps) ? sps : []
       setRole(userRole)
       setSalespersons(userList)
+      setCustomers(Array.isArray(custs) ? custs : [])
+      setVendors(Array.isArray(vends) ? vends : [])
+      setOrderTypeConfigs(Array.isArray(otcs) ? otcs : [])
       if (userList.length > 0 && userRole !== 'SALES') {
         setFilters(f => ({ ...f, salespersonId: userList[0].id }))
         setRefreshKey(k => k + 1)
@@ -49,7 +70,11 @@ export function CommissionClient() {
     if (filters.salespersonId) params.set('salespersonId', filters.salespersonId)
     if (filters.startDate) params.set('startDate', filters.startDate)
     if (filters.endDate) params.set('endDate', filters.endDate)
-    params.set('commissionStatus', filters.commissionStatus)
+    if (filters.commissionStatus) params.set('commissionStatus', filters.commissionStatus)
+    if (filters.invoiceStatus) params.set('invoiceStatus', filters.invoiceStatus)
+    if (filters.search) params.set('search', filters.search)
+    if (filters.customerId) params.set('customerId', filters.customerId)
+    if (filters.vendorId) params.set('vendorId', filters.vendorId)
     fetch(`/api/commission?${params}`)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
       .then(data => { setRows(Array.isArray(data) ? data : []); setLoading(false) })
@@ -70,6 +95,10 @@ export function CommissionClient() {
         ? new Set()
         : new Set(rows.map(r => r.load_id))
     )
+  }
+
+  function handleRowUpdate(loadId: string, updates: Pick<CommissionRow, 'order_type' | 'commission_status'>) {
+    setRows(prev => prev.map(r => r.load_id === loadId ? { ...r, ...updates } : r))
   }
 
   async function handleMarkPaid() {
@@ -93,7 +122,6 @@ export function CommissionClient() {
   }
 
   const filteredRows = rows
-    .filter(r => !filters.invoicePaymentStatus || r.invoice_payment_status === filters.invoicePaymentStatus)
     .filter(r => !filters.commissionPaidDateFrom || (r.commission_paid_date ?? '') >= filters.commissionPaidDateFrom)
     .filter(r => !filters.commissionPaidDateTo || (r.commission_paid_date ?? '') <= filters.commissionPaidDateTo)
 
@@ -125,6 +153,8 @@ export function CommissionClient() {
       <CommissionFiltersBar
         filters={filters}
         salespersons={salespersons}
+        customers={customers}
+        vendors={vendors}
         role={role}
         onChange={update => setFilters(f => ({ ...f, ...update }))}
       />
@@ -138,6 +168,8 @@ export function CommissionClient() {
           onToggle={toggleSelect}
           onToggleAll={toggleAll}
           role={role}
+          orderTypeConfigs={orderTypeConfigs}
+          onRowUpdate={handleRowUpdate}
         />
       )}
     </div>

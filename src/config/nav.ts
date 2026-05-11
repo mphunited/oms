@@ -1,18 +1,17 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  LayoutDashboard,
-  ShoppingCart,
+  Gauge,
+  FileStack,
   FilePlus,
-  RefreshCw,
-  Users,
-  Truck,
+  RefreshCcw,
+  Building2,
+  Warehouse,
   CalendarDays,
-  DollarSign,
+  CircleDollarSign,
   UsersRound,
-  Receipt,
-  Settings,
-  Mail,
-  PlusCircle,
+  FileCheck2,
+  SlidersHorizontal,
+  AtSign,
   BarChart2,
 } from "lucide-react";
 
@@ -29,12 +28,12 @@ export const NAV_ITEMS: NavItem[] = [
   {
     title: "Dashboard",
     href: "/dashboard",
-    icon: LayoutDashboard,
+    icon: Gauge,
   },
   {
     title: "Orders",
     href: "/orders",
-    icon: ShoppingCart,
+    icon: FileStack,
   },
   {
     title: "New Order",
@@ -43,13 +42,13 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     title: "Recycling",
-    icon: RefreshCw,
+    icon: RefreshCcw,
     roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
     children: [
       {
         title: "IBCs",
         href: "/recycling/ibcs",
-        icon: RefreshCw,
+        icon: RefreshCcw,
         roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
       },
       {
@@ -61,7 +60,7 @@ export const NAV_ITEMS: NavItem[] = [
       {
         title: "Drums",
         href: "/recycling/drums",
-        icon: RefreshCw,
+        icon: RefreshCcw,
         roles: ["ADMIN", "CSR", "ACCOUNTING", "SALES"],
       },
       {
@@ -75,17 +74,17 @@ export const NAV_ITEMS: NavItem[] = [
   {
     title: "Customers",
     href: "/customers",
-    icon: Users,
+    icon: Building2,
   },
   {
     title: "Vendors",
     href: "/vendors",
-    icon: Truck,
+    icon: Warehouse,
   },
   {
     title: "Global Emails",
     href: "/global-emails",
-    icon: Mail,
+    icon: AtSign,
   },
   {
     title: "Schedules",
@@ -96,13 +95,13 @@ export const NAV_ITEMS: NavItem[] = [
   {
     title: "Commission",
     href: "/commission",
-    icon: DollarSign,
+    icon: CircleDollarSign,
     requiresCommission: true,
   },
   {
     title: "Invoicing",
     href: "/invoicing",
-    icon: Receipt,
+    icon: FileCheck2,
     roles: ["ADMIN", "ACCOUNTING"],
   },
   {
@@ -113,12 +112,12 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     title: "Settings",
-    icon: Settings,
+    icon: SlidersHorizontal,
     children: [
       {
         title: "General",
         href: "/settings",
-        icon: Settings,
+        icon: SlidersHorizontal,
         roles: ["ADMIN"],
       },
       {

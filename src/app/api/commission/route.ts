@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { and, eq, gte, isNotNull, isNull, lte } from 'drizzle-orm'
+import { and, eq, gte, ilike, lte, or } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
@@ -23,22 +23,22 @@ export async function GET(req: NextRequest) {
   const salespersonIdParam = searchParams.get('salespersonId')
   const startDate = searchParams.get('startDate')
   const endDate = searchParams.get('endDate')
-  const commissionStatus = searchParams.get('commissionStatus') ?? 'unpaid'
+  const commissionStatus = searchParams.get('commissionStatus') ?? ''
+  const customerId = searchParams.get('customerId')
+  const vendorId = searchParams.get('vendorId')
+  const search = searchParams.get('search')
+  const invoiceStatus = searchParams.get('invoiceStatus')
 
   const salespersonAlias = alias(users, 'salesperson')
   const csrAlias = alias(users, 'csr')
 
   const conditions = [
-    eq(order_split_loads.commission_status, 'Eligible'),
     eq(salespersonAlias.is_commission_eligible, true),
   ]
 
-  if (commissionStatus === 'unpaid') {
-    conditions.push(isNull(order_split_loads.commission_paid_date))
-  } else if (commissionStatus === 'paid') {
-    conditions.push(isNotNull(order_split_loads.commission_paid_date))
+  if (commissionStatus && commissionStatus !== 'all') {
+    conditions.push(eq(order_split_loads.commission_status, commissionStatus))
   }
-  // 'all' → push nothing
 
   if (dbUser.role === 'SALES') {
     conditions.push(eq(orders.salesperson_id, dbUser.id))
@@ -48,6 +48,17 @@ export async function GET(req: NextRequest) {
 
   if (startDate) conditions.push(gte(order_split_loads.ship_date, startDate))
   if (endDate) conditions.push(lte(order_split_loads.ship_date, endDate))
+  if (customerId) conditions.push(eq(orders.customer_id, customerId))
+  if (vendorId) conditions.push(eq(orders.vendor_id, vendorId))
+  if (invoiceStatus) conditions.push(eq(orders.invoice_payment_status, invoiceStatus))
+
+  if (search) {
+    const searchCond = or(
+      ilike(orders.order_number, `%${search}%`),
+      ilike(orders.customer_po, `%${search}%`),
+    )
+    if (searchCond) conditions.push(searchCond)
+  }
 
   const rows = await db
     .select({
