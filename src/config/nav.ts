@@ -13,6 +13,7 @@ import {
   Settings,
   Mail,
   PlusCircle,
+  BarChart2,
 } from "lucide-react";
 
 export type NavItem = {
@@ -102,6 +103,12 @@ export const NAV_ITEMS: NavItem[] = [
     title: "Invoicing",
     href: "/invoicing",
     icon: Receipt,
+    roles: ["ADMIN", "ACCOUNTING"],
+  },
+  {
+    title: "Financials",
+    href: "/financials",
+    icon: BarChart2,
     roles: ["ADMIN", "ACCOUNTING"],
   },
   {
