@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { Mail, ArrowUp, ArrowDown, ArrowUpDown, Link2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { OrdersFilterBar, DEFAULT_FILTERS, type FilterState } from './orders-filter-bar'
@@ -16,16 +17,31 @@ const LIMIT = 50
 type BadgeMeta = Record<string, { color: string }> | null
 
 export function OrdersTable() {
+  const searchParams = useSearchParams()
+  const router       = useRouter()
+  const pathname     = usePathname()
+
   const [orderRows, setOrderRows] = useState<OrderRow[]>([])
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-  const [filters, setFilters]     = useState<FilterState>(DEFAULT_FILTERS)
+  const [filters, setFilters]     = useState<FilterState>(() => ({
+    search:         searchParams.get('search') ?? '',
+    lifecycle:      (searchParams.get('lifecycle') as FilterState['lifecycle']) ?? 'active',
+    statuses:       searchParams.get('status') ? searchParams.get('status')!.split(',') : [],
+    flagOnly:       searchParams.get('flag') === 'true',
+    vendorIds:      searchParams.get('vendor_id') ? searchParams.get('vendor_id')!.split(',') : [],
+    customerIds:    searchParams.get('customer_id') ? searchParams.get('customer_id')!.split(',') : [],
+    salespersonIds: searchParams.get('salesperson_id') ? searchParams.get('salesperson_id')!.split(',') : [],
+    csrIds:         searchParams.get('csr_id') ? searchParams.get('csr_id')!.split(',') : [],
+    shipDateFrom:   searchParams.get('ship_date_from') ?? '',
+    shipDateTo:     searchParams.get('ship_date_to') ?? '',
+  }))
   const [page, setPage]           = useState(1)
   const [total, setTotal]         = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('search') ?? '')
   const [role, setRole]           = useState<string | null>(null)
   const [statusOptions, setStatusOptions] = useState<string[]>([])
   const [statusMeta, setStatusMeta] = useState<BadgeMeta>(null)
@@ -75,6 +91,23 @@ export function OrdersTable() {
     }, 400)
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current) }
   }, [filters.search])
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (filters.search)                    params.set('search', filters.search)
+    if (filters.lifecycle !== 'active')    params.set('lifecycle', filters.lifecycle)
+    if (filters.statuses.length > 0)      params.set('status', filters.statuses.join(','))
+    if (filters.flagOnly)                  params.set('flag', 'true')
+    if (filters.vendorIds.length > 0)     params.set('vendor_id', filters.vendorIds.join(','))
+    if (filters.customerIds.length > 0)   params.set('customer_id', filters.customerIds.join(','))
+    if (filters.salespersonIds.length > 0) params.set('salesperson_id', filters.salespersonIds.join(','))
+    if (filters.csrIds.length > 0)        params.set('csr_id', filters.csrIds.join(','))
+    if (filters.shipDateFrom)             params.set('ship_date_from', filters.shipDateFrom)
+    if (filters.shipDateTo)               params.set('ship_date_to', filters.shipDateTo)
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters])
 
   useEffect(() => {
     const params = new URLSearchParams()
