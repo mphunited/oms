@@ -692,24 +692,16 @@ export function OrderTableRow({
                     Load {index + 1}
                   </p>
                 )}
-                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
-                  <span className="text-muted-foreground">Load PO</span>
-                  <span className="font-mono">{load.order_number_override ?? order.order_number}</span>
-
-                  <span className="text-muted-foreground">Customer PO</span>
-                  <span>{load.customer_po ?? order.customer_po ?? '—'}</span>
-
-                  <span className="col-span-2 text-muted-foreground text-xs font-medium">Description</span>
-                  <span className="col-span-2 whitespace-pre-wrap">{load.description ?? '—'}</span>
-
-                  <span className="text-muted-foreground">Qty</span>
-                  <span>{load.qty != null ? parseFloat(load.qty).toString() : '—'}</span>
-
-                  <span className="text-muted-foreground">Buy</span>
-                  <span>{formatCurrency(load.buy, true)}</span>
-
-                  <span className="text-muted-foreground">Sell</span>
-                  <span>{formatCurrency(load.sell, true)}</span>
+                <div className="flex flex-wrap gap-x-6 gap-y-1 mb-2">
+                  <span><span className="text-xs text-muted-foreground mr-1">Load PO</span><span className="text-sm font-medium font-mono">{load.order_number_override ?? order.order_number}</span></span>
+                  <span><span className="text-xs text-muted-foreground mr-1">Customer PO</span><span className="text-sm font-medium">{load.customer_po ?? order.customer_po ?? '—'}</span></span>
+                  <span><span className="text-xs text-muted-foreground mr-1">Qty</span><span className="text-sm font-medium">{load.qty != null ? parseFloat(load.qty).toString() : '—'}</span></span>
+                  <span><span className="text-xs text-muted-foreground mr-1">Buy</span><span className="text-sm font-medium">{formatCurrency(load.buy, true)}</span></span>
+                  <span><span className="text-xs text-muted-foreground mr-1">Sell</span><span className="text-sm font-medium">{formatCurrency(load.sell, true)}</span></span>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground mr-1">Description</span>
+                  <span className="text-sm">{load.description ?? '—'}</span>
                 </div>
               </div>
             ))}
