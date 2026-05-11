@@ -19,8 +19,8 @@ export type CommissionFilters = {
   commissionPaidDateFrom: string
   commissionPaidDateTo: string
   search: string
-  customerId: string
-  vendorId: string
+  customerId: string | null
+  vendorId: string | null
 }
 
 type Salesperson = { id: string; name: string | null }
@@ -128,7 +128,7 @@ export function CommissionFiltersBar({ filters, salespersons, customers, vendors
             <label htmlFor="salesperson-filter" className="text-xs text-muted-foreground">Salesperson</label>
             <Select
               value={filters.salespersonId}
-              onValueChange={v => onChange({ salespersonId: v === '_all' ? '' : v })}
+              onValueChange={v => onChange({ salespersonId: v === '_all' ? '' : (v ?? '') })}
             >
               <SelectTrigger id="salesperson-filter" className="h-8 w-44 text-sm">
                 <SelectValue placeholder="All salespersons" />

@@ -17,8 +17,8 @@ const DEFAULT_FILTERS: CommissionFilters = {
   commissionPaidDateFrom: '',
   commissionPaidDateTo: '',
   search: '',
-  customerId: '',
-  vendorId: '',
+  customerId: null,
+  vendorId: null,
 }
 
 export function CommissionClient() {
