@@ -23,6 +23,7 @@ import { formatVendorName } from '@/lib/utils/format-vendor-name'
 import { useGlobalContacts } from '@/components/orders/use-global-contacts'
 import { NewContactPrompt } from '@/components/orders/new-contact-prompt'
 import type { NewContactEntry } from '@/components/orders/new-contact-prompt'
+import { UnsavedChangesBanner } from '@/components/shared/unsaved-changes-banner'
 
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
@@ -141,6 +142,8 @@ export default function OrderDetailPage() {
           </button>
         </div>
       </div>
+
+      <UnsavedChangesBanner isDirty={isDirty} onSave={onSave} saving={saving} />
 
       {/* Order Identity */}
       <EditOrderIdentitySection

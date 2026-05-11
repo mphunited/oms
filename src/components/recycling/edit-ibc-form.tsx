@@ -32,7 +32,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export function EditIbcForm({ id, onDirtyChange }: { id: string; onDirtyChange?: (v: boolean) => void }) {
+export function EditIbcForm({
+  id,
+  onDirtyChange,
+  onSavingChange,
+  saveRef,
+}: {
+  id: string
+  onDirtyChange?: (v: boolean) => void
+  onSavingChange?: (v: boolean) => void
+  saveRef?: React.MutableRefObject<(() => void) | null>
+}) {
   const {
     form, set, setAddress, addContact, updateContact, removeContact,
     save, saving, loading, carriers, salespeople, csrList, customers, vendorList,
@@ -40,6 +50,8 @@ export function EditIbcForm({ id, onDirtyChange }: { id: string; onDirtyChange?:
   } = useEditIbcForm(id)
 
   useEffect(() => { onDirtyChange?.(isDirty) }, [isDirty, onDirtyChange])
+  useEffect(() => { onSavingChange?.(saving) }, [saving, onSavingChange])
+  useEffect(() => { if (saveRef) saveRef.current = save })
 
   const { handleEmailPo, emailingPo } = useRecyclingPoEmail(id, form.order_number)
 

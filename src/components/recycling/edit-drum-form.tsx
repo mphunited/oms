@@ -32,7 +32,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export function EditDrumForm({ id, onDirtyChange }: { id: string; onDirtyChange?: (v: boolean) => void }) {
+export function EditDrumForm({
+  id,
+  onDirtyChange,
+  onSavingChange,
+  saveRef,
+}: {
+  id: string
+  onDirtyChange?: (v: boolean) => void
+  onSavingChange?: (v: boolean) => void
+  saveRef?: React.MutableRefObject<(() => void) | null>
+}) {
   const {
     form, set, setShipFrom, setBillTo,
     addContact, updateContact, removeContact,
@@ -42,6 +52,8 @@ export function EditDrumForm({ id, onDirtyChange }: { id: string; onDirtyChange?
   } = useEditDrumForm(id)
 
   useEffect(() => { onDirtyChange?.(isDirty) }, [isDirty, onDirtyChange])
+  useEffect(() => { onSavingChange?.(saving) }, [saving, onSavingChange])
+  useEffect(() => { if (saveRef) saveRef.current = save })
 
   const { handleEmailPo, emailingPo } = useRecyclingPoEmail(id, form.order_number)
 
