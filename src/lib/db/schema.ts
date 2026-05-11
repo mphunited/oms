@@ -614,6 +614,7 @@ export const recycling_orders = pgTable(
     appointment_notes: text("appointment_notes"),
     po_contacts: jsonb("po_contacts"),
     // [{ name, email, role: "to"|"cc" }] — PO email recipients (order-level, NOT vendor)
+    qb_invoice_number: text("qb_invoice_number"),
     is_blind_shipment: boolean("is_blind_shipment").notNull().default(false),
 
     flag: boolean("flag").notNull().default(false),

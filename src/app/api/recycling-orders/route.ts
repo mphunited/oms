@@ -115,6 +115,7 @@ export async function GET(req: Request) {
         invoice_status:        recycling_orders.invoice_status,
         invoice_payment_status: recycling_orders.invoice_payment_status,
         bol_number:            recycling_orders.bol_number,
+        qb_invoice_number:     recycling_orders.qb_invoice_number,
         flag:                  recycling_orders.flag,
         is_blind_shipment:     recycling_orders.is_blind_shipment,
         created_at:            recycling_orders.created_at,

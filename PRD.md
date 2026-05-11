@@ -184,9 +184,7 @@ qty (numeric(10,2)), buy (numeric(10,2)), sell (numeric(10,2)),
 description (text), part_number (text),
 created_at, updated_at
 
-**IMPORTANT:** recycling_orders does NOT have qb_invoice_number in the current schema.
-This is a known gap — either add a migration or remove the field from the edit forms
-before using the invoicing workflow on recycling orders.
+recycling_orders has qb_invoice_number (text, nullable) — added via migration May 2026.
 
 ### vendors table — key fields
 id, name, is_active, is_blind_shipment_default (boolean, default false),
@@ -569,10 +567,8 @@ Creates Graph API draft with PDF attached, opens Outlook.
 po_contacts on the ORDER drives recipients (not vendor.po_contacts).
 If po_contacts empty: opens draft with empty To field — does not throw.
 
-### Known Schema Gap
-`qb_invoice_number` does NOT exist on recycling_orders in the current schema.
-The edit form spec referenced this field. Either add a migration or remove it from the
-edit form before using the invoicing workflow on recycling orders.
+### Invoice Number
+`qb_invoice_number` (text, nullable) is on recycling_orders. Surfaced on IBC and Drum edit forms in the Financial section.
 
 ---
 
@@ -740,7 +736,7 @@ qb_invoice_number, checklist (fresh from vendor template), buy/sell, group_id (n
     IBC + Drum list pages, new + edit forms, PO PDF builder (inverted layout),
     Graph API email hook, navigation items. Inverted customer/vendor relationship
     documented in AGENTS.md. COASTAL_VENDOR_ID: 8ae0764b-c98d-4b4f-a71f-1e0111225a94.
-    Known gap: qb_invoice_number not in recycling_orders schema — needs follow-up.
+    qb_invoice_number added to recycling_orders via migration (May 2026).
 
 ### Reports and admin
 13. ✅ COMPLETE — Commission report page
@@ -830,7 +826,7 @@ Currently applies to Renee Sauvageau only.
 | Issue | Decision |
 |-------|----------|
 | Recycling inverted customer/vendor | customer_id = source company (PO recipient). vendor_id = processing facility (PO destination). PO goes TO customer. po_contacts on order (not vendor). See Section 14. |
-| recycling_orders qb_invoice_number | NOT in schema. Edit form references it. Add migration or remove from form before using invoicing on recycling orders. |
+| recycling_orders qb_invoice_number | Added via migration (May 2026). Text column, nullable. Surfaced on IBC and Drum edit forms. |
 | Coastal Container Services UUID | 8ae0764b-c98d-4b4f-a71f-1e0111225a94. Stored as COASTAL_VENDOR_ID in src/lib/recycling/use-new-drum-form.ts. Pre-fills vendor_id on new drum form. |
 | order_number_seq | Shared by regular orders, recycling orders, and order_groups.group_po_number. Single sequence, same format [Initials]-MPH[Number]. |
 | RECYCLING_STATUSES | Hardcoded in schema.ts. NOT managed via dropdown_configs. Do not add RECYCLING_STATUS type. |

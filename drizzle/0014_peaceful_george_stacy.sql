@@ -1,0 +1,1 @@
+ALTER TABLE "recycling_orders" ADD COLUMN IF NOT EXISTS "qb_invoice_number" text;
