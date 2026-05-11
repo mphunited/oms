@@ -80,8 +80,18 @@ export function IbcRecyclingTable({ initialRows, userRole }: Props) {
     if (salespersonId) p.set('salespersonId', salespersonId)
     try {
       const res = await fetch(`/api/recycling-orders?${p}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('[IBC recycling fetch]', err)
+        toast.error('Failed to load orders')
+        setRows([])
+        return
+      }
       const data = await res.json()
       setRows(data.data ?? [])
+    } catch (err) {
+      console.error('[IBC recycling fetch]', err)
+      toast.error('Failed to load orders')
     } finally {
       setLoading(false)
     }
