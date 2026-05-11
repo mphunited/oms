@@ -359,10 +359,23 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     saves.** It is only written when the PATCH body contains checklist as the sole field
     (sent by ChecklistPopup in order-row.tsx).
 
-50. **DATE_FIELDS coercion on order_split_loads** — `ship_date`, `wanted_date`, and
-    `commission_paid_date` must be coerced from empty string ("") or undefined to null
-    before DB insert/update. PostgreSQL rejects empty string for date columns. Apply the
-    same coercion to all date and numeric fields on recycling_orders PATCH.
+50. **DATE_FIELDS coercion on order_split_loads** — ship_date, wanted_date, and
+    commission_paid_date must be coerced from empty string ("") or undefined to null
+    before DB insert/update. PostgreSQL rejects empty string for date columns.
+
+    **recycling_orders PATCH coerce pattern** — coerce empty strings to null only.
+    Do NOT coerce undefined fields to null — absent fields are excluded from the
+    SET clause automatically by Drizzle and do not need to be set at all.
+    Wrong:  if (out[f] === '' || out[f] === undefined) out[f] = null
+    Right:  if (out[f] === '') out[f] = null
+
+    additional_costs on recycling_orders is NOT NULL with default '0'. Always
+    add an explicit fallback after the coerce loops:
+      if (out.additional_costs === null || out.additional_costs === undefined) {
+        out.additional_costs = '0'
+      }
+    Never set a NOT NULL column to null in a PATCH — check schema.ts for
+    notNull() constraints before adding fields to any coerce function.
 
 51. **customer_contacts JSONB shape on orders** | [{name, email, is_primary: boolean}]
     — is_primary=true → To recipient, false → Cc recipient for confirmation emails.
