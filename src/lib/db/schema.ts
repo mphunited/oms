@@ -711,3 +711,26 @@ export const credit_memo_line_items = pgTable("credit_memo_line_items", {
 
 export type CreditMemoLineItem = typeof credit_memo_line_items.$inferSelect;
 export type NewCreditMemoLineItem = typeof credit_memo_line_items.$inferInsert;
+
+export const emailErrorSeverityEnum = pgEnum("email_error_severity", [
+  "warning",
+  "error",
+  "critical",
+]);
+
+export const email_errors = pgTable(
+  "email_errors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    user_id: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    context: text("context").notNull(),
+    message: text("message").notNull(),
+    status_code: integer("status_code"),
+    severity: emailErrorSeverityEnum("severity").notNull().default("error"),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("email_errors_user_created_idx").on(t.user_id, t.created_at)]
+);
+
+export type EmailError = typeof email_errors.$inferSelect;
+export type NewEmailError = typeof email_errors.$inferInsert;

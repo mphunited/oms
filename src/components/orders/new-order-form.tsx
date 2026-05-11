@@ -22,6 +22,7 @@ import { OrderAddressFields } from '@/components/orders/order-address-fields'
 import { OrderContactFields } from '@/components/orders/order-contact-fields'
 import { BillToContactFields } from '@/components/orders/bill-to-contact-fields'
 import { useNewOrderForm } from '@/components/orders/use-new-order-form'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import { formatVendorName } from '@/lib/utils/format-vendor-name'
 import { useGlobalContacts } from '@/components/orders/use-global-contacts'
 import { NewContactPrompt } from '@/components/orders/new-contact-prompt'
@@ -37,6 +38,9 @@ export function NewOrderForm() {
     isAdmin, canUseManualPO, csrInitials, customers, vendors, salespersonOptions, csrOptions,
     carriers, statusOptions, onSubmit,
   } = useNewOrderForm()
+
+  const isDirty = form.formState.isDirty && !savedOrder
+  useUnsavedChanges(isDirty)
 
   const { confirmationContacts, billToContacts: globalBillToContacts, findNewContacts } = useGlobalContacts()
   const [pendingNewContacts, setPendingNewContacts] = useState<NewContactEntry[]>([])

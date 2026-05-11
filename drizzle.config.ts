@@ -19,5 +19,6 @@ export default defineConfig({
     "company_settings",
     "dropdown_configs",
     "audit_logs",
+    "email_errors",
   ],
 });

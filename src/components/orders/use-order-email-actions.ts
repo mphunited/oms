@@ -2,12 +2,16 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { getMailToken } from '@/lib/email/msal-client'
-import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
+import { getMailTokenResilient, isTokenError } from '@/lib/email/msal-client-resilient'
+import { createDraftResilient, attachFileToDraftResilient, GraphAPIError } from '@/lib/email/graph-mail-resilient'
+import { openDraft } from '@/lib/email/graph-mail'
+import { tokenCache } from '@/lib/email/token-cache'
+import { logEmailError } from '@/lib/email/error-logger'
 import { buildPoEmail, type OrderWithRelations } from '@/lib/email/build-po-email'
 import { buildMultiShipToEmail, type MultiShipToOrderForEmail } from '@/lib/email/build-multi-ship-to-email'
 import { getUserSignature } from '@/lib/email/get-user-signature'
 import { formatDate } from '@/lib/utils/format-date'
+import { type EmailOperationStatus } from '@/components/orders/email-status-indicator'
 
 type FullOrderForEmail = OrderWithRelations & { id: string }
 
@@ -40,17 +44,28 @@ async function fetchOrdersAndVendor(ids: string[]) {
   return { fullOrders: fullOrders as any[], vendor }
 }
 
+async function getToken(): Promise<string> {
+  return tokenCache.acquire('mail_token', async () => {
+    const token = await getMailTokenResilient()
+    return { token, expiresInMs: 55 * 60 * 1000 }
+  })
+}
+
 export function useOrderEmailActions(
   selectedIds: Set<string>,
   onClearSelection: () => void,
 ) {
   const [emailingPos, setEmailingPos] = useState(false)
   const [emailingBols, setEmailingBols] = useState(false)
+  const [emailStatus, setEmailStatus] = useState<EmailOperationStatus>('idle')
+  const [emailError, setEmailError] = useState<string | undefined>(undefined)
 
   async function handleEmailPosClick() {
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
     setEmailingPos(true)
+    setEmailStatus('acquiring_token')
+    setEmailError(undefined)
     const toastId = toast.loading('Creating draft…')
     try {
       const { fullOrders, vendor } = await fetchOrdersAndVendor(ids)
@@ -100,13 +115,33 @@ export function useOrderEmailActions(
         }
 
         const { subject, bodyHtml, to, cc } = buildMultiShipToEmail(group.group_po_number, vendorForEmail, ordersForGroupEmail)
-        const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+
+        setEmailStatus('acquiring_token')
+        let token: string
+        try {
+          token = await getToken()
+        } catch (err) {
+          if (isTokenError(err) && err.code === 'USER_CANCELLED') {
+            toast.dismiss(toastId)
+            setEmailStatus('idle')
+            setEmailingPos(false)
+            return
+          }
+          await logEmailError('getMailToken_pos', err)
+          throw err
+        }
+        setEmailStatus('building_email')
+        const signature = await getUserSignature()
+
         const pdfRes = await fetch(`/api/orders/${firstOrder.id}/po-pdf`)
         if (!pdfRes.ok) throw new Error('Failed to fetch combined PO PDF')
         const base64 = await blobToBase64(await pdfRes.blob())
-        const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
-        await attachFileToDraft(token, messageId, `MPH PO ${group.group_po_number} Multi-Ship-To.pdf`, base64)
+        setEmailStatus('creating_draft')
+        const { id: messageId, webLink } = await createDraftResilient(token, { to, cc, subject, bodyHtml, signature })
+        setEmailStatus('attaching_pdf')
+        await attachFileToDraftResilient(token, messageId, `MPH PO ${group.group_po_number} Multi-Ship-To.pdf`, base64)
         toast.success('Draft created — opening Outlook', { id: toastId })
+        setEmailStatus('success')
         openDraft(webLink)
         onClearSelection()
         return
@@ -138,7 +173,24 @@ export function useOrderEmailActions(
       const count = ordersForEmail.length
       toast.loading(`Creating draft with ${count} PDF${count > 1 ? 's' : ''}…`, { id: toastId })
       const { subject, bodyHtml, to, cc } = buildPoEmail(ordersForEmail, vendor.name ?? '')
-      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+
+      setEmailStatus('acquiring_token')
+      let token: string
+      try {
+        token = await getToken()
+      } catch (err) {
+        if (isTokenError(err) && err.code === 'USER_CANCELLED') {
+          toast.dismiss(toastId)
+          setEmailStatus('idle')
+          setEmailingPos(false)
+          return
+        }
+        await logEmailError('getMailToken_pos', err)
+        throw err
+      }
+      setEmailStatus('building_email')
+      const signature = await getUserSignature()
+
       const pdfResults = await Promise.all(
         ordersForEmail.map(o =>
           fetch(`/api/orders/${o.id}/po-pdf`).then(async r => {
@@ -147,14 +199,20 @@ export function useOrderEmailActions(
           })
         )
       )
-      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
+      setEmailStatus('creating_draft')
+      const { id: messageId, webLink } = await createDraftResilient(token, { to, cc, subject, bodyHtml, signature })
+      setEmailStatus('attaching_pdf')
       for (const { filename, base64 } of pdfResults) {
-        await attachFileToDraft(token, messageId, filename, base64)
+        await attachFileToDraftResilient(token, messageId, filename, base64)
       }
       toast.success('Draft created — opening Outlook', { id: toastId })
+      setEmailStatus('success')
       openDraft(webLink)
       onClearSelection()
     } catch (err) {
+      setEmailStatus('error')
+      setEmailError(err instanceof Error ? err.message : String(err))
+      await logEmailError('handleEmailPosClick', err)
       const msg = err instanceof Error ? err.message : String(err)
       if (msg === '__SAME_VENDOR__') toast.error('All selected orders must be from the same vendor', { id: toastId })
       else if (msg === '__NO_VENDOR__') toast.error('Selected orders have no vendor assigned', { id: toastId })
@@ -168,6 +226,8 @@ export function useOrderEmailActions(
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
     setEmailingBols(true)
+    setEmailStatus('acquiring_token')
+    setEmailError(undefined)
     const toastId = toast.loading('Creating draft…')
     try {
       const { fullOrders, vendor } = await fetchOrdersAndVendor(ids)
@@ -189,7 +249,24 @@ export function useOrderEmailActions(
   ${orderLines}
   <p style="margin:16px 0 0;">Please confirm receipt at your earliest convenience.</p>
 </div>`
-      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+
+      setEmailStatus('acquiring_token')
+      let token: string
+      try {
+        token = await getToken()
+      } catch (err) {
+        if (isTokenError(err) && err.code === 'USER_CANCELLED') {
+          toast.dismiss(toastId)
+          setEmailStatus('idle')
+          setEmailingBols(false)
+          return
+        }
+        await logEmailError('getMailToken_pos', err)
+        throw err
+      }
+      setEmailStatus('building_email')
+      const signature = await getUserSignature()
+
       const pdfResults = await Promise.all(
         fullOrders.map(o =>
           fetch(`/api/orders/${o.id}/bol-pdf`).then(async r => {
@@ -198,17 +275,23 @@ export function useOrderEmailActions(
           })
         )
       )
-      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
+      setEmailStatus('creating_draft')
+      const { id: messageId, webLink } = await createDraftResilient(token, { to, cc, subject, bodyHtml, signature })
+      setEmailStatus('attaching_pdf')
       for (const { filename, base64 } of pdfResults) {
-        await attachFileToDraft(token, messageId, filename, base64)
+        await attachFileToDraftResilient(token, messageId, filename, base64)
       }
       toast.success('Draft created — opening Outlook', { id: toastId })
+      setEmailStatus('success')
       openDraft(webLink)
       onClearSelection()
     } catch (err) {
       console.error('[BOL Email] error message:', err instanceof Error ? err.message : String(err))
       console.error('[BOL Email] error stack:', err instanceof Error ? err.stack : 'no stack available')
       console.error('[BOL Email] full error:', err)
+      setEmailStatus('error')
+      setEmailError(err instanceof Error ? err.message : String(err))
+      await logEmailError('handleEmailBolsClick', err)
       const msg = err instanceof Error ? err.message : String(err)
       if (msg === '__SAME_VENDOR__') toast.error('All selected orders must be from the same vendor', { id: toastId })
       else if (msg === '__NO_VENDOR__') toast.error('Selected orders have no vendor assigned', { id: toastId })
@@ -218,5 +301,5 @@ export function useOrderEmailActions(
     }
   }
 
-  return { emailingPos, emailingBols, handleEmailPosClick, handleEmailBolsClick }
+  return { emailingPos, emailingBols, handleEmailPosClick, handleEmailBolsClick, emailStatus, emailError }
 }

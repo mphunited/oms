@@ -9,6 +9,7 @@ import { useOrderEmailActions } from './use-order-email-actions'
 import { sendConfirmationEmail } from '@/lib/orders/email-draft-helpers'
 import { OrderTableRow, type OrderRow } from './order-row'
 import { OrderSummaryDrawer } from './order-summary-drawer'
+import { EmailStatusIndicator } from '@/components/orders/email-status-indicator'
 
 const LIMIT = 50
 
@@ -34,7 +35,7 @@ export function OrdersTable() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const { emailingPos, emailingBols, handleEmailPosClick, handleEmailBolsClick } =
+  const { emailingPos, emailingBols, handleEmailPosClick, handleEmailBolsClick, emailStatus, emailError } =
     useOrderEmailActions(selectedIds, () => setSelectedIds(new Set()))
 
   const [emailingConfirmation, setEmailingConfirmation] = useState(false)
@@ -248,6 +249,7 @@ export function OrdersTable() {
                 {grouping ? 'Grouping…' : 'Group as Multi-Ship-To'}
               </button>
             )}
+            <EmailStatusIndicator status={emailStatus} error={emailError} />
           </div>
         )}
       </div>

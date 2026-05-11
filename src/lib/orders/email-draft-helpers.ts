@@ -1,8 +1,11 @@
 'use client'
 
 import { toast } from 'sonner'
-import { getMailToken } from '@/lib/email/msal-client'
-import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
+import { getMailTokenResilient, isTokenError } from '@/lib/email/msal-client-resilient'
+import { createDraftResilient, attachFileToDraftResilient, GraphAPIError } from '@/lib/email/graph-mail-resilient'
+import { openDraft } from '@/lib/email/graph-mail'
+import { tokenCache } from '@/lib/email/token-cache'
+import { logEmailError } from '@/lib/email/error-logger'
 import { buildPoEmail, type OrderWithRelations } from '@/lib/email/build-po-email'
 import { buildMultiShipToEmail, type MultiShipToOrderForEmail } from '@/lib/email/build-multi-ship-to-email'
 import { getUserSignature } from '@/lib/email/get-user-signature'
@@ -42,6 +45,13 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.onload = () => resolve((reader.result as string).split(',')[1])
     reader.onerror = reject
     reader.readAsDataURL(blob)
+  })
+}
+
+async function getToken(): Promise<string> {
+  return tokenCache.acquire('mail_token', async () => {
+    const token = await getMailTokenResilient()
+    return { token, expiresInMs: 55 * 60 * 1000 }
   })
 }
 
@@ -111,12 +121,24 @@ export async function sendPoEmail(
       }
 
       const { subject, bodyHtml, to, cc } = buildMultiShipToEmail(group.group_po_number, vendorForEmail, ordersForEmail)
-      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+      let token: string
+      try {
+        token = await getToken()
+      } catch (err) {
+        if (isTokenError(err) && err.code === 'USER_CANCELLED') {
+          toast.dismiss(toastId)
+          setEmailing(false)
+          return
+        }
+        await logEmailError('getMailToken_sendPoEmail', err)
+        throw err
+      }
+      const signature = await getUserSignature()
       const pdfRes = await fetch(`/api/orders/${order.id}/po-pdf`)
       if (!pdfRes.ok) throw new Error('Failed to fetch combined PO PDF')
       const base64 = await blobToBase64(await pdfRes.blob())
-      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
-      await attachFileToDraft(token, messageId, `MPH PO ${group.group_po_number} Multi-Ship-To.pdf`, base64)
+      const { id: messageId, webLink } = await createDraftResilient(token, { to, cc, subject, bodyHtml, signature })
+      await attachFileToDraftResilient(token, messageId, `MPH PO ${group.group_po_number} Multi-Ship-To.pdf`, base64)
       toast.success('Draft created — opening Outlook', { id: toastId })
       openDraft(webLink)
       return
@@ -153,15 +175,28 @@ export async function sendPoEmail(
       })),
     }
     const { subject, bodyHtml, to, cc } = buildPoEmail([orderData], greetingName)
-    const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+    let token: string
+    try {
+      token = await getToken()
+    } catch (err) {
+      if (isTokenError(err) && err.code === 'USER_CANCELLED') {
+        toast.dismiss(toastId)
+        setEmailing(false)
+        return
+      }
+      await logEmailError('getMailToken_sendPoEmail', err)
+      throw err
+    }
+    const signature = await getUserSignature()
     const pdfRes = await fetch(`/api/orders/${order.id}/po-pdf`)
     if (!pdfRes.ok) throw new Error('Failed to fetch PO PDF')
     const base64 = await blobToBase64(await pdfRes.blob())
-    const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
-    await attachFileToDraft(token, messageId, `MPH PO ${order.order_number}.pdf`, base64)
+    const { id: messageId, webLink } = await createDraftResilient(token, { to, cc, subject, bodyHtml, signature })
+    await attachFileToDraftResilient(token, messageId, `MPH PO ${order.order_number}.pdf`, base64)
     toast.success('Draft created — opening Outlook', { id: toastId })
     openDraft(webLink)
   } catch (err) {
+    await logEmailError('sendPoEmail', err)
     toast.error('Failed to create draft: ' + (err instanceof Error ? err.message : String(err)), { id: toastId })
   } finally {
     setEmailing(false)
@@ -198,15 +233,28 @@ export async function sendBolEmail(
   <p style="margin:0 0 16px;">Please find attached the Bill of Lading for MPH United order ${order.order_number}, shipping to ${shipToLine} on ${shipDateFmt}.</p>
   <p style="margin:0 0 24px;">Please confirm receipt at your earliest convenience.</p>
 </div>`
-    const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+    let token: string
+    try {
+      token = await getToken()
+    } catch (err) {
+      if (isTokenError(err) && err.code === 'USER_CANCELLED') {
+        toast.dismiss(toastId)
+        setEmailing(false)
+        return
+      }
+      await logEmailError('getMailToken_sendBolEmail', err)
+      throw err
+    }
+    const signature = await getUserSignature()
     const pdfRes = await fetch(`/api/orders/${order.id}/bol-pdf`)
     if (!pdfRes.ok) throw new Error('Failed to fetch BOL PDF')
     const base64 = await blobToBase64(await pdfRes.blob())
-    const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
-    await attachFileToDraft(token, messageId, `MPH BOL ${order.order_number}.pdf`, base64)
+    const { id: messageId, webLink } = await createDraftResilient(token, { to, cc, subject, bodyHtml, signature })
+    await attachFileToDraftResilient(token, messageId, `MPH BOL ${order.order_number}.pdf`, base64)
     toast.success('Draft created — opening Outlook', { id: toastId })
     openDraft(webLink)
   } catch (err) {
+    await logEmailError('sendBolEmail', err)
     toast.error('Failed to create draft: ' + (err instanceof Error ? err.message : String(err)), { id: toastId })
   } finally {
     setEmailing(false)
@@ -230,8 +278,20 @@ export async function sendConfirmationEmail(
       throw new Error(data.error ?? `${res.status}`)
     }
     const emailData = await res.json() as { subject: string; bodyHtml: string; to: string[]; cc: string[] }
-    const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
-    const draft = await createDraft(token, {
+    let token: string
+    try {
+      token = await getToken()
+    } catch (err) {
+      if (isTokenError(err) && err.code === 'USER_CANCELLED') {
+        toast.dismiss(toastId)
+        setEmailing(false)
+        return
+      }
+      await logEmailError('getMailToken_sendConfirmationEmail', err)
+      throw err
+    }
+    const signature = await getUserSignature()
+    const draft = await createDraftResilient(token, {
       to: emailData.to,
       cc: emailData.cc,
       subject: emailData.subject,
@@ -241,6 +301,7 @@ export async function sendConfirmationEmail(
     openDraft(draft.webLink)
     toast.success('Draft created — opening Outlook', { id: toastId })
   } catch (err) {
+    await logEmailError('sendConfirmationEmail', err)
     toast.error('Failed to create draft: ' + (err instanceof Error ? err.message : String(err)), { id: toastId })
   } finally {
     setEmailing(false)

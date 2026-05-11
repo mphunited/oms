@@ -21,6 +21,7 @@ export function useEditOrderForm(orderId: string) {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
   const [csrUserOptions, setCsrUserOptions] = useState<Array<{ id: string; name: string | null; role: string }>>([])
   const [salespersonOptions, setSalespersonOptions] = useState<Array<{ id: string; name: string }>>([])
   const [carriers, setCarriers] = useState<string[]>([])
@@ -148,6 +149,7 @@ export function useEditOrderForm(orderId: string) {
           preview_po: '',
         })))
         setLoading(false)
+        setIsDirty(false)  // ensure clean state after load
         if (data.group_id) {
           fetch(`/api/order-groups/${data.group_id}`)
             .then(r => r.ok ? r.json() : null)
@@ -213,6 +215,7 @@ export function useEditOrderForm(orderId: string) {
       })
       if (!res.ok) throw new Error(`${res.status}`)
       setSaved(true)
+      setIsDirty(false)
       setTimeout(() => setSaved(false), 3000)
       return true
     } catch (err) {
@@ -311,6 +314,8 @@ export function useEditOrderForm(orderId: string) {
     checklist, setChecklist,
     isAdmin,
     groupData,
+    isDirty,
+    markDirty: () => setIsDirty(true),
     handleSave,
     handleDuplicate,
     handleEmailPoClick,

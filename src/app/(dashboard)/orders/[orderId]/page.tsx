@@ -18,6 +18,7 @@ import { EditOrderIdentitySection } from '@/components/orders/edit-order-identit
 import { EditOrderDeleteModal } from '@/components/orders/edit-order-delete-modal'
 import { toast } from 'sonner'
 import { useEditOrderForm } from '@/components/orders/use-edit-order-form'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import { formatVendorName } from '@/lib/utils/format-vendor-name'
 import { useGlobalContacts } from '@/components/orders/use-global-contacts'
 import { NewContactPrompt } from '@/components/orders/new-contact-prompt'
@@ -63,10 +64,13 @@ export default function OrderDetailPage() {
     checklist, setChecklist,
     isAdmin,
     groupData,
+    isDirty, markDirty,
     handleSave, handleDuplicate,
     handleEmailPoClick, handleEmailBolClick, handleEmailConfirmationClick,
     csrInitials,
   } = useEditOrderForm(orderId)
+
+  useUnsavedChanges(isDirty)
 
   const { confirmationContacts, billToContacts: globalBillToContacts, findNewContacts } = useGlobalContacts()
   const [pendingNewContacts, setPendingNewContacts] = useState<NewContactEntry[]>([])
@@ -142,8 +146,8 @@ export default function OrderDetailPage() {
         csr2Id={csr2Id}
         csrUserOptions={csrUserOptions}
         isBlind={isBlind}
-        onOrderDateChange={setOrderDate}
-        onStatusChange={setStatus}
+        onOrderDateChange={v => { markDirty(); setOrderDate(v) }}
+        onStatusChange={v => { markDirty(); setStatus(v) }}
         onSalespersonChange={setSalespersonId}
         onCsrChange={setCsrId}
         onCsr2Change={setCsr2Id}
@@ -163,7 +167,7 @@ export default function OrderDetailPage() {
             <OrderCombobox
               options={customerOptions}
               value={customerId}
-              onChange={v => setCustomerId(v)}
+              onChange={v => { markDirty(); setCustomerId(v) }}
               placeholder="Choose customer"
             />
           </div>
@@ -173,6 +177,7 @@ export default function OrderDetailPage() {
               options={vendorOptions.map(v => ({ ...v, name: formatVendorName(v.name) }))}
               value={vendorId}
               onChange={v => {
+                markDirty()
                 setVendorId(v)
                 if (vendorOptions.find(o => o.id === v)?.name !== 'MPH United / Alliance Container -- Hillsboro, TX') {
                   setSalesOrderNumber('')
@@ -253,7 +258,7 @@ export default function OrderDetailPage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>PO Notes</Label>
-            <Textarea value={poNotes} onChange={e => setPoNotes(e.target.value)} placeholder="Appears on the purchase order" rows={3} />
+            <Textarea value={poNotes} onChange={e => { markDirty(); setPoNotes(e.target.value) }} placeholder="Appears on the purchase order" rows={3} />
           </div>
           <div className="space-y-1.5">
             <Label>Freight / Invoice Notes</Label>
@@ -261,7 +266,7 @@ export default function OrderDetailPage() {
           </div>
           <div className="col-span-2 space-y-1.5">
             <Label>Misc Notes</Label>
-            <Textarea value={miscNotes} onChange={e => setMiscNotes(e.target.value)} placeholder="Internal notes" rows={3} />
+            <Textarea value={miscNotes} onChange={e => { markDirty(); setMiscNotes(e.target.value) }} placeholder="Internal notes" rows={3} />
           </div>
         </div>
       </section>
