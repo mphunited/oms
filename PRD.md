@@ -382,6 +382,33 @@ Built by `src/lib/email/build-po-email.ts` — pure function, returns `{ subject
 Blind: `MPH United PO [order_number] | Ship [MM/DD/YYYY]`
 Date uses pick_up_date. Built from x-email-subject header set by /api/recycling-orders/[id]/po-pdf.
 
+### Email Resilience Layer (shipped May 2026)
+
+All email action hooks now use resilient modules instead of raw Graph API calls:
+- getMailTokenResilient() replaces getMailToken() — popup retry, 30s timeout, structured errors
+- createDraftResilient() replaces createDraft() — 3-attempt retry, exponential backoff
+- attachFileToDraftResilient() replaces attachFileToDraft() — same retry wrapper
+- tokenCache prevents concurrent auth popups (55-min cache)
+- logEmailError() logs all failures to email_errors table (Supabase)
+- EmailStatusIndicator component shows operation progress in the orders list toolbar
+  (acquiring_token → building_email → creating_draft → attaching_pdf → success/error)
+  Status persists 3s on success, 5s on error before resetting to idle.
+
+Do NOT use the raw getMailToken / createDraft / attachFileToDraft functions in new code.
+
+### Unsaved Changes Protection (shipped May 2026)
+
+useUnsavedChanges(isDirty) is active on:
+- Edit order page (orders/[orderId]) — chevron back guarded, sidebar guarded
+- New order form (orders/new) — tab close and refresh guarded
+- Edit IBC recycling page — back button and sidebar guarded
+- Edit drum recycling page — back button and sidebar guarded
+- New IBC recycling page — tab close and refresh guarded
+- New drum recycling page — tab close and refresh guarded
+
+Browser back button cannot be reliably intercepted in Next.js App Router.
+The sidebar guardedNavigate() and in-page back buttons are the reliable guard points.
+
 ---
 
 ## 12. Document Generation

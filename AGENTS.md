@@ -188,13 +188,29 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Microsoft Graph API to create drafts with PDF attachments already attached.
 
 26. **Never use Outlook Web deeplinks for email.** Use Microsoft Graph API via
-    src/lib/email/msal-client.ts and src/lib/email/graph-mail.ts.
-    - MSAL client: singleton PublicClientApplication, getMailToken() acquires token
-      with scopes Mail.ReadWrite and Mail.Send (silent, popup fallback).
+    the resilient email modules.
+    - MSAL client: src/lib/email/msal-client.ts — singleton PublicClientApplication.
+      getMailToken() acquires token silently, popup fallback.
+    - Resilient token acquisition: src/lib/email/msal-client-resilient.ts
+      getMailTokenResilient() — adds popup retry (2 attempts), 30s timeout,
+      structured TokenAcquisitionError with codes: SILENT_FAILED | USER_CANCELLED |
+      POPUP_TIMEOUT | POPUP_FAILED. Import isTokenError() for type guard.
+      USER_CANCELLED is retryable=true; SILENT_FAILED is retryable=false.
+    - Token cache: src/lib/email/token-cache.ts — singleton tokenCache.
+      tokenCache.acquire('mail_token', fn) prevents concurrent token acquisitions
+      and caches tokens for 55 minutes with a 30-second expiry buffer.
+    - Graph helpers (fragile originals): src/lib/email/graph-mail.ts
+      createDraft(), attachFileToDraft(), openDraft() — still used for openDraft only.
+    - Resilient Graph helpers: src/lib/email/graph-mail-resilient.ts
+      createDraftResilient(), attachFileToDraftResilient() — wrap Graph calls in
+      retryWithBackoff (3 attempts, exponential backoff 1s→2s→4s).
+      GraphAPIError class: status, retryable (true for 408/429/5xx), context.
+      Non-retryable errors (401/403/400) throw immediately without retry.
     - Azure App Registration: clientId 2785bb21-50cc-4e45-a996-c0aec39b13bd,
       tenantId 3abf2937-e518-43e5-b2a4-456eecfa8b00.
-    - Graph helpers: createDraft(), attachFileToDraft(), openDraft() in
-      src/lib/email/graph-mail.ts.
+    - All email action hooks (use-order-email-actions.ts, email-draft-helpers.ts)
+      use getMailTokenResilient + createDraftResilient + attachFileToDraftResilient.
+      The raw getMailToken/createDraft/attachFileToDraft must NOT be used in new code.
 
 27. **MSAL version is @azure/msal-browser 4.28.1 (pinned).** Do NOT upgrade to v5
     — popup flow is broken in v5. The redirectUri points to /msal-callback (a blank
@@ -248,6 +264,9 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Tracked in drizzle/0010_auth_user_sync_trigger.sql for version control.
     Applied via Supabase MCP (not drizzle-kit — pooler lacks auth schema DDL permission).
     Do NOT attempt to re-apply via npm run db:migrate — use Supabase MCP apply_migration.
+    drizzle-kit db:push crashes when existing tables have check constraints (known bug).
+    For new table DDL: write schema in schema.ts, apply via Supabase MCP apply_migration,
+    then add the table name to tablesFilter in drizzle.config.ts.
 
 35. **Commission eligibility is determined per split load** by looking up
     order_split_loads.order_type against the order_type_configs table
@@ -492,6 +511,40 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - New IBC and Drum forms always send part_number: null on POST.
     - The column is retained in recycling_orders for historical data only.
     - Do not re-add part_number to any recycling form UI.
+
+69. **Email error logging.** All email operation failures are logged to the
+    email_errors table via src/lib/email/error-logger.ts.
+    - logEmailError(context, error, severity?) — never throws, swallows fetch failures.
+    - Severity values: 'warning' | 'error' | 'critical'.
+    - API endpoint: POST /api/logs/email-error — session-guarded, inserts to DB.
+    - email_errors table: id, user_id, context, message, status_code, severity,
+      created_at. RLS enabled with service_role policy.
+    - Query pattern: SELECT context, severity, COUNT(*) FROM email_errors
+      WHERE created_at > now() - interval '7 days' GROUP BY context, severity
+      to monitor email health.
+
+70. **Navigation guard and unsaved changes protection.**
+    - src/lib/navigation-guard.ts — module-level singleton (not React context).
+      navigationGuard.setDirty(v), navigationGuard.isDirty(), navigationGuard.confirm().
+      confirm() shows window.confirm if dirty, returns true if clean.
+    - src/hooks/use-unsaved-changes.ts — call useUnsavedChanges(isDirty) in any
+      edit or new-record page. Handles: beforeunload (tab close/refresh),
+      popstate (browser back attempt), and publishes to navigationGuard.
+    - src/components/layout/app-sidebar.tsx — all nav items use guardedNavigate(href)
+      instead of plain <Link>. Checks navigationGuard.confirm() before router.push.
+    - isDirty tracking pattern for pages using individual useState fields (no RHF):
+      add isDirty + markDirty: () => setIsDirty(true) to the form hook, call
+      markDirty() in onChange of key fields. Reset setIsDirty(false) after save and
+      after initial data load.
+    - isDirty tracking for forms rendered as child components (recycling pages):
+      form component accepts onDirtyChange?: (v: boolean) => void prop. Page owns
+      local isDirty state fed by onDirtyChange, passes to useUnsavedChanges.
+    - react-hook-form pages (new-order-form): use form.formState.isDirty && !savedOrder.
+    - BROWSER BACK BUTTON LIMITATION: popstate fires after Next.js router has already
+      navigated internally. window.history.pushState restores the URL but not the
+      React tree. Browser back cannot be reliably prevented in Next.js App Router
+      without a third-party library. Sidebar links and in-page back buttons are
+      the reliable interception points.
 ---
 
 ## TECHNOLOGY STACK
@@ -564,7 +617,7 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-us-west-2.pooler.supab
 Tables: users, customers, vendors, order_groups, orders, order_split_loads,
         recycling_orders, bills_of_lading, company_settings, dropdown_configs,
         product_weights, order_type_configs, audit_logs, global_email_contacts,
-        credit_memos, credit_memo_line_items
+        credit_memos, credit_memo_line_items, email_errors
 
 Schema file: src/lib/db/schema.ts — this is the source of truth. Always read it before
 writing queries or API routes. Full field-level detail is in PRD.md Section 5.
@@ -788,6 +841,14 @@ src/lib/db/schema.ts          — Drizzle schema, always read before writing que
 src/lib/db/index.ts           — Drizzle client
 src/lib/email/msal-client.ts  — MSAL singleton + getMailToken()
 src/lib/email/graph-mail.ts   — createDraft(), attachFileToDraft(), openDraft()
+src/lib/email/graph-mail-resilient.ts — createDraftResilient(), attachFileToDraftResilient(), GraphAPIError, retryWithBackoff
+src/lib/email/msal-client-resilient.ts — getMailTokenResilient(), TokenAcquisitionError, isTokenError()
+src/lib/email/token-cache.ts     — tokenCache singleton (55-min cache, 30s expiry buffer)
+src/lib/email/error-logger.ts    — logEmailError() — logs to email_errors, never throws
+src/lib/navigation-guard.ts      — module-level dirty state for cross-component nav guard
+src/hooks/use-unsaved-changes.ts — useUnsavedChanges(isDirty) — beforeunload + popstate + guard
+src/components/orders/email-status-indicator.tsx — EmailStatusIndicator, EmailOperationStatus type
+src/app/api/logs/email-error/route.ts — POST email error log endpoint
 src/lib/email/build-po-email.ts — PO email subject/body builder (pure function)
 src/lib/utils/format-date.ts  — formatDate() MM/DD/YYYY display helper
 src/lib/orders/badge-colors.ts — getBadgeColor(), getBadgeTextColor() helpers
