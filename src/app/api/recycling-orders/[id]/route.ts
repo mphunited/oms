@@ -10,8 +10,11 @@ const NUMERIC_FIELDS = ['qty', 'buy', 'sell', 'freight_cost', 'freight_credit_am
 
 function coerce(body: Record<string, unknown>) {
   const out = { ...body }
-  for (const f of DATE_FIELDS)    if (out[f] === '' || out[f] === undefined) out[f] = null
-  for (const f of NUMERIC_FIELDS) if (out[f] === '' || out[f] === undefined) out[f] = null
+  for (const f of DATE_FIELDS)    if (out[f] === '') out[f] = null
+  for (const f of NUMERIC_FIELDS) if (out[f] === '') out[f] = null
+  if (out.additional_costs === null || out.additional_costs === undefined) {
+    out.additional_costs = '0'
+  }
   return out
 }
 
