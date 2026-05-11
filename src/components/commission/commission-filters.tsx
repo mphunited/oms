@@ -90,7 +90,7 @@ export function CommissionFiltersBar({ filters, salespersons, customers, vendors
         <div className="space-y-1">
           <label htmlFor="customer-filter" className="text-xs text-muted-foreground">Customer</label>
           <Select
-            value={filters.customerId}
+            value={filters.customerId ?? undefined}
             onValueChange={v => onChange({ customerId: v === '_all' ? '' : v })}
           >
             <SelectTrigger id="customer-filter" className="h-8 w-44 text-sm">
@@ -108,7 +108,7 @@ export function CommissionFiltersBar({ filters, salespersons, customers, vendors
         <div className="space-y-1">
           <label htmlFor="vendor-filter" className="text-xs text-muted-foreground">Vendor</label>
           <Select
-            value={filters.vendorId}
+            value={filters.vendorId ?? undefined}
             onValueChange={v => onChange({ vendorId: v === '_all' ? '' : v })}
           >
             <SelectTrigger id="vendor-filter" className="h-8 w-44 text-sm">
