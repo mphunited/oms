@@ -127,7 +127,7 @@ export async function GET(req: Request) {
       .leftJoin(salesUser, eq(recycling_orders.salesperson_id, salesUser.id))
       .leftJoin(csrAlias,  eq(recycling_orders.csr_id,        csrAlias.id))
       .where(where)
-      .orderBy(asc(sql`${recycling_orders.pick_up_date} NULLS LAST`))
+      .orderBy(sql`${recycling_orders.pick_up_date} asc nulls last`)
       .limit(limit)
       .offset(offset)
 
