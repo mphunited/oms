@@ -47,7 +47,7 @@ export async function GET(
     ])
 
     const buf = await renderToBuffer(
-      React.createElement(CreditMemoPdf, {
+      (React.createElement(CreditMemoPdf, {
         memo,
         lineItems,
         customer: customer ?? null,
