@@ -47,12 +47,12 @@ export async function GET(
     ])
 
     const buf = await renderToBuffer(
-      (React.createElement(CreditMemoPdf, {
+      React.createElement(CreditMemoPdf, {
         memo,
         lineItems,
         customer: customer ?? null,
         companySetting: companySetting ?? null,
-      }) as React.ReactElement
+      }) as React.ReactElement<DocumentProps>
     )
 
     const creditLabel = memo.credit_number ? `-${memo.credit_number}` : ''
