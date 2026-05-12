@@ -158,7 +158,7 @@ order_number_override (text, nullable — per-load MPH PO; auto-generated via ne
 customer_po (text, nullable — per-load Customer PO, overrides order-level when set),
 order_type (text, nullable — per-load Order Type, drives commission eligibility for this load),
 ship_date (date, nullable), wanted_date (date, nullable),
-commission_status (text, default 'Not Eligible'),
+commission_status (text, default 'Not Eligible') — values: 'Not Eligible' | 'Eligible' | 'Paid',
 commission_paid_date (date, nullable — stamped when commission paid for this load),
 created_at, updated_at
 
@@ -671,7 +671,7 @@ qb_invoice_number, checklist (fresh from vendor template), buy/sell, group_id (n
 | /vendors | Vendor list | 1 — Done |
 | /vendors/[vendorId] | Vendor detail, contacts, checklist template | 1 — Done |
 | /schedules | Weekly schedule generation | 1 — Done |
-| /commission | Commission report per split load. Route guard: SALES without can_view_commission → /dashboard. | 1 — Done |
+| /commission | Commission report. Shows ALL split loads for commission-eligible salespersons (regardless of order type eligibility). Filters: Search (order number, customer PO, customer name, vendor name), Customer, Vendor, Salesperson, Commission Status pills (Not Eligible \| Eligible \| Paid), Invoice Status pills (Not Invoiced \| Invoiced \| Paid). Inline order_type editing per row — calls PATCH /api/commission/split-load/[splitLoadId], re-derives commission_status live. Route guard: SALES without can_view_commission → /dashboard. | 1 — Done |
 | /invoicing | Invoice Queue + Credit Memos tabs. ACCOUNTING + ADMIN only. Filters: Search (matches order_number, customer_po, order_number_override, group_po_number), Customer, Vendor, CSR, Salesperson (single-select), Invoice Status (multi-select), Ship Date range. All persisted in URL params. Client-side filtering — full queue loads without pagination. | 1 — Done |
 | /settings | Carriers, Order Statuses, Company Settings, Order Number preview, Order Types, Product Weights | 1 — Done |
 | /global-emails | Global email contact directory. All roles view/add/edit. ADMIN only deletes. | 1 — Done |
@@ -702,6 +702,7 @@ qb_invoice_number, checklist (fresh from vendor template), buy/sell, group_id (n
 | /api/schedules/vendor-pdf | POST vendor/Frontline schedule PDF | 1 — Done |
 | /api/commission | GET commission data, role-filtered | 1 — Done |
 | /api/commission/mark-paid | POST bulk mark commission paid | 1 — Done |
+| /api/commission/split-load/[splitLoadId] | PATCH update order_type on a single order_split_loads row and re-derive commission_status. Re-derive logic: eligible type + was Not Eligible → Eligible; eligible type + already Eligible or Paid → unchanged; ineligible type → Not Eligible. ADMIN + ACCOUNTING only. | 1 — Done |
 | /api/credit-memos | GET list (ACCOUNTING + ADMIN); POST create draft | 1 — Done |
 | /api/credit-memos/[id] | PUT update draft (blocked if Final); DELETE draft same-day only | 1 — Done |
 | /api/credit-memos/[id]/finalize | POST — stamps credit_number, sets status=Final, locks | 1 — Done |

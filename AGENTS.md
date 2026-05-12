@@ -822,8 +822,13 @@ Key routes:
 - /api/orders/[orderId]/po-pdf — GET PO PDF (handles grouped orders via group_id)
 - /api/orders/[orderId]/bol-pdf — GET BOL PDF
 - /api/orders/duplicate/[orderId] — POST duplicate order
-- /api/commission — GET commission data, role-filtered
+- /api/commission — GET commission data for commission-eligible salespersons. Returns ALL
+  order_split_loads rows regardless of order type eligibility. Supports query params:
+  salespersonId, startDate, endDate, commissionStatus, invoiceStatus, customerId, vendorId,
+  search (ILIKE on order_number, customer_po, customer name, vendor name). Role-filtered.
 - /api/commission/mark-paid — POST bulk mark commission paid
+- /api/commission/split-load/[splitLoadId] — PATCH update order_type on a single
+  order_split_loads row, re-derive commission_status. ADMIN/ACCOUNTING only.
 - /api/me — GET current user id/name/email/role/email_signature
 - /api/users — GET users list; ?permission=SALES|CSR filter
 - /api/dropdown-configs — GET { type, values, meta }; PUT (ADMIN only)
@@ -882,6 +887,7 @@ src/app/api/logs/email-error/route.ts — POST email error log endpoint
 src/lib/email/build-po-email.ts — PO email subject/body builder (pure function)
 src/lib/utils/format-date.ts  — formatDate() MM/DD/YYYY display helper
 src/lib/orders/badge-colors.ts — getBadgeColor(), getBadgeTextColor() helpers
+src/lib/orders/commission-eligibility.ts — deriveInitials(), deriveFirstName() helpers
 src/lib/orders/build-po-pdf.tsx — regular order PO PDF builder
 src/lib/orders/build-bol-pdf.tsx — BOL PDF builder
 src/lib/orders/build-multi-ship-to-pdf.tsx — combined multi-ship-to PO PDF builder
@@ -907,7 +913,9 @@ src/components/recycling/edit-drum-form.tsx — edit drum order form component
 src/components/recycling/recycling-order-summary-drawer.tsx — Sheet drawer for
   recycling orders; recycling_type-aware (hides delivery_date/freight_credit for Drum)
 src/components/commission/commission-client.tsx
-src/components/commission/commission-filters.tsx
+src/components/commission/commission-filters.tsx — search input, customer/vendor/salesperson
+  dropdowns, commission status pill group (Not Eligible | Eligible | Paid), invoice status
+  pill group (Not Invoiced | Invoiced | Paid), Clear Filters button
 src/components/commission/commission-table.tsx
 src/components/commission/commission-badge.tsx
 src/components/settings/carriers-section.tsx
@@ -961,6 +969,10 @@ src/app/api/recycling-orders/[id]/po-pdf/route.ts — GET PDF; sets email header
 src/app/api/order-groups/route.ts       — POST create group
 src/app/api/order-groups/[id]/route.ts  — DELETE ungroup (ADMIN only)
 src/app/api/orders/[orderId]/po-pdf/route.ts — handles grouped orders via group_id
+src/app/api/commission/split-load/[splitLoadId]/route.ts — PATCH: update order_type on a
+  split load, re-derive commission_status. Re-derive logic: eligible type + was Not Eligible
+  → Eligible; eligible type + already Eligible or Paid → unchanged; ineligible type →
+  Not Eligible. ADMIN + ACCOUNTING only.
 src/app/api/auth/signout/route.ts
 src/app/api/company-settings/route.ts
 src/proxy.ts                  — session handler (Next.js 16 middleware equivalent)
