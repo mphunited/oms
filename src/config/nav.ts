@@ -14,6 +14,7 @@ import {
   AtSign,
   BarChart2,
   TrendingUp,
+  Activity,
 } from "lucide-react";
 
 export type NavItem = {
@@ -115,6 +116,12 @@ export const NAV_ITEMS: NavItem[] = [
     title: "Margins",
     href: "/margins",
     icon: TrendingUp,
+    roles: ["ADMIN", "ACCOUNTING"],
+  },
+  {
+    title: "Order Frequency",
+    href: "/order-frequency",
+    icon: Activity,
     roles: ["ADMIN", "ACCOUNTING"],
   },
   {
