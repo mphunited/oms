@@ -519,7 +519,7 @@ Pre-filled in new drum form; field remains a dropdown.
 
 **Invoice behavior (Drum only):** `invoice_status` is never shown in the drum UI and
 always saves as `'Invoice'`. `invoice_customer_amount` is never shown and always saves
-as `null`. Neither field is user-editable on drum forms.
+as `null`. Neither field is user-editable on drum forms. `qb_invoice_number` is shown on drum edit forms in the Financial section — same as IBC edit forms.
 
 **Coastal default sell:** `COASTAL_DEFAULT_SELL = "12.00"` constant in
 `use-new-drum-form.ts`. Pre-fills `sell` when vendor = Coastal and `sell` is currently
@@ -1108,3 +1108,5 @@ constrained to 148px with text-wrap support; lifecycle pill visual spec added (V
 #1a2744 active, #fee2e2 Flagged inactive); Live Margin panel spec added (order-margin-card.tsx,
 #1a2744 background, green/red margin thresholds); form section header spec added (2px navy left-bar,
 13px semibold, sentence case, no all-caps); DESIGN.md reference added to Section 3.*
+
+*Last updated: May 11, 2026 — Session changes: (1) supabase.auth.getSession() replaced with supabase.auth.getUser() across 38 API route files — session data from cookies is unverified; getUser() contacts the Auth server. Files with a local const user (DB lookup) renamed to dbUser to avoid shadowing. (2) Drizzle migration journal resynced — 4 unapplied journal entries had DDL delivered via Supabase MCP; fixed filename mismatch on idx 13, wrapped existing DDL in IF NOT EXISTS guards, replaced auth trigger migration with no-op SELECT 1 (pooler lacks auth-schema DDL permission); db:generate now shows no changes. (3) Recycling orders list fixed — GET /api/recycling-orders was returning 500 on every request due to invalid ORDER BY: pick_up_date NULLS LAST asc is not valid PostgreSQL; fixed to pick_up_date asc nulls last. (4) Orders filter bar now persists state via URL params (refresh, shareable links) and sessionStorage key "orders_filters" (survives client-side navigation); Clear Filters clears both. (5) qb_invoice_number added to recycling_orders via migration and surfaced on both IBC and Drum edit forms in the Financial section.*

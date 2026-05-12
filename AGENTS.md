@@ -575,6 +575,59 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Recycling orders use pick_up_date as the date filter, not ship_date (recycling_orders
     has no ship_date column). The UI labels this field "Ship Date".
     PDF route must always include: export const runtime = 'nodejs'
+
+72. **Always use supabase.auth.getUser() for authentication and identity checks.**
+    Never use supabase.auth.getSession() for this purpose — session data comes from
+    cookies and is not verified by the Auth server. getUser() authenticates by
+    contacting the Supabase Auth server directly and is the only secure option.
+    Pattern: const { data: { user }, error } = await supabase.auth.getUser()
+    Guard: if (!user || error) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    When a file already has a local const user = (a DB lookup result), rename the DB
+    result to dbUser to avoid shadowing the auth user. This was applied to:
+    me/route.ts, orders/route.ts, orders/[orderId]/route.ts, order-groups/route.ts,
+    orders/duplicate/[orderId]/route.ts.
+    src/proxy.ts already used getUser() — do not change it.
+
+73. **Never use asc(nullsLast()) or desc(nullsLast()) from drizzle-orm for ORDER BY.**
+    These wrappers generate invalid PostgreSQL — the direction modifier is appended
+    after NULLS LAST, producing `pick_up_date NULLS LAST asc` which PostgreSQL rejects.
+    This caused every GET /api/recycling-orders request to return a 500 silently until
+    error logging was added.
+    Always write sort-with-nulls as a raw SQL template:
+    `.orderBy(sql`${table.column} asc nulls last`)`
+    `.orderBy(sql`${table.column} desc nulls last`)`
+    This applies to every list route. The orders list route uses ship_date. The
+    recycling-orders list route uses pick_up_date. Any new list route must follow
+    this pattern.
+
+74. **Orders filter bar uses two-layer persistence: URL params + sessionStorage.**
+    URL params: written on every filter change via router.replace(..., { scroll: false }).
+    Read on mount as first priority. Supports refresh and shareable/bookmarkable URLs.
+    Defaults (lifecycle=active, empty selections) are omitted from the URL to keep it clean.
+    sessionStorage key "orders_filters": written alongside URL params on every change.
+    Read on mount only when URL has no filter params (i.e. user navigated to plain /orders
+    via the sidebar). Survives client-side navigation. All sessionStorage access is wrapped
+    in try/catch (throws in some privacy browser modes).
+    Clear Filters: resets to DEFAULT_FILTERS, calls router.replace to collapse URL to /orders,
+    and calls sessionStorage.removeItem("orders_filters").
+    The /invoicing and /recycling list pages use URL params only — no sessionStorage layer yet.
+
+75. **Drizzle migration journal discipline — how to handle journal drift.**
+    The journal drifts when schema changes are applied via Supabase MCP instead of db:migrate
+    (required when DDL touches the auth schema, which the Transaction Pooler cannot access).
+    To resync after drift:
+    1. Run npm run db:generate and inspect the output SQL.
+    2. For each statement that re-applies existing DDL: wrap CREATE TABLE with IF NOT EXISTS,
+       wrap ADD COLUMN with ADD COLUMN IF NOT EXISTS, wrap CREATE INDEX with CREATE INDEX IF
+       NOT EXISTS, wrap CREATE TYPE with a DO/EXCEPTION block.
+    3. For auth-schema DDL (triggers on auth.users): replace entirely with SELECT 1; — the
+       pooler cannot execute auth-schema statements.
+    4. Run npm run db:migrate to advance the journal.
+    5. Run npm run db:generate again — output must be "No schema changes, nothing to migrate".
+    6. Run the Supabase security advisor to confirm zero critical errors.
+    Never run npm audit fix --force — the esbuild advisory in drizzle-kit is a known
+    acceptable vulnerability (see KNOWN ACCEPTABLE VULNERABILITIES).
+
 ---
 
 ## TECHNOLOGY STACK
