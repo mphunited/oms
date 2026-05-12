@@ -148,7 +148,7 @@ export function CommissionFiltersBar({ filters, salespersons, customers, vendors
             <SelectContent>
               <SelectItem value="_all">All vendors</SelectItem>
               {vendors.map(v => (
-                <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                <SelectItem key={v.id} value={v.id}>{displayVendorName(v.name)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
