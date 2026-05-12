@@ -30,3 +30,8 @@ export function deriveInitials(name: string | null | undefined): string {
   if (parts.length === 1) return (parts[0][0] ?? 'X').toUpperCase() + 'X'
   return ((parts[0][0] ?? 'X') + (parts[parts.length - 1][0] ?? 'X')).toUpperCase()
 }
+
+export function deriveFirstName(name: string | null | undefined): string {
+  if (!name?.trim()) return '—'
+  return name.trim().split(/\s+/)[0]
+}

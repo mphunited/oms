@@ -33,9 +33,10 @@ type Props = {
   vendors: NamedItem[]
   role: string | null
   onChange: (f: Partial<CommissionFilters>) => void
+  onClear: () => void
 }
 
-const COMMISSION_STATUS_PILLS = ['All', 'Not Eligible', 'Pending', 'Paid'] as const
+const COMMISSION_STATUS_PILLS = ['All', 'Not Eligible', 'Eligible', 'Paid'] as const
 const INVOICE_STATUS_PILLS = ['All', 'Not Invoiced', 'Invoiced', 'Paid'] as const
 
 function PillGroup({
@@ -72,7 +73,19 @@ function PillGroup({
   )
 }
 
-export function CommissionFiltersBar({ filters, salespersons, customers, vendors, role, onChange }: Props) {
+export function CommissionFiltersBar({ filters, salespersons, customers, vendors, role, onChange, onClear }: Props) {
+  const hasActiveFilters = !!(
+    filters.search ||
+    filters.customerId ||
+    filters.vendorId ||
+    filters.commissionStatus ||
+    filters.invoiceStatus ||
+    filters.startDate ||
+    filters.endDate ||
+    filters.commissionPaidDateFrom ||
+    filters.commissionPaidDateTo
+  )
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">
@@ -207,6 +220,16 @@ export function CommissionFiltersBar({ filters, salespersons, customers, vendors
               />
             </div>
           </>
+        )}
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="ml-auto rounded-md border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground hover:border-[#00205B]/50 hover:text-foreground transition-colors"
+          >
+            Clear Filters
+          </button>
         )}
       </div>
     </div>

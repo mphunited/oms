@@ -19,8 +19,8 @@ export type CommissionRow = {
   commission_status: string | null
   vendorName: string
   customerName: string
-  salespersonInitials: string
-  csrInitials: string
+  salespersonFirst: string
+  csrFirst: string
   invoice_payment_status: string | null
   invoice_paid_date: string | null
   commission_paid_date: string | null
@@ -40,8 +40,15 @@ type Props = {
 
 function commissionStatusClass(status: string | null) {
   if (status === 'Paid' || status === 'Commission Paid') return 'text-xs font-medium text-green-700 dark:text-green-400'
-  if (status === 'Pending' || status === 'Eligible') return 'text-xs font-medium text-amber-700 dark:text-amber-400'
+  if (status === 'Eligible') return 'text-xs font-medium text-amber-700 dark:text-amber-400'
   return 'text-xs text-muted-foreground'
+}
+
+function displayVendor(name: string) {
+  if (!name || name === '—') return '—'
+  if (name.startsWith('MPH United / ')) return name.replace('MPH United / ', '')
+  if (name === 'MPH United') return '—'
+  return name
 }
 
 export function CommissionTable({ rows, selectedIds, onToggle, onToggleAll, role, orderTypeConfigs, onRowUpdate }: Props) {
@@ -135,10 +142,10 @@ export function CommissionTable({ rows, selectedIds, onToggle, onToggleAll, role
                   />
                 </td>
               )}
-              <td className="px-3 py-2">{row.vendorName}</td>
+              <td className="px-3 py-2">{displayVendor(row.vendorName)}</td>
               <td className="px-3 py-2">{row.customerName}</td>
               <td className="px-3 py-2 text-muted-foreground">
-                {row.salespersonInitials}/{row.csrInitials}
+                {row.salespersonFirst}/{row.csrFirst}
               </td>
               <td className="px-3 py-2 font-mono">
                 <Link

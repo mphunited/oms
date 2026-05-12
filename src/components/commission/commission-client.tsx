@@ -157,6 +157,7 @@ export function CommissionClient() {
         vendors={vendors}
         role={role}
         onChange={update => setFilters(f => ({ ...f, ...update }))}
+        onClear={() => setFilters(DEFAULT_FILTERS)}
       />
 
       {loading ? (

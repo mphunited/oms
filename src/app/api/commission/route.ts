@@ -4,7 +4,7 @@ import { alias } from 'drizzle-orm/pg-core'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { orders, order_split_loads, customers, vendors, users } from '@/lib/db/schema'
-import { deriveInitials } from '@/lib/orders/commission-eligibility'
+import { deriveFirstName } from '@/lib/orders/commission-eligibility'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
@@ -56,6 +56,8 @@ export async function GET(req: NextRequest) {
     const searchCond = or(
       ilike(orders.order_number, `%${search}%`),
       ilike(orders.customer_po, `%${search}%`),
+      ilike(customers.name, `%${search}%`),
+      ilike(vendors.name, `%${search}%`),
     )
     if (searchCond) conditions.push(searchCond)
   }
@@ -95,8 +97,8 @@ export async function GET(req: NextRequest) {
     mphPo: r.order_number_override ?? r.order_number,
     customerPo: r.customer_po_load ?? r.customer_po_order ?? null,
     vendorName: r.vendorName ?? '—',
-    salespersonInitials: deriveInitials(r.salespersonName),
-    csrInitials: deriveInitials(r.csrName),
+    salespersonFirst: deriveFirstName(r.salespersonName),
+    csrFirst: deriveFirstName(r.csrName),
   }))
 
   return NextResponse.json(result)

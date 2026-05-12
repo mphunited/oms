@@ -49,7 +49,7 @@ export async function PATCH(
   let newStatus: string
   if (isEligible) {
     const current = currentLoad.commission_status ?? 'Not Eligible'
-    newStatus = (current === 'Pending' || current === 'Paid') ? current : 'Pending'
+    newStatus = (current === 'Eligible' || current === 'Paid') ? current : 'Eligible'
   } else {
     newStatus = 'Not Eligible'
   }
