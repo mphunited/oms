@@ -1,0 +1,10 @@
+
+> oms@0.1.0 lint
+> eslint src
+
+
+C:\Users\jack\Claude Projects\oms\src\components\invoicing\credit-memo-form.tsx
+  99:6  warning  React Hook useEffect has a missing dependency: 'today'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Γ£û 1 problem (0 errors, 1 warning)
+
