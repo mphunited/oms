@@ -52,6 +52,16 @@ export async function GET(req: NextRequest) {
   if (vendorId) conditions.push(eq(orders.vendor_id, vendorId))
   if (invoiceStatus) conditions.push(eq(orders.invoice_payment_status, invoiceStatus))
 
+  const commissionPaidDateFrom = searchParams.get('commissionPaidDateFrom')
+  const commissionPaidDateTo = searchParams.get('commissionPaidDateTo')
+
+  if (commissionPaidDateFrom) conditions.push(
+    gte(order_split_loads.commission_paid_date, commissionPaidDateFrom)
+  )
+  if (commissionPaidDateTo) conditions.push(
+    lte(order_split_loads.commission_paid_date, commissionPaidDateTo)
+  )
+
   if (search) {
     const searchCond = or(
       ilike(orders.order_number, `%${search}%`),
