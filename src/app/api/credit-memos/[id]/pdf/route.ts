@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
-import { renderToBuffer } from '@react-pdf/renderer'
+import { renderToBuffer, DocumentProps } from '@react-pdf/renderer'
 import { db } from '@/lib/db'
 import { credit_memos, credit_memo_line_items, customers, company_settings, users } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
