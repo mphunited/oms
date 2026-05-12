@@ -35,13 +35,13 @@ async function fetchOrdersAndVendor(ids: string[]) {
       })
     )
   )
-  const vendorIds = [...new Set((fullOrders as any[]).map(o => o.vendor_id).filter(Boolean))]
+  const vendorIds = [...new Set(fullOrders.map(o => o.vendor_id).filter(Boolean))]
   if (vendorIds.length > 1) throw new Error('__SAME_VENDOR__')
   if (vendorIds.length === 0) throw new Error('__NO_VENDOR__')
   const vendorRes = await fetch(`/api/vendors/${vendorIds[0]}`)
   if (!vendorRes.ok) throw new Error('Failed to fetch vendor details')
   const vendor = await vendorRes.json()
-  return { fullOrders: fullOrders as any[], vendor }
+  return { fullOrders, vendor }
 }
 
 async function getToken(): Promise<string> {
@@ -162,7 +162,7 @@ export function useOrderEmailActions(
         po_notes: o.po_notes ?? null,
         vendor: { name: vendor.name, address: vendor.address ?? null, po_contacts: vendor.po_contacts ?? null },
         customer: o.customer_name ? { name: o.customer_name } : null,
-        order_split_loads: (o.split_loads ?? []).map((l: any) => ({
+        order_split_loads: (o.split_loads ?? []).map((l) => ({
           description: l.description ?? null,
           part_number: l.part_number ?? null,
           qty: l.qty ?? null,

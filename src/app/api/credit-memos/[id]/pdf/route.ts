@@ -52,7 +52,7 @@ export async function GET(
         lineItems,
         customer: customer ?? null,
         companySetting: companySetting ?? null,
-      }) as any
+      }) as React.ReactElement
     )
 
     const creditLabel = memo.credit_number ? `-${memo.credit_number}` : ''

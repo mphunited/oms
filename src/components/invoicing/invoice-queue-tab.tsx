@@ -53,6 +53,7 @@ export function InvoiceQueueTab() {
       .catch(() => { toast.error('Failed to load invoice queue'); setLoading(false) })
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch on refresh trigger
   useEffect(() => { fetchRows() }, [fetchRows, refreshKey])
 
   const filtered = rows.filter(row => {

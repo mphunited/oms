@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { recycling_orders, customers, vendors, company_settings } from '@/lib/db/schema'
+import { recycling_orders, customers, vendors } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { eq } from 'drizzle-orm'
 import { renderToBuffer } from '@react-pdf/renderer'

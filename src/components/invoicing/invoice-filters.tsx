@@ -44,6 +44,7 @@ export function InvoiceFilters({ filters, onChange }: Props) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Keep local input in sync if URL param changes externally (e.g. Clear Filters)
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- controlled input sync with URL params
   useEffect(() => { setSearchInput(filters.search) }, [filters.search])
 
   useEffect(() => {

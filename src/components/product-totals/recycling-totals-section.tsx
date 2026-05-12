@@ -22,6 +22,22 @@ function fmtNum(n: number) {
   return n.toLocaleString('en-US', { maximumFractionDigits: 2 })
 }
 
+function Th({ col, children, sort, dir, onSort }: { col: SortKey; children: string; sort: SortKey; dir: Dir; onSort: (col: SortKey) => void }) {
+  return (
+    <th
+      className="px-3 py-2 text-left text-[11px] font-medium text-white/80 cursor-pointer select-none whitespace-nowrap"
+      onClick={() => onSort(col)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {children}
+        {sort === col
+          ? (dir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)
+          : <ChevronUp className="h-3 w-3 opacity-30" />}
+      </span>
+    </th>
+  )
+}
+
 function SortedTable({ rows, label }: { rows: RecyclingVendorRow[]; label: string }) {
   const [sort, setSort] = useState<SortKey>('vendorName')
   const [dir, setDir] = useState<Dir>('asc')
@@ -38,22 +54,6 @@ function SortedTable({ rows, label }: { rows: RecyclingVendorRow[]; label: strin
     return mul * (a.totalOrders - b.totalOrders)
   })
 
-  function Th({ col, children }: { col: SortKey; children: string }) {
-    return (
-      <th
-        className="px-3 py-2 text-left text-[11px] font-medium text-white/80 cursor-pointer select-none whitespace-nowrap"
-        onClick={() => handleSort(col)}
-      >
-        <span className="inline-flex items-center gap-1">
-          {children}
-          {sort === col
-            ? (dir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)
-            : <ChevronUp className="h-3 w-3 opacity-30" />}
-        </span>
-      </th>
-    )
-  }
-
   return (
     <div>
       <p className="text-[12px] font-medium text-[#4d4d4d] mb-2">{label}</p>
@@ -61,9 +61,9 @@ function SortedTable({ rows, label }: { rows: RecyclingVendorRow[]; label: strin
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#1a2744]">
-              <Th col="vendorName">Vendor</Th>
-              <Th col="totalQty">Total QTY</Th>
-              <Th col="totalOrders">Total orders</Th>
+              <Th col="vendorName" sort={sort} dir={dir} onSort={handleSort}>Vendor</Th>
+              <Th col="totalQty" sort={sort} dir={dir} onSort={handleSort}>Total QTY</Th>
+              <Th col="totalOrders" sort={sort} dir={dir} onSort={handleSort}>Total orders</Th>
             </tr>
           </thead>
           <tbody>

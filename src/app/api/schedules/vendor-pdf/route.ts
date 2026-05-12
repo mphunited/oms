@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       vendorName,
       isFrontline,
       generatedAt,
-    }) as React.ReactElement<any>
+    }) as React.ReactElement
   );
 
   const filename = isFrontline

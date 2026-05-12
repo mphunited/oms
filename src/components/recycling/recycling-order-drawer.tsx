@@ -45,6 +45,7 @@ export function RecyclingOrderDrawer({ orderId, editHref, onClose }: Props) {
   const [error, setError]     = useState<string | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loading state reset before async fetch
     if (!orderId) { setOrder(null); return }
     setLoading(true); setError(null); setOrder(null)
     fetch(`/api/recycling-orders/${orderId}`)

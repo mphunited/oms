@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       endDate,
       orders,
       generatedAt,
-    }) as React.ReactElement<any>
+    }) as React.ReactElement
   );
 
   return new NextResponse(pdfBuffer as unknown as BodyInit, {

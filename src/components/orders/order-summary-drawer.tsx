@@ -140,6 +140,7 @@ export function OrderSummaryDrawer({ orderId, statusMeta, onClose }: OrderSummar
 
   useEffect(() => {
     if (!orderId) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch triggered by orderId
     fetchOrder(orderId)
   }, [orderId])
 
