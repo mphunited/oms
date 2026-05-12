@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { users } from '@/lib/db/schema'
 import { and, eq, sql } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (!user || error) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { searchParams } = req.nextUrl
   const permission = searchParams.get('permission')
 
