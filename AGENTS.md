@@ -643,6 +643,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 | UI Primitives    | @base-ui/react — underlies shadcn/ui components, do NOT add Radix |
 | Charts           | Recharts — listed but NOT YET INSTALLED. Run `npm install recharts` before use. |
 | PDFs             | @react-pdf/renderer                                               |
+| Excel export     | xlsx (SheetJS) — used in Margins report export                    |
 | Auth             | Supabase Auth + Microsoft Entra SSO via @supabase/ssr             |
 | Theme            | next-themes (light/dark toggle)                                   |
 | MSAL             | @azure/msal-browser 4.28.1 (pinned — v5 breaks popup flow)        |

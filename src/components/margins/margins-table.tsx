@@ -1,6 +1,7 @@
 'use client'
 
 import { formatDate } from '@/lib/utils/format-date'
+import { stripMphPrefix } from '@/lib/utils/strip-mph-prefix'
 
 export type MarginRow = {
   orderId: string
@@ -32,6 +33,10 @@ function currency(v: string | null): string {
   const n = parseFloat(v)
   if (isNaN(n)) return '—'
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+}
+
+function firstName(name: string | null): string {
+  return name ? name.trim().split(/\s+/)[0] : '—'
 }
 
 function qty2(v: string | null): string {
@@ -94,12 +99,12 @@ export function MarginsTable({ rows }: Props) {
 
             return (
               <tr key={r.orderId} className={i % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]'}>
-                <TD>{r.salesperson ?? '—'}</TD>
+                <TD>{firstName(r.salesperson)}</TD>
                 <TD>{r.orderNumber}</TD>
-                <TD>{r.vendorName ?? '—'}</TD>
+                <TD>{r.vendorName ? stripMphPrefix(r.vendorName) : '—'}</TD>
                 <TD>{r.customerName}</TD>
                 <TD>{r.shipToLabel ?? '—'}</TD>
-                <TD>{r.description ?? '—'}</TD>
+                <td className="px-3 py-2 text-[13px] text-[#171717] whitespace-normal break-words max-w-xs line-clamp-3">{r.description ?? '—'}</td>
                 <TD>{formatDate(r.shipDate)}</TD>
                 <TD right>{currency(r.buy)}</TD>
                 <TD right>{currency(r.sell)}</TD>

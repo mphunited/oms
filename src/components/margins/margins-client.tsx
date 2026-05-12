@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Download } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { MarginsTable, type MarginRow } from './margins-table'
+import { stripMphPrefix } from '@/lib/utils/strip-mph-prefix'
 
 function getYearBounds() {
   const now = new Date()
@@ -11,6 +13,9 @@ function getYearBounds() {
   const dd = String(now.getDate()).padStart(2, '0')
   return { start: `${y}-01-01`, end: `${y}-${mm}-${dd}` }
 }
+
+const firstName = (name: string | null | undefined) =>
+  name ? name.trim().split(/\s+/)[0] : ''
 
 type SelectOption = { id: string; name: string | null }
 type ShipToOption = { key: string; label: string }
@@ -92,6 +97,91 @@ export function MarginsClient() {
     }
   }, [startDate, endDate, selectedCustomerId, selectedVendorId, selectedSalespersonId, selectedShipToKey, searchText])
 
+  const handleExport = () => {
+    if (!rows || rows.length === 0) return
+
+    const fmt = (v: string | null | undefined) =>
+      v != null && v !== '' ? v : ''
+    const currency = (v: string | null | undefined) =>
+      v != null && v !== '' ? parseFloat(v) : ''
+    const pct = (v: string | null | undefined) =>
+      v != null && v !== '' ? parseFloat(v) / 100 : ''
+
+    const data = rows.map(row => ({
+      'Salesperson':             firstName(row.salesperson),
+      'MPH PO':                  fmt(row.orderNumber),
+      'Vendor':                  stripMphPrefix(row.vendorName),
+      'Customer':                fmt(row.customerName),
+      'Ship To':                 fmt(row.shipToLabel),
+      'Description':             fmt(row.description),
+      'Ship Date':               fmt(row.shipDate),
+      'Buy':                     currency(row.buy),
+      'Sell':                    currency(row.sell),
+      'Qty':                     currency(row.qty),
+      'Freight Cost':            currency(row.freightCost),
+      'Customer Freight Cost':   currency(row.customerFreightCost),
+      'Additional Costs':        currency(row.additionalCosts),
+      'Bottle Cost':             currency(row.bottleCost),
+      'Bottle Qty':              currency(row.bottleQty),
+      'MPH Freight Bottles':     currency(row.mphFreightBottles),
+      'Commission':              currency(row.commissionAmount),
+      'IBC Total Cost':          currency(row.ibcTotalCost),
+      'IBC Total Sell Price':    currency(row.ibcTotalSellPrice),
+      'Profit':                  currency(row.profit),
+      'Profit %':                pct(row.profitPct),
+    }))
+
+    const ws = XLSX.utils.json_to_sheet(data)
+
+    // Format currency columns as accounting format
+    const currencyCols = ['H','I','J','K','L','M','N','O','P','Q','R','S','T','U']
+    const range = XLSX.utils.decode_range(ws['!ref'] ?? 'A1')
+    for (let R = 1; R <= range.e.r; R++) {
+      currencyCols.forEach(col => {
+        const cell = ws[`${col}${R + 1}`]
+        if (cell && typeof cell.v === 'number') {
+          cell.z = '"$"#,##0.00'
+        }
+      })
+      // Profit % column (V)
+      const pctCell = ws[`V${R + 1}`]
+      if (pctCell && typeof pctCell.v === 'number') {
+        pctCell.z = '0.0%'
+      }
+    }
+
+    // Auto column widths
+    ws['!cols'] = [
+      { wch: 12 }, // Salesperson
+      { wch: 14 }, // MPH PO
+      { wch: 20 }, // Vendor
+      { wch: 24 }, // Customer
+      { wch: 26 }, // Ship To
+      { wch: 32 }, // Description
+      { wch: 11 }, // Ship Date
+      { wch: 10 }, // Buy
+      { wch: 10 }, // Sell
+      { wch: 8  }, // Qty
+      { wch: 13 }, // Freight Cost
+      { wch: 20 }, // Customer Freight Cost
+      { wch: 16 }, // Additional Costs
+      { wch: 12 }, // Bottle Cost
+      { wch: 10 }, // Bottle Qty
+      { wch: 18 }, // MPH Freight Bottles
+      { wch: 12 }, // Commission
+      { wch: 15 }, // IBC Total Cost
+      { wch: 18 }, // IBC Total Sell Price
+      { wch: 12 }, // Profit
+      { wch: 10 }, // Profit %
+    ]
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Margins')
+
+    const dateTag = `${startDate ?? 'all'}_${endDate ?? 'all'}`
+    XLSX.writeFile(wb, `margins-report-${dateTag}.xlsx`)
+  }
+
   const inputCls = 'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-white px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
 
   return (
@@ -164,7 +254,7 @@ export function MarginsClient() {
           >
             <option value="">All Vendors</option>
             {vendors.map(v => (
-              <option key={v.id} value={v.id}>{v.name}</option>
+              <option key={v.id} value={v.id}>{stripMphPrefix(v.name)}</option>
             ))}
           </select>
 
@@ -212,7 +302,19 @@ export function MarginsClient() {
       {!isLoading && rows !== null && rows.length > 0 && (
         <>
           <MarginsTable rows={rows} />
-          <p className="mt-3 text-[12px] text-[#6b7280]">Showing {rows.length} order{rows.length !== 1 ? 's' : ''}</p>
+          <div className="flex items-center justify-between mt-3">
+            <span className="text-[12px] text-[#6b7280]">
+              Showing {rows.length} order{rows.length !== 1 ? 's' : ''}
+            </span>
+            <button
+              onClick={handleExport}
+              disabled={!rows || rows.length === 0}
+              className="inline-flex items-center gap-2 rounded-md border border-[rgba(0,0,0,0.12)] bg-white px-3 py-1.5 text-[13px] font-medium text-[#171717] hover:bg-[#f9fafb] transition-colors disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              Export to Excel
+            </button>
+          </div>
         </>
       )}
     </div>

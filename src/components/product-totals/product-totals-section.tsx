@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import type { ProductTotal } from './aggregate-cards'
+import { stripMphPrefix } from '@/lib/utils/strip-mph-prefix'
 
 export type VendorTotal = {
   vendorId: string | null
@@ -137,7 +138,7 @@ export function ProductTotalsSection({
                 )}
                 {sortedVendors.map((r, i) => (
                   <tr key={`${r.vendorId}-${r.orderType}`} className={i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                    <td className="px-3 py-2 text-[13px] text-[#171717]">{r.vendorName}</td>
+                    <td className="px-3 py-2 text-[13px] text-[#171717]">{stripMphPrefix(r.vendorName)}</td>
                     <td className="px-3 py-2 text-[13px] text-[#171717]">{r.orderType}</td>
                     <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{fmtNum(r.totalQty)}</td>
                     <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{r.totalShipments}</td>

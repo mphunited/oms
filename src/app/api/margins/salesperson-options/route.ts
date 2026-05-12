@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { and, asc, eq, inArray } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { users } from '@/lib/db/schema'
@@ -25,7 +25,7 @@ export async function GET() {
     .where(
       and(
         eq(users.is_active, true),
-        inArray(users.role, ['ADMIN', 'CSR', 'SALES']),
+        eq(users.role, 'SALES'),
       )
     )
     .orderBy(asc(users.name))
