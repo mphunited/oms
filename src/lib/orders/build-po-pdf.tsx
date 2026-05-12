@@ -177,16 +177,6 @@ export function PurchaseOrderPDF({ order, splitLoads, vendor, companySetting }: 
             </View>
           </View>
 
-          {/* Row 4: Sales Order # (Alliance Hillsboro only) */}
-          {vendor?.name === 'MPH United / Alliance Container -- Hillsboro, TX' && (
-            <View style={S.rowBorder}>
-              <View style={S.cell}>
-                <Text style={S.lbl}>SALES ORDER #</Text>
-                <Text style={S.val}>{order.sales_order_number ?? '--'}</Text>
-              </View>
-            </View>
-          )}
-
         </View>
 
         {/* Line items */}

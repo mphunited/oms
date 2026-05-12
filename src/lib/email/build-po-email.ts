@@ -165,11 +165,6 @@ export function buildPoEmail(
   const below: string[] = []
 
   if (!isBlind) {
-    const salesNums = orders.map(o => o.sales_order_number).filter(Boolean)
-    if (salesNums.length > 0) {
-      below.push(`<p style="margin:6px 0;font-size:12pt;"><strong>Sales Order #:</strong> ${salesNums.join(', ')}</p>`)
-    }
-
     const carriers = [...new Set(orders.map(o => o.freight_carrier).filter(Boolean))]
     below.push(`<p style="margin:6px 0;font-size:12pt;"><strong>Ship Via:</strong> ${carriers.length > 0 ? carriers.join(', ') : '—'}</p>`)
 

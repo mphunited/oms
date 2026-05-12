@@ -189,19 +189,10 @@ export default function OrderDetailPage() {
               onChange={v => {
                 markDirty()
                 setVendorId(v)
-                if (vendorOptions.find(o => o.id === v)?.name !== 'MPH United / Alliance Container -- Hillsboro, TX') {
-                  setSalesOrderNumber('')
-                }
               }}
               placeholder="Choose vendor"
             />
           </div>
-          {vendorOptions.find(v => v.id === vendorId)?.name === 'MPH United / Alliance Container -- Hillsboro, TX' && (
-            <div className="space-y-1.5">
-              <Label>Sales Order #</Label>
-              <Input value={salesOrderNumber} onChange={e => setSalesOrderNumber(e.target.value)} placeholder="Sales order number" />
-            </div>
-          )}
         </div>
       </section>
 
