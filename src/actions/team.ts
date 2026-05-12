@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { users, userRoleEnum } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -63,6 +64,13 @@ export async function updateMember(
     permissions: string[];
   }
 ) {
+  const supabase = await createClient();
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+  if (!authUser || authError) throw new Error("Unauthorized");
+
+  const dbUser = await db.query.users.findFirst({ where: eq(users.id, authUser.id) });
+  if (!dbUser || dbUser.role !== "ADMIN") throw new Error("Forbidden: ADMIN role required");
+
   const [user] = await db.update(users)
     .set(data)
     .where(eq(users.id, userId))
