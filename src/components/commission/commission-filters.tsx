@@ -37,6 +37,13 @@ type Props = {
 }
 
 const COMMISSION_STATUS_PILLS = ['All', 'Not Eligible', 'Eligible', 'Paid'] as const
+
+function displayVendorName(name: string) {
+  if (!name) return name
+  if (name.startsWith('MPH United / ')) return name.replace('MPH United / ', '')
+  if (name === 'MPH United') return '—'
+  return name
+}
 const INVOICE_STATUS_PILLS = ['All', 'Not Invoiced', 'Invoiced', 'Paid'] as const
 
 function PillGroup({
@@ -107,7 +114,12 @@ export function CommissionFiltersBar({ filters, salespersons, customers, vendors
             onValueChange={v => onChange({ customerId: v === '_all' ? null : v })}
           >
             <SelectTrigger id="customer-filter" className="h-8 w-44 text-sm">
-              <SelectValue placeholder="All customers" />
+              <SelectValue>
+                {(value: string | undefined | null) => {
+                  if (!value) return 'All customers'
+                  return customers.find(c => c.id === value)?.name ?? value
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="_all">All customers</SelectItem>
@@ -125,7 +137,13 @@ export function CommissionFiltersBar({ filters, salespersons, customers, vendors
             onValueChange={v => onChange({ vendorId: v === '_all' ? null : v })}
           >
             <SelectTrigger id="vendor-filter" className="h-8 w-44 text-sm">
-              <SelectValue placeholder="All vendors" />
+              <SelectValue>
+                {(value: string | undefined | null) => {
+                  if (!value) return 'All vendors'
+                  const name = vendors.find(v => v.id === value)?.name
+                  return name ? displayVendorName(name) : value
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="_all">All vendors</SelectItem>
@@ -144,7 +162,12 @@ export function CommissionFiltersBar({ filters, salespersons, customers, vendors
               onValueChange={v => onChange({ salespersonId: v === '_all' ? '' : (v ?? '') })}
             >
               <SelectTrigger id="salesperson-filter" className="h-8 w-44 text-sm">
-                <SelectValue placeholder="All salespersons" />
+                <SelectValue>
+                  {(value: string | undefined | null) => {
+                    if (!value) return 'All salespersons'
+                    return salespersons.find(s => s.id === value)?.name ?? value
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="_all">All</SelectItem>
