@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -23,7 +23,6 @@ type Customer = {
 
 export default function CustomerDetailPage() {
   const { customerId } = useParams<{ customerId: string }>()
-  const router = useRouter()
 
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [loading, setLoading]   = useState(true)

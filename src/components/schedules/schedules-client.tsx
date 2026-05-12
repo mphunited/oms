@@ -15,7 +15,6 @@ import { Separator } from "@/components/ui/separator";
 import { CalendarDays, FileText, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getMonFri } from "@/lib/schedules/date-utils";
-import type { ScheduleEmailDraft } from "@/lib/schedules/email-utils";
 import { getMailToken } from "@/lib/email/msal-client";
 import { createDraft, attachFileToDraft, openDraft } from "@/lib/email/graph-mail";
 import { getUserSignature } from "@/lib/email/get-user-signature";
@@ -53,11 +52,7 @@ export function SchedulesClient() {
   const [vendorCount, setVendorCount] = useState<number | null>(null);
   const [frontlineCount, setFrontlineCount] = useState<number | null>(null);
 
-  const [adminEmailDraft, setAdminEmailDraft] = useState<ScheduleEmailDraft | null>(null);
-  const [vendorEmailDraft, setVendorEmailDraft] = useState<ScheduleEmailDraft | null>(null);
-  const [frontlineEmailDraft, setFrontlineEmailDraft] = useState<ScheduleEmailDraft | null>(null);
-
-  useEffect(() => {
+useEffect(() => {
     fetch("/api/vendors?active=true")
       .then((r) => r.json())
       .then((data: VendorOption[]) => {
@@ -256,7 +251,7 @@ export function SchedulesClient() {
       {/* Admin Schedule */}
       <div className="rounded-lg border border-border bg-card p-5 space-y-3">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Mike's Schedule</h2>
+          <h2 className="text-base font-semibold text-foreground">Mike{"'"}s Schedule</h2>
           <p className="text-xs text-muted-foreground mt-0.5">All active orders grouped by vendor. Includes pricing. Sent to Mike and David.</p>
         </div>
         <Separator />

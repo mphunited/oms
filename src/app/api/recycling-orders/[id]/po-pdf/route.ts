@@ -39,7 +39,6 @@ export async function GET(
 
     const companySetting = await db.query.company_settings.findFirst()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdf = await renderToBuffer(
       React.createElement(RecyclingPurchaseOrderPDF, {
         order: {

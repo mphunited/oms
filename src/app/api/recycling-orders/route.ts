@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { recycling_orders, users, vendors, customers } from '@/lib/db/schema'
-import { eq, and, or, ilike, inArray, notInArray, gte, lte, asc, count, sql } from 'drizzle-orm'
+import { eq, and, or, ilike, inArray, notInArray, gte, lte, count, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { createClient } from '@/lib/supabase/server'
 import { deriveInitials } from '@/lib/orders/commission-eligibility'

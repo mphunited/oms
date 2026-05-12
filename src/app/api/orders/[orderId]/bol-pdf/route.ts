@@ -50,7 +50,6 @@ export async function GET(
 
     console.log('[BOL PDF] weightMap (matched product_weights rows):', weightMap)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdf = await renderToBuffer(
       React.createElement(BillOfLadingPDF, {
         order,
@@ -58,6 +57,7 @@ export async function GET(
         vendor: vendor ?? null,
         companySetting: companySetting ?? null,
         weightMap,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any
     )
 

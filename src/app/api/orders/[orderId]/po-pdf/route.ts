@@ -75,7 +75,6 @@ export async function GET(
         split_loads: allLoads.filter(l => l.order_id === o.id),
       }))
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const pdf = await renderToBuffer(
         React.createElement(MultiShipToPDF, {
           group: { group_po_number: group.group_po_number },
@@ -103,13 +102,13 @@ export async function GET(
       .where(eq(order_split_loads.order_id, orderId))
       .orderBy(asc(order_split_loads.created_at))
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdf = await renderToBuffer(
       React.createElement(PurchaseOrderPDF, {
         order,
         splitLoads,
         vendor: vendor ?? null,
         companySetting: companySetting ?? null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any
     )
 

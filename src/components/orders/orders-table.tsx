@@ -175,7 +175,6 @@ export function OrdersTable() {
         setLoading(false)
       })
       .catch(err => { setError(err.message); setLoading(false) })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, filters.lifecycle, filters.statuses, filters.flagOnly,
       filters.vendorIds, filters.customerIds, filters.shipDateFrom, filters.shipDateTo,
       filters.salespersonIds, filters.csrIds, page, sortBy, sortDir, refreshTick])
@@ -195,7 +194,7 @@ export function OrdersTable() {
   }
 
   function toggleExpand(id: string) {
-    setExpandedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+    setExpandedIds(prev => { const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s })
   }
 
   async function toggleFlag(id: string, current: boolean) {
@@ -229,7 +228,7 @@ export function OrdersTable() {
   function toggleSelect(id: string) {
     setSelectedIds(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id); else next.add(id)
       return next
     })
   }

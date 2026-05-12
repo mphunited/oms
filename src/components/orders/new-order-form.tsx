@@ -35,7 +35,7 @@ export function NewOrderForm() {
   const router = useRouter()
   const {
     form, loads, setLoads, savedOrder, setSavedOrder, isSubmitting, submitError,
-    isAdmin, canUseManualPO, csrInitials, customers, vendors, salespersonOptions, csrOptions,
+    canUseManualPO, csrInitials, customers, vendors, salespersonOptions, csrOptions,
     carriers, statusOptions, onSubmit,
   } = useNewOrderForm()
 

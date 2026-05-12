@@ -81,6 +81,7 @@ export function BillOfLadingPDF({order,splitLoads,vendor,companySetting,weightMa
         {/* Header */}
         <View style={S.hRow}>
           {companySetting?.logo_url
+            // eslint-disable-next-line jsx-a11y/alt-text
             ? <Image src={companySetting.logo_url} style={S.logo}/>
             : <Text style={S.vBold}>{companySetting?.name??'MPH United'}</Text>}
           <Text style={S.hTitle}>Bill of Lading</Text>
@@ -220,7 +221,7 @@ export function BillOfLadingPDF({order,splitLoads,vendor,companySetting,weightMa
           </View>
         ))}
         <View style={{borderTopWidth:0.5,borderTopColor:BORDER,borderTopStyle:'solid'}}>
-          <Text style={S.legal}>Where the rate is dependent on value, shippers are required to state specifically in writing the agreed or declared value of the property as follows: "The agreed or declared value of the property is specifically stated by the shipper to be not exceeding _______________ per _______________."</Text>
+          <Text style={S.legal}>Where the rate is dependent on value, shippers are required to state specifically in writing the agreed or declared value of the property as follows: {'"'}The agreed or declared value of the property is specifically stated by the shipper to be not exceeding _______________ per _______________.{'"'}</Text>
         </View>
 
         {/* Legal Notice */}

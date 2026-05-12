@@ -15,7 +15,7 @@ async function requireAccountingOrAdmin(user: { id: string } | null) {
   return dbUser
 }
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

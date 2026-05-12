@@ -2,9 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
-import Link from 'next/link'
 import { ChevronLeft, FileText, Truck, Copy, Link2, Mail, Trash2 } from 'lucide-react'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
@@ -37,15 +35,14 @@ export default function OrderDetailPage() {
     salespersonId, setSalespersonId,
     customerId, setCustomerId,
     vendorId, setVendorId,
-    salesOrderNumber, setSalesOrderNumber,
     customerOptions, vendorOptions,
     emailingPo, emailingBol, emailingConfirmation,
     orderDate, setOrderDate,
     status, setStatus,
-    customerPo, setCustomerPo,
+    customerPo, _setCustomerPo,
     freightCarrier, setFreightCarrier,
-    shipDate, setShipDate,
-    wantedDate, setWantedDate,
+    shipDate, _setShipDate,
+    wantedDate, _setWantedDate,
     freightCost, setFreightCost,
     freightToCustomer, setFreightToCustomer,
     additionalCosts, setAdditionalCosts,

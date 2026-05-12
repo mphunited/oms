@@ -132,9 +132,7 @@ export function IbcRecyclingTable({ initialRows, userRole }: Props) {
     setSalespersonId('')
   }
 
-  const drawerRow = rows.find(r => r.id === drawerId) ?? null
-
-  const selectCls = 'h-8 rounded border border-border bg-background text-xs px-2'
+const selectCls = 'h-8 rounded border border-border bg-background text-xs px-2'
 
   return (
     <div className="p-6">

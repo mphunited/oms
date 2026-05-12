@@ -17,7 +17,7 @@ function getAdminClient() {
   );
 }
 
-export async function inviteMember(email: string, name: string, role: UserRole = "CSR") {
+export async function inviteMember(email: string, name: string, _role: UserRole = "CSR") {
   const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
   if (existing) return { user: existing, invited: false };
 

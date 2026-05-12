@@ -86,6 +86,7 @@ export function CreditMemoPdf({ memo, lineItems, customer, companySetting }: Pro
           </View>
           {co?.logo_url && (
             <View style={S.headerRight}>
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <Image src={co.logo_url} style={S.logo} />
             </View>
           )}

@@ -10,7 +10,7 @@ import type { OrderFormValues } from '@/lib/orders/order-form-schema'
 
 type RegisterFn = ReturnType<typeof useForm<OrderFormValues>>['register']
 
-export function BillToContactFields({ control, register, setValue, globalContacts = [] }: {
+export function BillToContactFields({ control, register: _register, setValue, globalContacts = [] }: {
   control: Control<OrderFormValues>
   register: RegisterFn
   setValue: UseFormSetValue<OrderFormValues>

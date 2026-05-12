@@ -10,7 +10,6 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
 } from "@react-pdf/renderer";
 import type { ScheduleOrderRow } from "./fetch-schedule-data";
 import { formatScheduleDate } from "./date-utils";
@@ -160,7 +159,7 @@ export function AdminSchedulePdf({
       <Page size="LETTER" orientation="landscape" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>MPH United — Mike's Schedule</Text>
+          <Text style={styles.headerTitle}>MPH United — Mike{"'"}s Schedule</Text>
           <Text style={styles.headerSub}>
             {formatScheduleDate(startDate)} — {formatScheduleDate(endDate)}
             {"   "}|{"   "}

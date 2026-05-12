@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
-import { InvoiceFilters, DEFAULT_INVOICE_FILTERS, type InvoiceFilters as FilterState } from './invoice-filters'
+import { InvoiceFilters, type InvoiceFilters as FilterState } from './invoice-filters'
 import { InvoiceRow, type InvoiceQueueRow } from './invoice-row'
 import { OrderSummaryDrawer } from '@/components/orders/order-summary-drawer'
 

@@ -141,7 +141,6 @@ export function OrderSummaryDrawer({ orderId, statusMeta, onClose }: OrderSummar
   useEffect(() => {
     if (!orderId) return
     fetchOrder(orderId)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
 
   return (

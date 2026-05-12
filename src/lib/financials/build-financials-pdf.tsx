@@ -95,6 +95,7 @@ export function ProductTotalsPdf({ startDate, endDate, productTotals, vendorTota
         {/* Header */}
         <View style={S.header}>
           <View>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={S.logo} src={LOGO} />
           </View>
           <View style={S.headerRight}>

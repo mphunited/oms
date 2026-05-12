@@ -2,7 +2,7 @@
 
 import { toast } from 'sonner'
 import { getMailTokenResilient, isTokenError } from '@/lib/email/msal-client-resilient'
-import { createDraftResilient, attachFileToDraftResilient, GraphAPIError } from '@/lib/email/graph-mail-resilient'
+import { createDraftResilient, attachFileToDraftResilient } from '@/lib/email/graph-mail-resilient'
 import { openDraft } from '@/lib/email/graph-mail'
 import { tokenCache } from '@/lib/email/token-cache'
 import { logEmailError } from '@/lib/email/error-logger'

@@ -3,7 +3,6 @@
 import { Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 
 export type ChecklistItem = {
   label: string

@@ -115,6 +115,7 @@ export function RecyclingPurchaseOrderPDF({ order, customer, vendor, companySett
         <View style={S.headerRow}>
           <View>
             {companySetting?.logo_url
+              // eslint-disable-next-line jsx-a11y/alt-text
               ? <Image src={companySetting.logo_url} style={S.logo} />
               : <Text style={S.valBold}>{companySetting?.name ?? 'MPH United'}</Text>}
           </View>

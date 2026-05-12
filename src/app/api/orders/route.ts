@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { orders, order_split_loads, users, vendors, customers, order_type_configs, order_groups, type NewOrderSplitLoad } from '@/lib/db/schema'
-import { eq, sql, desc, and, or, ilike, inArray, notInArray, gte, lte, count } from 'drizzle-orm'
+import { eq, sql, and, or, ilike, inArray, notInArray, gte, lte, count } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { createClient } from '@/lib/supabase/server'
 import { deriveLoadCommissionStatus, deriveOrderCommissionStatus, deriveInitials } from '@/lib/orders/commission-eligibility'
