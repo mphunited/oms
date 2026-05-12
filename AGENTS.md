@@ -29,6 +29,25 @@ If you have not read it, stop and read it now. Do not proceed on memory alone.**
 
 ---
 
+## ⛔ DO NOT RE-ADD — PERMANENT REMOVALS
+
+These items were deliberately removed. Do not re-add them under any
+circumstances, regardless of what seems logical or what prior code
+suggests. If a task seems to require one of these, stop and re-read
+PRD.md before proceeding.
+
+| What | Removed From | Why |
+|------|-------------|-----|
+| Sales Order # field | new-order-form.tsx, orders/[orderId]/page.tsx, build-po-pdf.tsx, build-po-email.ts | Removed 2026-04-28 by business decision. Column retained in schema and API payloads for historical data only. Do not render, display, or output it anywhere. |
+| Outlook Web deeplinks | All email flows | Replaced by Microsoft Graph API drafts. Never use mailto: or Outlook web URL construction for email. |
+| next-auth | package.json | Auth is Supabase Auth + @supabase/ssr. Do not re-add. |
+| Prisma | package.json | ORM is Drizzle only. Do not re-add. |
+| /financials route | App router | Deleted intentionally. Do not recreate. |
+| Greeting modal | Email flows | Email greeting is derived automatically from vendor.name. No modal. |
+| Button asChild | All components | @base-ui/react does not support this prop. Use styled native Link elements instead. |
+
+---
+
 ## NEXT.JS VERSION WARNING
 
 This project uses Next.js 16. This version has breaking changes — APIs, conventions, and
@@ -157,6 +176,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - PO PDF background color is #ffffff (white). Constant: PAGE_BG in build-po-pdf.tsx.
     - Sales Order # field removed from PO PDF and all order forms as of 2026-04-28.
       Column retained in schema for historical data only. Do not re-add to any UI or PDF.
+      See ⛔ DO NOT RE-ADD section above.
     - BOL signature boxes: Shipper and Carrier boxes each have a spacer <Text> element
       between the "Signature:" label and the signing underline. Consignee box has no
       signing line.
