@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { FileDown, Loader2 } from 'lucide-react'
 import { AggregateCards, type ProductTotal } from './aggregate-cards'
 import { ProductTotalsSection, type VendorTotal } from './product-totals-section'
-import { CustomerFrequencySection } from './customer-frequency-section'
 import { RecyclingTotalsSection, type RecyclingData } from './recycling-totals-section'
 
 function getYearBounds() {
@@ -18,7 +17,7 @@ function SectionDivider() {
   return <hr className="border-t border-[#f3f4f6] my-8" />
 }
 
-export function FinancialsClient() {
+export function ProductTotalsClient() {
   const { start: defaultStart, end: defaultEnd } = getYearBounds()
   const [startDate, setStartDate] = useState(defaultStart)
   const [endDate, setEndDate] = useState(defaultEnd)
@@ -34,15 +33,15 @@ export function FinancialsClient() {
     try {
       const qs = `startDate=${startDate}&endDate=${endDate}`
       const [pRes, rRes] = await Promise.all([
-        fetch(`/api/financials/product-totals?${qs}`),
-        fetch(`/api/financials/recycling-totals?${qs}`),
+        fetch(`/api/product-totals/product-totals?${qs}`),
+        fetch(`/api/product-totals/recycling-totals?${qs}`),
       ])
       if (!pRes.ok || !rRes.ok) throw new Error('Failed to load data')
       const [pJson, rJson] = await Promise.all([pRes.json(), rRes.json()])
       setProductData(pJson)
       setRecyclingData(rJson)
     } catch {
-      setError('Failed to load financials data. Please try again.')
+      setError('Failed to load data. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -54,13 +53,13 @@ export function FinancialsClient() {
     setPdfLoading(true)
     try {
       const qs = `startDate=${startDate}&endDate=${endDate}`
-      const res = await fetch(`/api/financials/pdf?${qs}`)
+      const res = await fetch(`/api/product-totals/pdf?${qs}`)
       if (!res.ok) throw new Error('PDF generation failed')
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `financials-${startDate}-${endDate}.pdf`
+      a.download = `product-totals-${startDate}-${endDate}.pdf`
       a.click()
       URL.revokeObjectURL(url)
     } catch {
@@ -75,7 +74,7 @@ export function FinancialsClient() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-[#171717]" style={{ letterSpacing: '-0.96px' }}>
-          Financials
+          Product Totals
         </h1>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -131,12 +130,7 @@ export function FinancialsClient() {
 
       <SectionDivider />
 
-      {/* Section 2 — Customer Order Frequency */}
-      <CustomerFrequencySection startDate={startDate} endDate={endDate} />
-
-      <SectionDivider />
-
-      {/* Section 3 — Recycling Totals */}
+      {/* Section 2 — Recycling Totals */}
       <RecyclingTotalsSection data={recyclingData} />
     </div>
   )

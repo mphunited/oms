@@ -54,7 +54,6 @@ const S = StyleSheet.create({
 
 type ProductRow = { orderType: string; totalQty: number; totalShipments: number }
 type VendorRow  = { vendorName: string; orderType: string; totalQty: number; totalShipments: number }
-type CustomerRow = { customerName: string; period: string; orderCount: number }
 type RecyclingRow = { vendorName: string; totalQty: number; totalOrders: number }
 
 type Props = {
@@ -62,7 +61,6 @@ type Props = {
   endDate: string
   productTotals: ProductRow[]
   vendorTotals: VendorRow[]
-  customerRows: CustomerRow[]
   ibcTotals: RecyclingRow[]
   drumTotals: RecyclingRow[]
 }
@@ -73,9 +71,8 @@ function aggregateCards(productTotals: ProductRow[]) {
     const matching = productTotals.filter(r => set.has(r.orderType))
     return { qty: matching.reduce((a, r) => a + r.totalQty, 0), shipments: matching.reduce((a, r) => a + r.totalShipments, 0) }
   }
-  const containsFilter = (fragment: string) => productTotals.filter(r => r.orderType.includes(fragment))
   const sumContains = (fragment: string) => {
-    const matching = containsFilter(fragment)
+    const matching = productTotals.filter(r => r.orderType.includes(fragment))
     return { qty: matching.reduce((a, r) => a + r.totalQty, 0), shipments: matching.reduce((a, r) => a + r.totalShipments, 0) }
   }
   return [
@@ -89,29 +86,8 @@ function aggregateCards(productTotals: ProductRow[]) {
   ]
 }
 
-function fmtPeriod(p: string): string {
-  if (!p) return ''
-  const d = new Date(p + 'T00:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-}
-
-export function FinancialsPdf({ startDate, endDate, productTotals, vendorTotals, customerRows, ibcTotals, drumTotals }: Props) {
+export function ProductTotalsPdf({ startDate, endDate, productTotals, vendorTotals, ibcTotals, drumTotals }: Props) {
   const cards = aggregateCards(productTotals)
-
-  // Pivot customer rows for the table
-  const periodSet = new Set<string>()
-  for (const r of customerRows) if (r.period) periodSet.add(r.period)
-  const periods = Array.from(periodSet).sort().slice(0, 6) // cap at 6 periods for PDF width
-
-  type CustEntry = { name: string; total: number; counts: Record<string, number> }
-  const custMap = new Map<string, CustEntry>()
-  for (const r of customerRows) {
-    if (!custMap.has(r.customerName)) custMap.set(r.customerName, { name: r.customerName, total: 0, counts: {} })
-    const e = custMap.get(r.customerName)!
-    e.counts[r.period] = (e.counts[r.period] ?? 0) + r.orderCount
-    e.total += r.orderCount
-  }
-  const custRows = Array.from(custMap.values()).sort((a, b) => b.total - a.total)
 
   return (
     <Document>
@@ -123,7 +99,7 @@ export function FinancialsPdf({ startDate, endDate, productTotals, vendorTotals,
           </View>
           <View style={S.headerRight}>
             <Text style={S.companyName}>MPH United</Text>
-            <Text style={S.title}>Financials Report</Text>
+            <Text style={S.title}>Product Totals Report</Text>
             <Text style={S.dateRange}>
               {fmtDate(startDate)} — {fmtDate(endDate)}
             </Text>
@@ -191,28 +167,9 @@ export function FinancialsPdf({ startDate, endDate, productTotals, vendorTotals,
         </View>
       </Page>
 
-      {/* Page 2: Customer Orders + Recycling */}
+      {/* Page 2: Recycling Totals */}
       <Page size="A4" orientation="landscape" style={S.page}>
-        <Text style={S.sectionHdr}>Customer Order Frequency</Text>
-        <View style={S.thead}>
-          <Text style={[S.theadCell, { width: '22%' }]}>Customer</Text>
-          <Text style={[S.theadCell, { width: '8%', textAlign: 'right' }]}>Total</Text>
-          {periods.map(p => (
-            <Text key={p} style={[S.theadCell, { flex: 1, textAlign: 'right' }]}>{fmtPeriod(p)}</Text>
-          ))}
-        </View>
-        {custRows.map((r, i) => (
-          <View key={r.name} style={i % 2 === 0 ? S.trow : S.trowAlt}>
-            <Text style={[S.cellText, { width: '22%' }]}>{r.name}</Text>
-            <Text style={[S.cellText, { width: '8%', textAlign: 'right' }]}>{r.total}</Text>
-            {periods.map(p => (
-              <Text key={p} style={[S.cellText, { flex: 1, textAlign: 'right' }]}>{r.counts[p] ?? 0}</Text>
-            ))}
-          </View>
-        ))}
-
-        {/* Recycling Totals */}
-        <Text style={[S.sectionHdr, { marginTop: 20 }]}>Recycling Orders</Text>
+        <Text style={S.sectionHdr}>Recycling Orders</Text>
         <Text style={S.note}>Recycling totals are not included in Product Totals above.</Text>
         <View style={S.row2col}>
           <View style={S.col}>

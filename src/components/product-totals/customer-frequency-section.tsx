@@ -61,7 +61,7 @@ export function CustomerFrequencySection({ startDate, endDate }: { startDate: st
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const base = `/api/financials/customer-orders?startDate=${startDate}&endDate=${endDate}&granularity=${granularity}`
+      const base = `/api/product-totals/customer-orders?startDate=${startDate}&endDate=${endDate}&granularity=${granularity}`
       if (tab === 'single' && selectedCustomer) {
         const res = await fetch(`${base}&customerId=${selectedCustomer}`)
         const json = await res.json()

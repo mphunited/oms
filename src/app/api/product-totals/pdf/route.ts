@@ -3,8 +3,8 @@ import { and, eq, gte, lte, sql } from 'drizzle-orm'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
-import { orders, order_split_loads, customers, vendors, recycling_orders, users } from '@/lib/db/schema'
-import { FinancialsPdf } from '@/lib/financials/build-financials-pdf'
+import { orders, order_split_loads, vendors, recycling_orders, users } from '@/lib/db/schema'
+import { ProductTotalsPdf } from '@/lib/financials/build-financials-pdf'
 
 export const runtime = 'nodejs'
 
@@ -26,7 +26,6 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const startDate = searchParams.get('startDate') ?? ''
   const endDate = searchParams.get('endDate') ?? ''
-  const customerId = searchParams.get('customerId')
 
   // Product totals
   const slConditions = []
@@ -60,23 +59,6 @@ export async function GET(req: NextRequest) {
     .orderBy(vendors.name, sql`COALESCE(${order_split_loads.order_type}, 'Other — Parts & Supplies') ASC`),
   ])
 
-  // Customer orders (all customers or specific customer)
-  const custConditions = [...slConditions]
-  if (customerId) custConditions.push(eq(orders.customer_id, customerId))
-
-  const customerRows = await db
-    .select({
-      customerName: customers.name,
-      period: sql<string>`DATE_TRUNC('month', ${order_split_loads.ship_date}::date)::text`,
-      orderCount: sql<number>`COUNT(DISTINCT ${orders.id})::int`,
-    })
-    .from(order_split_loads)
-    .innerJoin(orders, eq(order_split_loads.order_id, orders.id))
-    .innerJoin(customers, eq(orders.customer_id, customers.id))
-    .where(custConditions.length ? and(...custConditions) : undefined)
-    .groupBy(customers.name, sql`DATE_TRUNC('month', ${order_split_loads.ship_date}::date)`)
-    .orderBy(customers.name, sql`DATE_TRUNC('month', ${order_split_loads.ship_date}::date) ASC`)
-
   // Recycling totals
   const rcConditions = []
   if (startDate) rcConditions.push(gte(recycling_orders.pick_up_date, startDate))
@@ -96,7 +78,7 @@ export async function GET(req: NextRequest) {
     .orderBy(vendors.name)
 
   const buf = await renderToBuffer(
-    FinancialsPdf({
+    ProductTotalsPdf({
       startDate,
       endDate,
       productTotals: productRows.map(r => ({
@@ -110,11 +92,6 @@ export async function GET(req: NextRequest) {
         totalQty: r.totalQty ? parseFloat(r.totalQty) : 0,
         totalShipments: r.totalShipments ?? 0,
       })),
-      customerRows: customerRows.map(r => ({
-        customerName: r.customerName ?? '(Unknown)',
-        period: r.period ?? '',
-        orderCount: r.orderCount ?? 0,
-      })),
       ibcTotals: recyclingRows
         .filter(r => r.recyclingType === 'IBC')
         .map(r => ({ vendorName: r.vendorName ?? '(No vendor)', totalQty: r.totalQty ? parseFloat(r.totalQty) : 0, totalOrders: r.totalOrders ?? 0 })),
@@ -127,7 +104,7 @@ export async function GET(req: NextRequest) {
   return new NextResponse(new Uint8Array(buf), {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="financials-${startDate}-${endDate}.pdf"`,
+      'Content-Disposition': `attachment; filename="product-totals-${startDate}-${endDate}.pdf"`,
     },
   })
 }

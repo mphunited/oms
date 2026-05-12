@@ -3,11 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { users } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
-import { FinancialsClient } from '@/components/financials/financials-client'
+import { ProductTotalsClient } from '@/components/product-totals/product-totals-client'
 
-export const metadata = { title: 'Financials — MPH United' }
+export const metadata = { title: 'Product Totals — MPH United' }
 
-export default async function FinancialsPage() {
+export default async function ProductTotalsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -24,5 +24,5 @@ export default async function FinancialsPage() {
     redirect('/dashboard')
   }
 
-  return <FinancialsClient />
+  return <ProductTotalsClient />
 }

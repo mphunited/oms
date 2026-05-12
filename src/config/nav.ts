@@ -105,8 +105,8 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["ADMIN", "ACCOUNTING"],
   },
   {
-    title: "Financials",
-    href: "/financials",
+    title: "Product Totals",
+    href: "/product-totals",
     icon: BarChart2,
     roles: ["ADMIN", "ACCOUNTING"],
   },
