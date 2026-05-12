@@ -70,8 +70,9 @@ and permissions afterward via /team page.
 | ORM | Drizzle ORM — Prisma was removed, do not re-add it |
 | Hosting | Vercel Pro (Jack's seat) |
 | UI | shadcn/ui + Tailwind CSS |
-| Charts | Recharts (listed but NOT YET INSTALLED — run `npm install recharts` before use) |
+| Charts | Recharts — installed. Do not install again.|
 | PDFs | @react-pdf/renderer |
+| Excel export | xlsx (SheetJS) — used in Margins report export                            |
 | Auth | Supabase Auth + Microsoft Entra SSO |
 | Theme | next-themes (light/dark toggle) |
 | Repository | github.com/mphunited/oms |
@@ -673,6 +674,9 @@ qb_invoice_number, checklist (fresh from vendor template), buy/sell, group_id (n
 | /schedules | Weekly schedule generation | 1 — Done |
 | /commission | Commission report. Shows ALL split loads for commission-eligible salespersons (regardless of order type eligibility). Filters: Search (order number, customer PO, customer name, vendor name), Customer, Vendor, Salesperson, Commission Status pills (Not Eligible \| Eligible \| Paid), Invoice Status pills (Not Invoiced \| Invoiced \| Paid). Inline order_type editing per row — calls PATCH /api/commission/split-load/[splitLoadId], re-derives commission_status live. Route guard: SALES without can_view_commission → /dashboard. | 1 — Done |
 | /invoicing | Invoice Queue + Credit Memos tabs. ACCOUNTING + ADMIN only. Filters: Search (matches order_number, customer_po, order_number_override, group_po_number), Customer, Vendor, CSR, Salesperson (single-select), Invoice Status (multi-select), Ship Date range. All persisted in URL params. Client-side filtering — full queue loads without pagination. | 1 — Done |
+| /product-totals | Product totals + recycling totals + PDF export. ADMIN + ACCOUNTING only. | 1 — Done |
+| /margins | Margin report: regular single-load orders, per-order row, all filters, Excel export. ADMIN + ACCOUNTING only. | 1 — Done |
+| /order-frequency | Grouped bar chart: Orders Placed vs Orders Shipped per month. Customer + Ship To filters. ADMIN + ACCOUNTING only. | 1 — Done |
 | /settings | Carriers, Order Statuses, Company Settings, Order Number preview, Order Types, Product Weights | 1 — Done |
 | /global-emails | Global email contact directory. All roles view/add/edit. ADMIN only deletes. | 1 — Done |
 | /team | User management — ADMIN only | 1 — Done |
@@ -713,10 +717,14 @@ qb_invoice_number, checklist (fresh from vendor template), buy/sell, group_id (n
 | /api/global-emails/[id] | PUT update; DELETE (ADMIN only) | 1 — Done |
 | /api/product-weights | GET all; POST/PUT/DELETE (ADMIN only for writes) | 1 — Done |
 | /api/dashboard | GET dashboard stats | 1 — Done |
-| GET /api/financials/product-totals | Returns product totals + vendor totals for regular orders by ship_date range |
-| GET /api/financials/customer-orders | Returns order counts per customer by period (monthly or quarterly) |
-| GET /api/financials/recycling-totals | Returns IBC and Drum totals from recycling_orders by pick_up_date range |
-| GET /api/financials/pdf | Generates landscape A4 PDF of all financial data tables |
+| GET /api/product-totals/product-totals | Returns product totals + vendor totals for regular orders by ship_date range | 1 — Done |
+| GET /api/product-totals/customer-orders | Returns monthly/quarterly order counts per customer | 1 — Done |
+| GET /api/product-totals/recycling-totals | Returns IBC and Drum totals from recycling_orders by pick_up_date range | 1 — Done |
+| GET /api/product-totals/pdf | Generates landscape A4 PDF (product totals + recycling totals). export const runtime = 'nodejs' | 1 — Done |
+| GET /api/margins | Single-load orders only; excludes Canceled + W&R Program; all filters; computes IBC costs, Commission, Profit | 1 — Done |
+| GET /api/margins/ship-to-options | Distinct ship_to locations for a customer; shared with /order-frequency | 1 — Done |
+| GET /api/margins/salesperson-options | Active users WHERE role = 'SALES' only | 1 — Done |
+| GET /api/order-frequency | Returns orderDateSeries + shipDateSeries; zero-fills all months in range | 1 — Done |
 
 ---
 
@@ -813,7 +821,7 @@ Currently applies to Renee Sauvageau only.
 - Email notifications
 - Vendor stock sheet tracking in-app
 - Alliance Hillsboro collaborative schedule
-- Financials tab with charts (/financials was deleted — do not recreate)
+- /financials route was deleted and must not be recreated. Product Totals (/product-totals), Margins (/margins), and Order Frequency (/order-frequency) were built in Phase 1 under separate routes.
 - Audit log UI
 - Salesperson margin calculator, quote forms, performance dashboard
 - Mobile-responsive optimization
@@ -945,6 +953,8 @@ src/lib/recycling/use-edit-drum-form.ts
 src/lib/recycling/use-recycling-po-email.ts — Graph API PO email hook
 src/lib/orders/badge-colors.ts      — getBadgeColor(), getBadgeTextColor()
 src/lib/utils/format-date.ts        — formatDate() MM/DD/YYYY display helper
+src/lib/utils/strip-mph-prefix.ts        — strips "MPH United / " prefix from vendor name
+                                           strings at render time; use wherever vendor names display
 src/lib/schedules/                  — schedule PDF builders, fetching, date utils
 src/components/orders/order-summary-drawer.tsx
 src/components/orders/order-row.tsx — ChecklistPopup and NotesPopup
@@ -957,6 +967,14 @@ src/components/recycling/edit-drum-form.tsx
 src/components/recycling/recycling-order-summary-drawer.tsx
 src/components/commission/          — commission report components
 src/components/settings/            — settings page section components
+src/components/product-totals/product-totals-client.tsx — main shell; owns shared date range state
+src/components/product-totals/product-totals-section.tsx — two sortable tables; vendor names use stripMphPrefix()
+src/components/product-totals/aggregate-cards.tsx — 7 computed summary cards
+src/components/product-totals/customer-frequency-section.tsx — preserved; not rendered on product-totals page
+src/components/product-totals/recycling-totals-section.tsx — IBC and Drum sub-tables; vendor names use stripMphPrefix()
+src/components/margins/margins-client.tsx — two-row filter bar; Export to Excel in filter bar row 2
+src/components/margins/margins-table.tsx — 21-column table; Commission "—" when ineligible; Profit % color-coded
+src/components/order-frequency/order-frequency-client.tsx — grouped bar chart; summary cards; data table
 src/components/global-emails/global-emails-client.tsx
 src/app/(dashboard)/                — all authenticated pages
 src/app/(dashboard)/recycling/page.tsx          — redirects to /recycling/ibcs
@@ -966,6 +984,17 @@ src/app/(dashboard)/recycling/ibcs/[id]/page.tsx
 src/app/(dashboard)/recycling/drums/page.tsx
 src/app/(dashboard)/recycling/drums/new/page.tsx
 src/app/(dashboard)/recycling/drums/[id]/page.tsx
+src/app/(dashboard)/product-totals/page.tsx — server component; ADMIN + ACCOUNTING role redirect
+src/app/(dashboard)/margins/page.tsx        — server component; ADMIN + ACCOUNTING role redirect
+src/app/(dashboard)/order-frequency/page.tsx — server component; ADMIN + ACCOUNTING role redirect
+src/app/api/product-totals/product-totals/route.ts
+src/app/api/product-totals/customer-orders/route.ts
+src/app/api/product-totals/recycling-totals/route.ts
+src/app/api/product-totals/pdf/route.ts    — export const runtime = 'nodejs'
+src/app/api/margins/route.ts
+src/app/api/margins/ship-to-options/route.ts — shared with order-frequency
+src/app/api/margins/salesperson-options/route.ts
+src/app/api/order-frequency/route.ts
 src/app/(auth)/login/               — login page
 src/app/api/recycling-orders/route.ts
 src/app/api/recycling-orders/[id]/route.ts
@@ -991,12 +1020,163 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-us-west-2.pooler.supab
 
 DATABASE_URL must NOT be prefixed with NEXT_PUBLIC_. It is server-only.
 
-## 28. Financial Section
+## 28. Product Totals
 
-Route: /financials
+Route: /product-totals
 Access: ADMIN and ACCOUNTING roles only. Server-side redirect for all other roles.
-All four API routes return 403 for unauthorized roles.
-Nav icon: BarChart2. Recharts is installed as of this sprint.
+All API routes under /api/product-totals/ return 403 for unauthorized roles.
+Nav icon: BarChart2.
+
+### Features
+
+**Product Totals (regular orders)**
+- Data source: order_split_loads JOIN orders
+- Date filter: order_split_loads.ship_date
+- Left table: Product | Total QTY | Total Shipments (sorted by product name)
+- Right table: Vendor | Product | Total QTY | Total Shipments (grouped by vendor_id)
+- Vendor names rendered via stripMphPrefix() utility
+- Vendor totals ALWAYS join by vendor_id — never group by vendor name text
+- Total QTY = SUM(order_split_loads.qty)
+- Total Shipments = COUNT(DISTINCT order_id) per product type
+- Shipment counting rule: one order = one truck = one shipment per product type.
+  Mixed-type orders give each product type independent shipment credit.
+  This is intentional and matches the existing Excel workbook behavior.
+- Null order_type rows grouped under "Other — Parts & Supplies"
+- Both tables sortable by column header click
+
+**Aggregate Summary Cards**
+Computed client-side from product-totals API response. No separate query.
+
+| Card | order_type values included |
+|---|---|
+| Total New Poly Drums | 55 Gal New OH Poly Drum, 55 Gal New TH Poly Drum |
+| Total Washout Drums | 55 Gal Washout OH Poly Drum, 55 Gal Washout TH Poly Drum |
+| Total Steel Drums | 55 Gal New OH Steel Drum, 55 Gal New TH Steel Drum |
+| Total All Drums | All 6 drum types above |
+| Total 275 Gal IBCs | All order_types containing "275 Gal" |
+| Total 330 Gal IBCs | All order_types containing "330 Gal" |
+| Total 135 Gal IBCs | All order_types containing "135 Gal" |
+
+Each card shows Total QTY and Total Shipments.
+Washout Drums intentionally excluded from Total New Poly Drums.
+
+**Recycling Totals (separate section)**
+- Data source: recycling_orders
+- Date filter: pick_up_date (UI label: "Ship Date")
+- IBC sub-table: recycling_type = 'IBC', grouped by vendor_id
+- Drum sub-table: recycling_type = 'Drum', grouped by vendor_id
+- Columns: Vendor | Total QTY | Total Orders
+- Vendor names rendered via stripMphPrefix()
+- Disclaimer: "Recycling totals are not included in Product Totals above."
+
+**PDF Export**
+- Route: GET /api/product-totals/pdf
+- export const runtime = 'nodejs' required
+- Landscape A4, 2 pages
+- Page 1: MPH logo header + date range + aggregate cards + product totals tables
+- Page 2: recycling totals tables only (customer order pivot removed)
+- No charts in PDF — data tables only
+
+### Future Considerations
+- Salesperson access: deferred. Buy/margin data exposure to SALES role requires deliberate review.
+- Seasonal alerts: deferred to Phase 3.
+
+---
+
+## 29. Margins
+
+Route: /margins
+Access: ADMIN and ACCOUNTING roles only.
+Nav icon: TrendingUp.
+
+### Included orders
+- Exactly one order_split_loads row (split-load orders excluded)
+- orders.status != 'Canceled'
+- order_type is NOT '275 Gal IBC Wash & Return Program'
+  and NOT '330 Gal IBC Wash & Return Program'
+- Recycling orders never appear on this page
+
+### Filters
+- Date range — filters on COALESCE(osl.ship_date, orders.ship_date)
+- Customer dropdown
+- Ship To dropdown — populated from DISTINCT orders.ship_to for selected customer;
+  disabled until customer selected; resets when customer changes.
+  Composite key: CONCAT(ship_to->>'name','|',ship_to->>'city','|',ship_to->>'state')
+  Label format: "name, city, state"
+- Vendor dropdown — vendor names rendered via stripMphPrefix()
+- Salesperson dropdown — active users WHERE role = 'SALES' only
+  (route: /api/margins/salesperson-options)
+- Search bar — matches customer name, order_number, vendor name (ILIKE)
+- All filters default to All. Run Report button triggers fetch.
+
+### Results table — one row per qualifying order
+Columns: Salesperson | MPH PO | Vendor | Customer | Ship To | Description |
+  Ship Date | Buy | Sell | Qty | Freight Cost | Customer Freight Cost |
+  Additional Costs | Bottle Cost | Bottle Qty | MPH Freight Bottles |
+  Commission | IBC Total Cost | IBC Total Sell Price | Profit | Profit %
+
+Display rules:
+- Salesperson: first name only
+- Vendor: stripMphPrefix() applied
+- Description: line-clamp-3, whitespace-normal, max-w-xs
+- Commission: shown as dollar amount when eligible; "—" when not eligible
+- Profit %: red (#ef4444) when < 8%, green (#10b981) when >= 8%
+- Null numerics: "—"
+
+### Computed columns
+- IBC Total Cost = (bottle_cost × bottle_qty) + mph_freight_bottles + additional_costs
+  Note: additional_costs is order-level; repeats on each row if multiple loads existed.
+- IBC Total Sell Price = (sell × qty) + freight_to_customer
+- Commission Amount = qty × $3 when order_type_configs.is_commission_eligible = true, else 0 (shown as "—")
+- Profit uses the canonical formula from Section 7
+- Profit % = Profit ÷ (sell × qty + freight_to_customer)
+- mph_freight_bottles used directly in IBC Total Cost;
+  used as (mph_freight_bottles / 90) × bottle_qty in Profit — intentionally different.
+- Commission eligibility always driven by order_type_configs — never hardcoded.
+
+### Excel Export
+- Export to Excel button in filter bar row 2, right of Run Report
+- Disabled when no rows loaded; exports currently loaded rows (no re-fetch)
+- Currency columns: $#,##0.00 format. Profit %: 0.0% format.
+- Filename: margins-report-[startDate]_[endDate].xlsx
+- Library: xlsx (SheetJS)
+
+### API Routes
+- GET /api/margins — main data route
+- GET /api/margins/ship-to-options — distinct ship_to locations for a customer; shared with /order-frequency
+- GET /api/margins/salesperson-options — active users WHERE role = 'SALES'
+
+---
+
+## 30. Order Frequency
+
+Route: /order-frequency
+Access: ADMIN and ACCOUNTING roles only.
+Nav icon: Activity.
+
+### Filters
+- Date range (Start Date / End Date)
+- Customer dropdown (required — Run Report disabled until selected)
+- Ship To dropdown — reuses /api/margins/ship-to-options; label format "name, city, state"
+
+### Chart
+- Recharts grouped bar chart, two bar series per month
+- "Orders Placed" (navy #1a2744): COUNT(DISTINCT orders.id) by DATE_TRUNC('month', orders.order_date)
+- "Orders Shipped" (blue #3b82f6): COUNT(DISTINCT orders.id) by DATE_TRUNC('month', effective_ship_date)
+  Effective ship date = COALESCE(MIN(order_split_loads.ship_date), orders.ship_date)
+- X-axis: month labels ("Jan 2025"). Y-axis: order count.
+- Zero-count months always included in both series (API fills gaps)
+- Canceled orders excluded
+- Chart title: "{customerName}" or "{customerName} — {shipToLabel}" when Ship To selected
+
+### Below chart
+- Summary cards: Total Orders Placed, Total Orders Shipped, Date Range
+- Data table: Month | Orders Placed | Orders Shipped (all months, including zeros, chronological)
+
+### API Route
+- GET /api/order-frequency — params: startDate, endDate, customerId, shipToKey
+  Returns: { orderDateSeries: [{month, count}], shipDateSeries: [{month, count}], customerName }
+  Zero-fills every month in range for both series.
 
 ### Features
 
@@ -1064,6 +1244,12 @@ included in the poly drum card.
 - Seasonal alerts: deferred to Phase 3. Requires recurrence pattern logic, minimum
   sample size definition, alert delivery mechanism, and dismissal state.
 ---
+
+*Last updated: May 2026 — /financials renamed to /product-totals; Customer Order Frequency
+moved to new /order-frequency page (Section 30); /margins page added (Section 29) for
+single-load order margin reporting with IBC cost/sell columns, Commission column, Profit,
+and Excel export; stripMphPrefix utility applied to all vendor name displays; Recharts
+confirmed installed; xlsx (SheetJS) added for Margins Excel export.*
 
 *Last updated: May 2026 — Financial section built (Section 28): /financials route added
 for ADMIN + ACCOUNTING roles; product totals with vendor breakdown; 7 aggregate summary
