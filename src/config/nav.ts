@@ -13,6 +13,7 @@ import {
   SlidersHorizontal,
   AtSign,
   BarChart2,
+  TrendingUp,
 } from "lucide-react";
 
 export type NavItem = {
@@ -108,6 +109,12 @@ export const NAV_ITEMS: NavItem[] = [
     title: "Product Totals",
     href: "/product-totals",
     icon: BarChart2,
+    roles: ["ADMIN", "ACCOUNTING"],
+  },
+  {
+    title: "Margins",
+    href: "/margins",
+    icon: TrendingUp,
     roles: ["ADMIN", "ACCOUNTING"],
   },
   {
