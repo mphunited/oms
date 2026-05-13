@@ -715,6 +715,17 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 
 ---
 
+## CODE QUALITY
+
+Lint: `npm run lint` (scoped to `src/` as of 2026-05-12). Target: 0 errors.
+One known deferred warning: `credit-memo-form.tsx` react-hooks/exhaustive-deps
+(`today` dependency, low risk). **Do not attempt to resolve this warning** —
+it is intentionally deferred and tracked here.
+Never run lint fixes blindly. Address errors only; leave warnings that appear
+in this file alone.
+
+---
+
 ## PACKAGE DISCIPLINE — READ BEFORE ADDING ANY DEPENDENCY
 
 Before installing any new npm package, you must:
