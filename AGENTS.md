@@ -669,6 +669,15 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     6. Run the Supabase security advisor to confirm zero critical errors.
     Never run npm audit fix --force — the esbuild advisory in drizzle-kit is a known
     acceptable vulnerability (see KNOWN ACCEPTABLE VULNERABILITIES).
+    **tablesFilter must include ALL tables in schema.ts** — if a table is missing from the
+    filter, db:generate cannot detect drift for it, forcing MCP-only migrations and
+    recurring journal drift. Always add new tables to tablesFilter when adding them to
+    schema.ts. Current canonical list: users, customers, vendors, order_groups, orders,
+    order_split_loads, recycling_orders, bills_of_lading, company_settings,
+    dropdown_configs, product_weights, order_type_configs, audit_logs,
+    global_email_contacts, credit_memos, credit_memo_line_items, email_errors.
+    **If db:generate outputs "No schema changes, nothing to migrate"**: the journal is
+    already in sync. Skip steps 2–4. Proceed directly to step 6 (security advisor).
 
 76. **stripMphPrefix utility — always use for vendor name display.**
     File: src/lib/utils/strip-mph-prefix.ts
@@ -720,9 +729,8 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
 Lint: `npm run lint` (scoped to `src/` as of 2026-05-12). Target: 0 errors.
 One known deferred warning: `credit-memo-form.tsx` react-hooks/exhaustive-deps
 (`today` dependency, low risk). **Do not attempt to resolve this warning** —
-it is intentionally deferred and tracked here.
-Never run lint fixes blindly. Address errors only; leave warnings that appear
-in this file alone.
+it is intentionally deferred and tracked here. Never run lint fixes blindly.
+Address errors only; leave warnings documented in this section alone.
 
 ---
 
@@ -995,16 +1003,16 @@ Claude Code creates git worktrees under .claude/worktrees/ for each task.
 Verify with `git log --oneline -5` after every task.
 Do not trust Claude Code's success confirmations — verify with git log yourself.
 
-Inside a git worktree, `git checkout main` silently fails — use
-`git push origin HEAD:main` directly from the worktree branch.
-
-COMMIT VERIFICATION (mandatory after every Claude Code task):
-Before merging or moving on, ask Claude Code: "Show me the commit hash 
-for the changes you just made." If it cannot provide one, the changes 
+**COMMIT VERIFICATION (mandatory after every Claude Code task):**
+Before merging or moving on, ask Claude Code: "Show me the commit hash
+for the changes you just made." If it cannot provide one, the changes
 are on a worktree branch only. Run:
   git for-each-ref --sort=-committerdate refs/heads/claude/ \
     --format="%(committerdate:short) %(refname:short)" | head -5
 then merge the correct branch to main before proceeding.
+
+Inside a git worktree, `git checkout main` silently fails — use
+`git push origin HEAD:main` directly from the worktree branch.
 
 **Shell environment:** Jack uses Git Bash on Windows.
 - Git Bash commands: rm -rf, find, grep
