@@ -1162,6 +1162,10 @@ and uses different data structures. AGENTS.md and PRD.md are the authoritative s
 
 - **esbuild <=0.24.2** inside drizzle-kit — accept the risk. Never run
   `npm audit fix --force` to resolve this.
+- **xlsx (SheetJS) — Prototype Pollution (GHSA-4r6h-8v6p-xvw6) and ReDoS
+  (GHSA-5pgg-2g8v-p4x9)** — No fix available upstream. Acceptable because xlsx
+  is used write-only (server-side export generation from DB data). It never
+  parses user-uploaded files, so neither vulnerability is reachable.
 
 ---
 
