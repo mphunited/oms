@@ -987,10 +987,19 @@ Do not trust Claude Code's success confirmations — verify with git log yoursel
 Inside a git worktree, `git checkout main` silently fails — use
 `git push origin HEAD:main` directly from the worktree branch.
 
+COMMIT VERIFICATION (mandatory after every Claude Code task):
+Before merging or moving on, ask Claude Code: "Show me the commit hash 
+for the changes you just made." If it cannot provide one, the changes 
+are on a worktree branch only. Run:
+  git for-each-ref --sort=-committerdate refs/heads/claude/ \
+    --format="%(committerdate:short) %(refname:short)" | head -5
+then merge the correct branch to main before proceeding.
+
 **Shell environment:** Jack uses Git Bash on Windows.
 - Git Bash commands: rm -rf, find, grep
 - PowerShell commands (Remove-Item, Get-ChildItem) do NOT work in Git Bash
 - Never give PowerShell commands when the user is in Git Bash
+- Always tell him what one to use.
 
 ---
 
