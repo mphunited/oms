@@ -173,7 +173,7 @@ export function useEditOrderForm(orderId: string) {
     setSaving(true)
     setSaved(false)
     try {
-      const loadsToSend = splitLoads.map(({ separate_po: _s, preview_po: _p, ...rest }) => rest)
+      const loadsToSend = splitLoads.map(({ preview_po: _p, ...rest }) => rest)
       const res = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
