@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Auth</title>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@4.28.1/dist/msal-browser.min.js"></script>
+<script>
+  var msalInstance = new msal.PublicClientApplication({
+    auth: {
+      clientId: "2785bb21-50cc-4e45-a996-c0aec39b13bd",
+      authority: "https://login.microsoftonline.com/3abf2937-e518-43e5-b2a4-456eecfa8b00",
+      redirectUri: window.location.origin + "/msal-callback.html",
+    }
+  });
+  msalInstance.initialize().then(function() {
+    msalInstance.handleRedirectPromise();
+  });
+</script>
+</body>
+</html>

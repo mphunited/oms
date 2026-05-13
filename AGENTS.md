@@ -233,12 +233,12 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       The raw getMailToken/createDraft/attachFileToDraft must NOT be used in new code.
 
 27. **MSAL version is @azure/msal-browser 4.28.1 (pinned).** Do NOT upgrade to v5
-    — popup flow is broken in v5. The redirectUri points to /msal-callback (a blank
-    Next.js page with its own layout to prevent root layout interference).
+    — popup flow is broken in v5. The redirectUri points to /msal-callback.html
+    (a static HTML file at public/msal-callback.html — not a Next.js page).
     Azure SPA redirect URIs registered:
-    http://localhost:3000/msal-callback,
-    https://oms-mphuniteds-projects.vercel.app/msal-callback,
-    https://oms-jade.vercel.app/msal-callback.
+    http://localhost:3000/msal-callback.html,
+    https://oms-mphuniteds-projects.vercel.app/msal-callback.html,
+    https://oms-jade.vercel.app/msal-callback.html.
 
 28. **PO email body is built by src/lib/email/build-po-email.ts** — pure function,
     takes order data, returns { subject, bodyHtml, to, cc }.
