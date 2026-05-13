@@ -3,7 +3,7 @@ import { db } from '@/lib/db'
 import { recycling_orders, customers, vendors } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { eq } from 'drizzle-orm'
-import { renderToBuffer } from '@react-pdf/renderer'
+import { renderToBuffer, DocumentProps } from '@react-pdf/renderer'
 import React from 'react'
 import { RecyclingPurchaseOrderPDF } from '@/lib/recycling/build-recycling-po-pdf'
 
@@ -64,7 +64,7 @@ export async function GET(
           ? { name: vendor.name, address: vendor.address ?? null }
           : null,
         companySetting: companySetting ?? null,
-      }) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+      }) as React.ReactElement<DocumentProps>
     )
 
     // Build email headers from po_contacts

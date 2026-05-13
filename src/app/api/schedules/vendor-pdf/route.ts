@@ -8,7 +8,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { renderToBuffer } from "@react-pdf/renderer";
+import { renderToBuffer, DocumentProps } from "@react-pdf/renderer";
 import React from "react";
 import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       vendorName,
       isFrontline,
       generatedAt,
-    }) as React.ReactElement
+    }) as React.ReactElement<DocumentProps>
   );
 
   const filename = isFrontline

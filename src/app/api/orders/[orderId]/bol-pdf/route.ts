@@ -3,7 +3,7 @@ import { db } from '@/lib/db'
 import { orders, order_split_loads, vendors, product_weights } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { eq, asc, inArray } from 'drizzle-orm'
-import { renderToBuffer } from '@react-pdf/renderer'
+import { renderToBuffer, DocumentProps } from '@react-pdf/renderer'
 import React from 'react'
 import { BillOfLadingPDF, bolDescription } from '@/lib/orders/build-bol-pdf'
 
@@ -57,8 +57,7 @@ export async function GET(
         vendor: vendor ?? null,
         companySetting: companySetting ?? null,
         weightMap,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }) as any
+        }) as React.ReactElement<DocumentProps>
     )
 
     return new Response(new Uint8Array(pdf), {
