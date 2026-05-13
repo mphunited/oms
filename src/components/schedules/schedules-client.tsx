@@ -66,7 +66,6 @@ useEffect(() => {
   const handleGenerateAdmin = useCallback(async () => {
     setGenerating("admin");
     setAdminCount(null);
-    setAdminEmailDraft(null);
     try {
       const res = await fetch("/api/schedules/admin-pdf", {
         method: "POST",
@@ -75,18 +74,7 @@ useEffect(() => {
       });
       if (!res.ok) throw new Error(await res.text());
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
-      const emailTo = res.headers.get("x-email-to") ?? "";
-      const emailCc = res.headers.get("x-email-cc") ?? "";
-      const emailSubject = (res.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
       setAdminCount(count);
-      const formattedStart = formatDate(startDate);
-      const formattedEnd = formatDate(endDate);
-      setAdminEmailDraft({
-        to: emailTo.split(",").filter(Boolean),
-        cc: emailCc.split(",").filter(Boolean),
-        subject: emailSubject,
-        bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
-      });
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -106,7 +94,6 @@ useEffect(() => {
     if (!selectedVendorId) { toast.error("Select a vendor first"); return; }
     setGenerating("vendor");
     setVendorCount(null);
-    setVendorEmailDraft(null);
     try {
       const res = await fetch("/api/schedules/vendor-pdf", {
         method: "POST",
@@ -115,18 +102,7 @@ useEffect(() => {
       });
       if (!res.ok) throw new Error(await res.text());
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
-      const emailTo = res.headers.get("x-email-to") ?? "";
-      const emailCc = res.headers.get("x-email-cc") ?? "";
-      const emailSubject = (res.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
       setVendorCount(count);
-      const formattedStart = formatDate(startDate);
-      const formattedEnd = formatDate(endDate);
-      setVendorEmailDraft({
-        to: emailTo.split(",").filter(Boolean),
-        cc: emailCc.split(",").filter(Boolean),
-        subject: emailSubject,
-        bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
-      });
       const vendorName = vendors.find((v) => v.id === selectedVendorId)?.name ?? "Vendor";
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -146,7 +122,6 @@ useEffect(() => {
   const handleGenerateFrontline = useCallback(async () => {
     setGenerating("frontline");
     setFrontlineCount(null);
-    setFrontlineEmailDraft(null);
     try {
       const res = await fetch("/api/schedules/vendor-pdf", {
         method: "POST",
@@ -155,18 +130,7 @@ useEffect(() => {
       });
       if (!res.ok) throw new Error(await res.text());
       const count = parseInt(res.headers.get("x-shipment-count") ?? "0", 10);
-      const emailTo = res.headers.get("x-email-to") ?? "";
-      const emailCc = res.headers.get("x-email-cc") ?? "";
-      const emailSubject = (res.headers.get("x-email-subject") ?? "").replace(" - ", " — ");
       setFrontlineCount(count);
-      const formattedStart = formatDate(startDate);
-      const formattedEnd = formatDate(endDate);
-      setFrontlineEmailDraft({
-        to: emailTo.split(",").filter(Boolean),
-        cc: emailCc.split(",").filter(Boolean),
-        subject: emailSubject,
-        bodyHtml: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`,
-      });
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

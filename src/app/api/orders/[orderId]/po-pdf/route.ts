@@ -3,7 +3,7 @@ import { db } from '@/lib/db'
 import { orders, order_split_loads, vendors, order_groups, customers } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { eq, asc, inArray } from 'drizzle-orm'
-import { renderToBuffer } from '@react-pdf/renderer'
+import { renderToBuffer, DocumentProps } from '@react-pdf/renderer'
 import React from 'react'
 import { PurchaseOrderPDF } from '@/lib/orders/build-po-pdf'
 import { MultiShipToPDF, type MultiShipToOrder } from '@/lib/orders/build-multi-ship-to-pdf'
@@ -83,7 +83,7 @@ export async function GET(
             ? { name: vendor.name, address: vendor.address as { city?: string; state?: string; street?: string; zip?: string } | null, lead_contact: vendor.lead_contact ?? null }
             : null,
           companySetting: companySetting ?? null,
-        }) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+        }) as React.ReactElement<DocumentProps>
       )
 
       return new Response(new Uint8Array(pdf), {
@@ -108,8 +108,7 @@ export async function GET(
         splitLoads,
         vendor: vendor ?? null,
         companySetting: companySetting ?? null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }) as any
+        }) as React.ReactElement<DocumentProps>
     )
 
     return new Response(new Uint8Array(pdf), {

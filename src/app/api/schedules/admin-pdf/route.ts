@@ -6,7 +6,7 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { renderToBuffer } from "@react-pdf/renderer";
+import { renderToBuffer, DocumentProps } from "@react-pdf/renderer";
 import React from "react";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       endDate,
       orders,
       generatedAt,
-    }) as React.ReactElement
+    }) as React.ReactElement<DocumentProps>
   );
 
   return new NextResponse(pdfBuffer as unknown as BodyInit, {

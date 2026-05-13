@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { and, eq, gte, lte, sql } from 'drizzle-orm'
-import { renderToBuffer } from '@react-pdf/renderer'
+import { renderToBuffer, DocumentProps } from '@react-pdf/renderer'
+import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { orders, order_split_loads, vendors, recycling_orders, users } from '@/lib/db/schema'
@@ -98,7 +99,7 @@ export async function GET(req: NextRequest) {
       drumTotals: recyclingRows
         .filter(r => r.recyclingType === 'Drum')
         .map(r => ({ vendorName: r.vendorName ?? '(No vendor)', totalQty: r.totalQty ? parseFloat(r.totalQty) : 0, totalOrders: r.totalOrders ?? 0 })),
-    })
+    }) as React.ReactElement<DocumentProps>
   )
 
   return new NextResponse(new Uint8Array(buf), {
