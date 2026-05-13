@@ -36,7 +36,7 @@ type Props = {
   onClear: () => void
 }
 
-const COMMISSION_STATUS_PILLS = ['All', 'Not Eligible', 'Eligible', 'Paid'] as const
+const COMMISSION_STATUS_PILLS = ['All', 'Not Eligible', 'Eligible', 'Commission Paid'] as const
 
 function displayVendorName(name: string) {
   if (!name) return name
@@ -220,7 +220,7 @@ export function CommissionFiltersBar({ filters, salespersons, customers, vendors
           />
         </div>
 
-        {filters.commissionStatus === 'Paid' && (
+        {filters.commissionStatus === 'Commission Paid' && (
           <>
             <div className="space-y-1">
               <label htmlFor="comm-paid-from" className="text-xs text-muted-foreground">Comm Paid From</label>

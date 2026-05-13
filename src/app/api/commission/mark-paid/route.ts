@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   await db.transaction(async (tx) => {
     // Stamp commission_paid_date on the selected split loads
     await tx.update(order_split_loads)
-      .set({ commission_paid_date: commissionPaidDate, commission_status: 'Paid' })
+      .set({ commission_paid_date: commissionPaidDate, commission_status: 'Commission Paid' })
       .where(inArray(order_split_loads.id, splitLoadIds))
 
     // Get affected order IDs from those split loads
