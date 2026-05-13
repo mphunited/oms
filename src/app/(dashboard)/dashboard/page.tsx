@@ -41,8 +41,13 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const [dbUser] = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, user.id)).limit(1)
+
   const week = getWeekBounds()
   const month = getMonthBounds()
+
+  const isSales = dbUser?.role === 'SALES'
+  const salesFilter = isSales ? eq(orders.salesperson_id, user.id) : undefined
 
   const [
     activeResult,
@@ -53,19 +58,19 @@ export default async function DashboardPage() {
     recentOrders,
   ] = await Promise.all([
     db.select({ count: count() }).from(orders)
-      .where(not(inArray(orders.status, INACTIVE))),
+      .where(and(not(inArray(orders.status, INACTIVE)), salesFilter)),
 
     db.select({ count: count() }).from(orders)
-      .where(eq(orders.status, 'Ready To Invoice')),
+      .where(and(eq(orders.status, 'Ready To Invoice'), salesFilter)),
 
     db.select({ count: count() }).from(orders)
-      .where(and(gte(orders.ship_date, week.start), lte(orders.ship_date, week.end))),
+      .where(and(gte(orders.ship_date, week.start), lte(orders.ship_date, week.end), salesFilter)),
 
     db.select({ count: count() }).from(orders)
-      .where(and(gte(orders.order_date, month.start), lte(orders.order_date, month.end))),
+      .where(and(gte(orders.order_date, month.start), lte(orders.order_date, month.end), salesFilter)),
 
     db.select({ status: orders.status, count: count() }).from(orders)
-      .where(not(inArray(orders.status, INACTIVE)))
+      .where(and(not(inArray(orders.status, INACTIVE)), salesFilter))
       .groupBy(orders.status)
       .orderBy(sql`count(*) desc`),
 
@@ -80,6 +85,7 @@ export default async function DashboardPage() {
       .from(orders)
       .leftJoin(customers, eq(orders.customer_id, customers.id))
       .leftJoin(users, eq(orders.salesperson_id, users.id))
+      .where(salesFilter)
       .orderBy(desc(orders.created_at))
       .limit(10),
   ])
