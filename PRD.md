@@ -110,6 +110,8 @@ and permissions afterward via /team page.
 8. **invoice_payment_status lives on orders and recycling_orders.** Not derived from a separate invoices table.
 9. **Transaction Pooler only** — port 6543. No DIRECT_URL. No Session Pooler.
 10. **Next.js 16 runtime declaration required** for any API route using @react-pdf/renderer: `export const runtime = 'nodejs'`
+11. **PDF and duplicate route permissions (confirmed May 14, 2026):**
+  ADMIN, CSR, and ACCOUNTING may access po-pdf, bol-pdf, duplicate order, and order-groups routes. SALES role is blocked (403) from all four. Accounting confirmed as needing PO/BOL generation access.
 
 ---
 

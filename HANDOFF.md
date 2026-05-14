@@ -1,123 +1,67 @@
-# OMS Handoff — May 13, 2026
+# OMS Handoff — May 14, 2026
 
-## What Was Done Today
+## Session Summary
 
-| # | Fix | Commit |
-|---|-----|--------|
-| 1 | Database password rotated, Vercel DATABASE_URL updated, unused Postgres vars removed | — |
-| 2 | test-db.js purged from all git history | force push |
-| 3 | Commission status canonical value: `"Commission Paid"` everywhere | 6395b12 |
-| 4 | Separate PO flag preserved in edit-order PATCH payload | 9ec84bc |
-| 5 | `public/msal-callback.html` created for MSAL popup OAuth redirect | e354697 |
-| 6 | Dashboard stats filtered to own orders for SALES role | 9e2f100 |
-| 7 | New Order button hidden + order detail read-only for SALES role | b336e56 |
-| 8 | Order Frequency filtered to own orders for SALES role | fae59fc |
-| 9 | Margins opened to SALES role with own-orders filter (server-side enforced) | 9d59c23 |
-
-Mike Harding confirmed as ADMIN. Larry/Jennifer confirmed `can_view_commission = false`. Renee confirmed `can_view_commission = true`.
+All pre-Christina red items from May 13 are closed. Dark mode is partially 
+complete — stopped mid-session with 3 known remaining items.
 
 ---
 
-## Still To Do — Priority Order
+## Commits From This Session
 
-### 🔴 Before Christina Goes Live
+| Commit | Description |
+|--------|-------------|
+| `7f92bf3` | fix: text-foreground on Buy/Sell/Ship To cells for dark mode |
+| `c391b4b` | feat: hide New Order nav item for SALES role |
+| `cf636eb` | fix: hide Notes button and block PATCH for SALES role |
+| `697a991` | fix: use dbUser.role in orders list/create route |
+| `c026b48` | fix: make customer_po optional on SplitLoad type (build fix) |
+| `88ae2f7` | fix: apply stripMphPrefix to vendor name in PO PDF |
+| `3d60498` | fix: email bugs — greeting name, city duplication, customer PO, recipient format |
+| `a4e1250` | fix: block SALES from PDF generation and duplicate routes |
+| `15658ee` | fix: dark mode backgrounds — orders table and reporting pages |
+| `5814ee5` | fix: dark mode contrast and missing recycling section backgrounds |
 
-**1. Test SALES role permissions end-to-end**
-- Log in as a SALES test account (jack2 or create a test SALES user)
-- Confirm: only sees own orders on Orders list, Dashboard, Order Frequency, Margins
-- Confirm: New Order button not visible
-- Confirm: Order detail is read-only (no Save/Delete buttons)
-- Confirm: Commission nav not visible (unless can_view_commission = true)
+---
 
-**2. Test separate PO flow**
-- Create an order with 2+ split loads
-- Use "Assign Separate PO" on Load 2
-- Save the order
-- Reopen and confirm the separate PO assignment persisted
+## Still To Do
 
-**3. Test MSAL email draft flow**
-- Create an order with customer contacts set
-- Trigger the email customer confirmation action
-- Confirm the Outlook draft opens correctly (the /msal-callback.html fix)
+### 🔴 Finish Before Heavy Use
 
-**4. RLS missing on `recycling_orders` and `product_weights` tables**
-- These tables were created in migrations 0003 and 0006 without RLS SQL
-- Run in Supabase SQL editor:
-  ```sql
-  ALTER TABLE public.recycling_orders ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "service_role_only" ON public.recycling_orders
-    FOR ALL TO service_role USING (true) WITH CHECK (true);
+**1. Remaining dark mode fixes**
+Three specific items stopped mid-session:
+- `src/components/product-totals/aggregate-cards.tsx` — card label and number 
+  text colors (text-gray-500 etc.) need to be text-foreground/text-muted-foreground
+- `src/components/order-frequency/order-frequency-client.tsx` — monthly data 
+  table row td elements need text-foreground
+- `src/app/(dashboard)/product-totals/page.tsx` — page title barely visible,
+  needs text-foreground
 
-  ALTER TABLE public.product_weights ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "service_role_only" ON public.product_weights
-    FOR ALL TO service_role USING (true) WITH CHECK (true);
-  ```
-- Run Supabase Security Advisor after and confirm clean
+Prompt is already written — use the one from the May 14 session ending.
+After fixing, also check `src/app/(dashboard)/margins/page.tsx` for the same
+page title visibility issue.
 
-**5. Manual PO route check uses wrong role source**
-- File: `src/app/api/orders/[orderId]/route.ts` around line 331
-- Bug: checks `user.role` from Supabase Auth instead of `public.users.role` from DB
-- Fix: use the already-fetched DB user role consistently
-- Claude Code prompt: *"In the manual PO creation block in src/app/api/orders/[orderId]/route.ts around line 331, the role check uses supabase auth user.role instead of the DB user's role fetched via getCurrentDbUser(). Fix it to use the DB role. No other changes."*
+**2. CSR access to Order Frequency**
+CSRs currently cannot access Order Frequency. They should be able to — the page
+shows shipment counts, not margin/buy data. Add CSR to the route guard and nav
+config for `/order-frequency`.
 
 ---
 
 ### 🟡 Soon — Before Heavy Use
 
-**6. Authorization gaps on PDF and duplicate routes**
-- PO/BOL PDF routes only check auth, not role or order ownership
-- Duplicate order route lacks CSR/ADMIN guard
-- Files: `po-pdf/route.ts`, `bol-pdf/route.ts`, `duplicate/route.ts`, `order-groups/route.ts`
-- Fix: add role check (ADMIN or CSR) before allowing these actions
-- Low blast radius with current user base but worth fixing before external access
-
-**7. team.ts unsafe server actions**
+**3. team.ts unsafe server actions**
 - File: `src/actions/team.ts`
-- Contains service-role admin code and banned `inviteUserByEmail` (lines 12, 25)
+- Contains banned `inviteUserByEmail` (lines 12, 25)
 - `inviteMember`, `updateMemberRole`, `removeMember` lack ADMIN guards
-- Fix: remove invite flow entirely per AGENTS.md onboarding rules, add ADMIN checks to all privileged actions
+- Fix: remove invite flow per AGENTS.md onboarding rules, add ADMIN checks
 
-**8. Email flows using raw Graph helpers**
-- Files: `new-order-form.tsx` (line 76), `use-recycling-po-email.ts` (line 36), `schedules-client.tsx` (line 170)
-- These use raw MSAL/Graph calls instead of `getMailTokenResilient` and resilient wrappers
+**4. Email flows using raw Graph helpers**
+- Files: `new-order-form.tsx` (line 76), `use-recycling-po-email.ts` (line 36), 
+  `schedules-client.tsx` (line 170)
+- These use raw MSAL/Graph calls instead of `getMailTokenResilient`
 - Causes silent failures when tokens expire
 - Fix: migrate to resilient token/Graph helpers
 
-**9. .env.example incomplete**
-- Currently only documents `DATABASE_URL`
-- Add: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- Remove or document `SUPABASE_SERVICE_ROLE_KEY` appropriately
-
----
-
-### 🟢 Nice To Have (Post-Launch)
-
-**10. Add typecheck and test scripts to package.json**
-```json
-"typecheck": "tsc --noEmit",
-"test": "vitest"
-```
-
-**11. Lint warning**
-- File: `src/components/credit-memo-form.tsx` line 99
-- `today` missing from useEffect dependency array
-
-**12. Sidebar loads open during /api/me fetch**
-- File: `src/components/layout/app-sidebar.tsx` line 90
-- Flickers open briefly before role is known
-- Fix: default to closed state while loading
-
-**13. Worktree cleanup**
-- ~90 stale `claude/` branches in the repo
-- Periodically delete merged/old worktree branches to keep repo lean
-- Command: `git branch -r | Select-String "claude/" | ...` then bulk delete
-
-**14. tsconfig.json breadth**
-- Currently includes all `**/*.ts(x)` which pulls in ~371k files from `.claude/worktrees`
-- Add `.claude` to `exclude` in tsconfig.json to keep tooling fast
-
----
-
-## Known Acceptable Vulnerabilities (Do Not Fix)
-- esbuild ≤0.24.2 inside drizzle-kit — accept risk, never run `npm audit fix --force`
-- xlsx SheetJS — Prototype Pollution + ReDoS — acceptable (write-only, never parses uploads)
+**5. Dark mode — systematic cleanup**
+After the targeted fixes above, run a grep for remaining hardcoded light colors:

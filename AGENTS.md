@@ -123,30 +123,50 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     locked to the parent worktree — use `git push origin HEAD:main` directly from the
     worktree branch instead of checking out main to merge.
 
-13. **Session handling uses src/proxy.ts — NOT src/middleware.ts.**
+13. **Claude Code git commit rule — MANDATORY PROMPT FOOTER**
+    Claude Code frequently makes file edits but silently fails to commit or push.
+    Every Claude Code prompt must end with explicit git steps or the changes will
+    not land on main. Always append this block to every prompt:
+
+    After making the changes:
+    git add [list of changed files]
+    git commit -m "descriptive message"
+    git push origin HEAD:main
+    git log --oneline -3
+
+    Never trust Claude Code's verbal success confirmations without seeing the
+    commit hash appear in git log after git pull origin main.
+    This failure mode was observed on 4 of 5 prompts in the May 14 session.
+
+14. **ACCOUNTING role has access to PDF and duplicate routes.**
+    Routes po-pdf, bol-pdf, duplicate/[orderId], and order-groups allow
+    ADMIN, CSR, and ACCOUNTING. SALES is blocked. Do not change this without
+    deliberate review — Accounting needs to generate and send POs/BOLs.
+
+15. **Session handling uses src/proxy.ts — NOT src/middleware.ts.**
     Next.js 16 renamed middleware.ts to proxy.ts with a `proxy` export.
     Never create src/middleware.ts — it will conflict and break the build.
 
-14. **Vercel Framework Preset must be set to Next.js.**
+16. **Vercel Framework Preset must be set to Next.js.**
     If deploying a new Vercel project, go to Settings → General → Framework Preset
     and set it to Next.js. Leaving it as "Other" causes 404 on all routes.
 
-15. **Stale .next cache causes all routes to 404 on Turbopack.**
+17. **Stale .next cache causes all routes to 404 on Turbopack.**
     If all routes return 404 and nothing appears in the dev server terminal when
     hitting them, delete .next and restart:
     `rm -rf .next` (Git Bash) then `npm run dev`.
     This is the first debugging step for any unexplained 404s.
     Never use Remove-Item in Git Bash — that is PowerShell syntax.
 
-16. **drizzle.config.ts loads .env.local via dotenv.**
+18. **drizzle.config.ts loads .env.local via dotenv.**
     `npm run db:migrate` and other drizzle-kit CLI commands work without any
     manual env var setup. Do not remove the dotenv import from drizzle.config.ts.
 
-17. **@react-pdf/renderer cannot render SVG.** Always use PNG or JPG for images
+19. **@react-pdf/renderer cannot render SVG.** Always use PNG or JPG for images
     in PDF components. Logo must be PNG. Stored at /public/mph-logo.png and
     referenced via https://oms-jade.vercel.app/mph-logo.png in company_settings.
 
-18. **BOL description extraction uses bolDescription() helper** in
+20. **BOL description extraction uses bolDescription() helper** in
     src/lib/orders/build-bol-pdf.tsx. Strips "SPLIT LOAD n — " prefix, takes
     text before first "|". CSR convention: always use "|" to separate product
     specs in description field.
@@ -159,7 +179,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     bill_to JSONB keys email and email2 are legacy — not rendered on the order
     form. phone_office, phone_ext, phone_cell are still rendered on Bill To.
 
-19. **product_weights table** stores canonical BOL product names and weights.
+21. **product_weights table** stores canonical BOL product names and weights.
     Seeded with 17 products. Do not hardcode weights anywhere — always query
     this table. **product_name values must exactly match the text returned by
     bolDescription()** from order descriptions. Use the abbreviation "Gal" (not
@@ -169,7 +189,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     product_weights — check the exact string in Vercel logs under
     "[BOL PDF] keys going into inArray:".
 
-20. **PO PDF logic lives in src/lib/orders/build-po-pdf.tsx**
+22. **PO PDF logic lives in src/lib/orders/build-po-pdf.tsx**
     **BOL PDF logic lives in src/lib/orders/build-bol-pdf.tsx**
     **Recycling PO PDF logic lives in src/lib/recycling/build-recycling-po-pdf.tsx**
     Route files handle data fetching only. PDF components handle rendering only.
@@ -182,13 +202,13 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       signing line.
     - BOL return email is bol@mphunited.com. Hardcoded in build-bol-pdf.tsx.
 
-21. **invoice_paid_date and commission_paid_date are date columns on orders.**
+23. **invoice_paid_date and commission_paid_date are date columns on orders.**
     invoice_paid_date = when customer paid. Set by Accounting on the order edit form.
     commission_paid_date on orders is updated for backward compatibility only — the
     canonical commission_paid_date lives on order_split_loads rows, stamped by
     POST /api/commission/mark-paid.
 
-22. **Vendor contact arrays (po_contacts, bol_contacts, invoice_contacts, schedule_contacts)
+24. **Vendor contact arrays (po_contacts, bol_contacts, invoice_contacts, schedule_contacts)
     all use shape `[{name, email, role: "to"|"cc"}]`.**
     `role: "to"` = primary recipient; `role: "cc"` = copied recipient.
     Backward-compat: normalizeContacts() in vendor detail treats `is_primary=true` as
@@ -198,16 +218,16 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     If bol_contacts or po_contacts is empty, sendBolEmail and sendPoEmail open an Outlook
     draft with an empty To field rather than throwing. This is intentional.
 
-23. **inArray() from drizzle-orm must be used for IN queries.** Never use
+25. **inArray() from drizzle-orm must be used for IN queries.** Never use
     manual .in() on a column. Import inArray from 'drizzle-orm'.
 
-24. **Date display format is MM/DD/YYYY throughout the UI.** Stored format in
+26. **Date display format is MM/DD/YYYY throughout the UI.** Stored format in
     the database remains YYYY-MM-DD. Format on display only, never on storage.
 
-25. **Outlook Web deeplinks are no longer used.** All email actions now use
+27. **Outlook Web deeplinks are no longer used.** All email actions now use
     Microsoft Graph API to create drafts with PDF attachments already attached.
 
-26. **Never use Outlook Web deeplinks for email.** Use Microsoft Graph API via
+28. **Never use Outlook Web deeplinks for email.** Use Microsoft Graph API via
     the resilient email modules.
     - MSAL client: src/lib/email/msal-client.ts — singleton PublicClientApplication.
       getMailToken() acquires token silently, popup fallback.
@@ -232,7 +252,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       use getMailTokenResilient + createDraftResilient + attachFileToDraftResilient.
       The raw getMailToken/createDraft/attachFileToDraft must NOT be used in new code.
 
-27. **MSAL version is @azure/msal-browser 4.28.1 (pinned).** Do NOT upgrade to v5
+29. **MSAL version is @azure/msal-browser 4.28.1 (pinned).** Do NOT upgrade to v5
     — popup flow is broken in v5. The redirectUri points to /msal-callback.html
     (a static HTML file at public/msal-callback.html — not a Next.js page).
     Azure SPA redirect URIs registered:
@@ -240,7 +260,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     https://oms-mphuniteds-projects.vercel.app/msal-callback.html,
     https://oms-jade.vercel.app/msal-callback.html.
 
-28. **PO email body is built by src/lib/email/build-po-email.ts** — pure function,
+30. **PO email body is built by src/lib/email/build-po-email.ts** — pure function,
     takes order data, returns { subject, bodyHtml, to, cc }.
     Never inline PO email construction in a component or route.
     - Intro string uses vendorName directly — do NOT prepend "MPH United / " as a
@@ -250,33 +270,33 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - is_revised must be included in OrderSnap (optional: boolean) and passed through
       use-edit-order-form.ts and use-order-email-actions.ts to buildPoEmail.
 
-29. **Email buttons do NOT show a greeting modal.** The greeting name is derived
+31. **Email buttons do NOT show a greeting modal.** The greeting name is derived
     automatically from vendor.name. Do not add a modal to any email flow.
 
-30. **orders table has csr2_id — nullable UUID FK to users.id.** The order form and
+32. **orders table has csr2_id — nullable UUID FK to users.id.** The order form and
     edit page both have a CSR 2 (optional) dropdown. API routes accept and return
     csr2_id and csr2_name. Schedule PDFs display CSR as first name only; two CSRs
     shown as FirstName / FirstName2. recycling_orders does NOT have csr2_id.
 
-31. **users table has title (text), phone (text), email_signature (text), and
+33. **users table has title (text), phone (text), email_signature (text), and
     can_view_commission (boolean, default false) columns.** Email signatures are
     appended to all Graph API drafts automatically via getUserSignature() called
     in parallel with getMailToken(). Manage user records including signature on
     /team page (ADMIN only).
 
-32. **users table has a permissions column (jsonb, default []).** Valid values in the
+34. **users table has a permissions column (jsonb, default []).** Valid values in the
     array: "SALES" | "CSR". This controls which order-form role dropdowns a user
     appears in, independent of their app access role. Salesperson dropdown filters
     GET /api/users?permission=SALES. CSR dropdown filters GET /api/users?permission=CSR.
     A user with role=ADMIN can have either or both permissions to appear in order form
     dropdowns. Managed on the /team page.
 
-33. **freight_carrier on orders is a Select dropdown** populated from dropdown_configs
+35. **freight_carrier on orders is a Select dropdown** populated from dropdown_configs
     where type = 'CARRIER'. Fetch via GET /api/dropdown-configs?type=CARRIER, which
     returns a string[] from the row's values jsonb array. Seeded with 34 carriers.
     The same CARRIER dropdown is used on recycling order forms.
 
-34. **on_auth_user_created trigger syncs auth.users → public.users on first SSO login.**
+36. **on_auth_user_created trigger syncs auth.users → public.users on first SSO login.**
     Fires AFTER INSERT on auth.users. Name extraction priority:
       1. raw_user_meta_data->>'full_name'
       2. CONCAT(custom_claims->>'given_name', ' ', custom_claims->>'family_name')
@@ -288,7 +308,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     For new table DDL: write schema in schema.ts, apply via Supabase MCP apply_migration,
     then add the table name to tablesFilter in drizzle.config.ts.
 
-35. **Commission eligibility is determined per split load** by looking up
+37. **Commission eligibility is determined per split load** by looking up
     order_split_loads.order_type against the order_type_configs table
     (is_commission_eligible column). Do NOT use keyword matching — it has been
     replaced by a DB lookup. commission_status and commission_paid_date live on
@@ -297,23 +317,23 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Recycling orders have a commission_status column but no commission tracking workflow
     is built for them in Phase 1.
 
-36. **order_split_loads carries per-load fields** in addition to its pricing columns:
+38. **order_split_loads carries per-load fields** in addition to its pricing columns:
     customer_po (overrides order-level when set), order_type (drives commission
     eligibility for this load), ship_date, wanted_date, commission_status
     (default 'Not Eligible'), commission_paid_date, and order_number_override
     (per-load MPH PO when the load needs its own sequential number).
     qty precision: numeric(12,3). buy precision: numeric(12,3). sell: numeric(10,2).
 
-37. **Split load MPH PO numbers** are generated via SELECT nextval('order_number_seq')
+39. **Split load MPH PO numbers** are generated via SELECT nextval('order_number_seq')
     on save only — never on preview. Preview uses pg_sequence_last_value without
     consuming the sequence. The generated number is stored in
     order_split_loads.order_number_override.
 
-38. **GET /api/orders search includes order_split_loads.order_number_override**
+40. **GET /api/orders search includes order_split_loads.order_number_override**
     via a subquery so searching for a split-load override PO number surfaces the
     parent order in the results.
 
-39. **GET /api/dropdown-configs?type=X returns { type, values, meta }.**
+41. **GET /api/dropdown-configs?type=X returns { type, values, meta }.**
     values is string[]. meta is nullable JSONB of per-label badge colors.
     PUT /api/dropdown-configs performs full array replacement for a given type.
     ADMIN role enforced server-side on PUT. Currently manages types:
@@ -321,41 +341,41 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     PUT sorts values alphabetically before saving. PUT merges meta — does not
     null it out when meta is absent from the request body.
 
-40. **users table has is_commission_eligible boolean (default false).** Only users
+42. **users table has is_commission_eligible boolean (default false).** Only users
     with is_commission_eligible = true appear in the commission report salesperson
     dropdown and commission API queries. Currently only Renee Sauvageau is eligible.
     Managed on /team page by ADMIN. Distinct from can_view_commission (controls
     whether a user can see the commission nav item at all).
 
-41. **dropdown_configs.meta is a nullable JSONB column storing per-label badge colors.**
+43. **dropdown_configs.meta is a nullable JSONB column storing per-label badge colors.**
     Shape: { [label: string]: { color: string } }. The existing values column stays
     as string[]. Do not change the values shape. GET /api/dropdown-configs returns
     { type, values, meta }. PUT accepts optional meta and merges — never nulls it.
     Default colors seeded for ORDER_STATUS (17 values) and CARRIER (34 values).
     Colors editable in /settings via inline swatches on each item row.
 
-42. **The orders table expanded row uses card-style layout** inside a single colSpan
+44. **The orders table expanded row uses card-style layout** inside a single colSpan
     cell. Do not attempt to align expanded row cells to parent column widths — column
     widths are dynamic and this pattern always misaligns. Each split load renders as
     a card: bg-muted/40 rounded-md p-3 border-l-4 border-[#B88A44], grid grid-cols-2.
 
-43. **Expanded split load detail (chevron click on order row) shows per-load fields:**
+45. **Expanded split load detail (chevron click on order row) shows per-load fields:**
     Load PO | Customer PO | Description | Qty | Buy | Sell. Ship Date and Wanted Date
     are NOT shown (already on main row). Order Type is NOT shown (redundant).
     Customer PO is shown directly below Load PO.
 
-44. **Order Summary Drawer** — clicking the MPH PO number in the orders table opens a
+46. **Order Summary Drawer** — clicking the MPH PO number in the orders table opens a
     Sheet drawer (side="right", w-[520px]) that fetches from GET /api/orders/[orderId].
     The PO number cell is a button, not a link. The Edit Order link is in the drawer
     header. Never use Button asChild for the Edit Order link — use a styled native Link.
 
-45. **GET /api/dropdown-configs returns { type, values, meta }** — NOT a plain string[].
+47. **GET /api/dropdown-configs returns { type, values, meta }** — NOT a plain string[].
     Callers that only need the values array must extract .values from the response.
     Three existing callers patched when meta was added:
     orders-filter-bar.tsx, use-edit-order-form.ts, use-new-order-form.ts.
     Recycling forms also use .values extraction for CARRIER dropdown.
 
-46. **Filter bar on /orders has two always-visible rows — no More Filters toggle.**
+48. **Filter bar on /orders has two always-visible rows — no More Filters toggle.**
     Recycling list pages (/recycling/ibcs and /recycling/drums) use the same two-row
     pattern without the Flagged pill:
     - Row 1: Search | lifecycle pills (Active/Complete/All) | Status single-select dropdown
@@ -364,22 +384,22 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     API params: customer_id, vendor_id, csr_id, salesperson_id, status.
     No Canceled lifecycle pill on any filter bar.
 
-47. **New Order form layout rules:**
+49. **New Order form layout rules:**
     - Blind Shipment toggle is in the Customer & Vendor section, second row under Vendor.
     - Flag This Order and Revised PO are NOT on the New Order form — Edit page only.
     - Save Order button is at the bottom of the form, below Misc Notes.
     - Invoice & Payment section is on Edit page only.
     - Manual PO entry mode is available to ADMIN and CSR roles via a toggle.
 
-48. **Color inputs in settings — Use `<input type="color">` directly as the visible
+50. **Color inputs in settings — Use `<input type="color">` directly as the visible
     swatch element.** Never use a hidden input triggered via a ref click — this pattern
     does not reliably fire onChange.
 
-49. **PATCH /api/orders/[orderId] — checklist is intentionally excluded from full-form
+51. **PATCH /api/orders/[orderId] — checklist is intentionally excluded from full-form
     saves.** It is only written when the PATCH body contains checklist as the sole field
     (sent by ChecklistPopup in order-row.tsx).
 
-50. **DATE_FIELDS coercion on order_split_loads** — ship_date, wanted_date, and
+52. **DATE_FIELDS coercion on order_split_loads** — ship_date, wanted_date, and
     commission_paid_date must be coerced from empty string ("") or undefined to null
     before DB insert/update. PostgreSQL rejects empty string for date columns.
 
@@ -397,7 +417,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     Never set a NOT NULL column to null in a PATCH — check schema.ts for
     notNull() constraints before adding fields to any coerce function.
 
-51. **customer_contacts JSONB shape on orders** | [{name, email, is_primary: boolean}]
+53. **customer_contacts JSONB shape on orders** | [{name, email, is_primary: boolean}]
     — is_primary=true → To recipient, false → Cc recipient for confirmation emails.
     Default first contact to true, rest to false. Treat missing is_primary as true.
 
@@ -410,7 +430,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     **PO email duplicate recipient fix** | graph-mail.ts parseEmailAddress() splits
     RFC 5322 "Name <email>" strings into separate name and address fields.
 
-52. **order_type_configs is the runtime source of truth for order types and commission
+54. **order_type_configs is the runtime source of truth for order types and commission
     eligibility.**
     - Do NOT use keyword matching to determine commission eligibility anywhere.
     - Always join or query order_type_configs to get is_commission_eligible.
@@ -418,23 +438,23 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - ADMIN can add, remove, and toggle commission eligibility via /settings.
     - API route: GET /api/order-type-configs (auth required, all roles).
 
-53. **product_weights table is managed via /settings (Product Weights section).**
+55. **product_weights table is managed via /settings (Product Weights section).**
     - ADMIN only. CRUD on product_name / weight_lbs rows.
     - product_name values must exactly match bolDescription() output (text before "|").
     - API route: GET /api/product-weights (all roles). POST, PUT, DELETE: ADMIN only.
 
-54. **global_email_contacts is a standalone table — not linked to customers or vendors.**
+56. **global_email_contacts is a standalone table — not linked to customers or vendors.**
     It is a flat shared directory of name/email/company/type used for autocomplete on
     order forms. email is unique (enforced by DB constraint). type is a pgEnum:
     CONFIRMATION | BILL_TO | BOTH. Company is optional (nullable text).
     Do NOT add foreign keys from global_email_contacts to any other table.
 
-55. **Canonical order status spelling is "Canceled" (one L).** "Cancelled" (two L's) was
+57. **Canonical order status spelling is "Canceled" (one L).** "Cancelled" (two L's) was
     removed from ORDER_STATUSES in schema.ts and normalized in the database via migration.
     Do not reintroduce "Cancelled" anywhere — not in code, queries, filters, seed data,
     or migrations. The lifecycle filter in GET /api/orders uses "Canceled" only.
 
-56. **GET /api/orders uses an explicit Drizzle .select({}) — it does NOT auto-include new
+58. **GET /api/orders uses an explicit Drizzle .select({}) — it does NOT auto-include new
     columns.** Any new field added to the orders table that needs to reach the client MUST
     be explicitly added to the .select({}) in src/app/api/orders/route.ts. The [orderId]
     GET uses db.query.orders.findFirst which returns all columns automatically — but the
@@ -443,17 +463,17 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     When adding a new row-level feature (popup, indicator, computed value), check the list
     route .select({}) first — the detail route does not need changes for popups or drawers.
 
-57. **Orders list default sort is ship_date ASC NULLS LAST.**
+59. **Orders list default sort is ship_date ASC NULLS LAST.**
     Sortable columns: ship_date, customer_name, ship_to_name, vendor_name.
     Recycling list pages default sort: pick_up_date ASC NULLS LAST.
 
-58. **Flagged orders visual treatment in orders list.**
+60. **Flagged orders visual treatment in orders list.**
     When order.flag is true: <tr> gets bg-red-50 dark:bg-red-950/20, Flag icon renders
     text-red-500 fill-red-500. Optimistic update is in orders-table.tsx — visual flips
     immediately on click before API responds. Same treatment applies on recycling list
     pages.
 
-59. **order_groups table enables multi-ship-to order grouping (2–4 orders, same vendor).**
+61. **order_groups table enables multi-ship-to order grouping (2–4 orders, same vendor).**
     - group_po_number is minted from nextval('order_number_seq') — same sequence as
       regular order numbers and recycling order numbers.
     - orders.group_id (nullable UUID FK to order_groups) — null on all standard orders.
@@ -472,7 +492,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       JOIN on order_groups. Both return all orders in the group when a group_po_number
       matches.
 
-60. **Recycling orders have an inverted customer/vendor relationship vs regular orders.**
+62. **Recycling orders have an inverted customer/vendor relationship vs regular orders.**
     - recycling_orders.customer_id = the company providing empty IBCs or drums for
       disposal. This is the PO RECIPIENT. It is a record in the customers table.
     - recycling_orders.vendor_id = the recycling/processing facility that receives
@@ -488,7 +508,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - If po_contacts is empty, draft opens with empty To field — do not throw an error.
     - This inverted pattern applies to both IBC and Drum recycling types.
 
-61. **Drum recycling vendor default is Coastal Container Services.**
+63. **Drum recycling vendor default is Coastal Container Services.**
     - UUID: 8ae0764b-c98d-4b4f-a71f-1e0111225a94 (MPH United / Coastal Container
       Services -- Alvin, TX)
     - Stored as COASTAL_VENDOR_ID constant in src/lib/recycling/use-new-drum-form.ts.
@@ -497,24 +517,24 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     field when vendor = Coastal and sell is currently empty. CSR can edit freely. Edit
     form applies only when sell is null on load — never overwrites an existing value.
 
-62. **Recycling orders use the same order_number_seq as regular orders.**
+64. **Recycling orders use the same order_number_seq as regular orders.**
     - Same [Initials]-MPH[Number] format. No separate sequence.
     - Recycling PO numbers appear in the same number range as regular orders.
     - order_groups.group_po_number also uses the same sequence.
 
-63. **Recycling statuses are hardcoded in RECYCLING_STATUSES constant in schema.ts.**
+65. **Recycling statuses are hardcoded in RECYCLING_STATUSES constant in schema.ts.**
     - Not managed via dropdown_configs. Do not add a RECYCLING_STATUS type there.
     - Values: Acknowledged Order | PO Request To Accounting | Waiting On Vendor To
       Confirm | Credit Sent In | Confirmed To Customer | Waiting For Customer To
       Confirm | Ready To Pickup | Picked Up | Sent Order To Carrier | Ready To Ship |
       Ready To Invoice | Complete | Canceled
 
-64. **appointment_notes on recycling_orders is plain text, not a timestamp.**
+66. **appointment_notes on recycling_orders is plain text, not a timestamp.**
     - Free-text field (e.g. "Not needed right away", "Call ahead").
     - Never use a timestamp, DatePicker, or TimePicker input for this field.
     - IBC orders only — not shown on drum order forms.
 
-65. **recycling_type discriminator field.**
+67. **recycling_type discriminator field.**
     - Values: 'IBC' | 'Drum'. Column is NOT NULL, default 'IBC'.
     - Always pass recycling_type in POST /api/recycling-orders body.
     - Always include ?type=IBC or ?type=Drum in GET /api/recycling-orders — it is
@@ -523,7 +543,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       freight_credit_amount, ship_to.
     - Drum-only fields (hide from IBC forms): ship_from, bill_to, customer_contacts.
 
-66. **Default CSR on recycling order forms is Matt Cozik.**
+68. **Default CSR on recycling order forms is Matt Cozik.**
     - Applies to both IBC and Drum new and edit forms.
     - Implementation: after fetching CSR users list for the dropdown, find the user
       with name === "Matt Cozik" and set csr_id to that user's id.
@@ -532,7 +552,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       an existing CSR assignment.
     - If Matt Cozik is not found in the list (e.g. deactivated), leave csr_id empty.
 
-67. **Drum recycling orders: invoice_status and invoice_customer_amount are not
+69. **Drum recycling orders: invoice_status and invoice_customer_amount are not
     user-editable and are not rendered in the drum form UI.**
     - POST and PATCH for drum orders always send invoice_status: 'Invoice'.
     - invoice_customer_amount is always null for drum orders — it is not calculated
@@ -540,12 +560,12 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - These fields remain in the schema and are fully used by IBC orders.
     - Do not re-add these fields to drum forms.
 
-68. **part_number is not rendered on any recycling order form (IBC or Drum).**
+70. **part_number is not rendered on any recycling order form (IBC or Drum).**
     - New IBC and Drum forms always send part_number: null on POST.
     - The column is retained in recycling_orders for historical data only.
     - Do not re-add part_number to any recycling form UI.
 
-69. **Email error logging.** All email operation failures are logged to the
+71. **Email error logging.** All email operation failures are logged to the
     email_errors table via src/lib/email/error-logger.ts.
     - logEmailError(context, error, severity?) — never throws, swallows fetch failures.
     - Severity values: 'warning' | 'error' | 'critical'.
@@ -556,7 +576,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       WHERE created_at > now() - interval '7 days' GROUP BY context, severity
       to monitor email health.
 
-70. **Navigation guard and unsaved changes protection.**
+72. **Navigation guard and unsaved changes protection.**
     - src/lib/navigation-guard.ts — module-level singleton (not React context).
       navigationGuard.setDirty(v), navigationGuard.isDirty(), navigationGuard.confirm().
       confirm() shows window.confirm if dirty, returns true if clean.
@@ -579,7 +599,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       without a third-party library. Sidebar links and in-page back buttons are
       the reliable interception points.
 
-71. **Product Totals (/product-totals), Margins (/margins), and Order Frequency
+73. **Product Totals (/product-totals), Margins (/margins), and Order Frequency
     (/order-frequency) are ADMIN + ACCOUNTING only.**
     Role check enforced in two places for each section: server-side redirect in page.tsx
     and 403 guard in all API routes under /api/product-totals/, /api/margins/,
@@ -618,7 +638,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     /api/margins/ship-to-options is shared between Margins and Order Frequency — do not
     duplicate it.
 
-72. **Always use supabase.auth.getUser() for authentication and identity checks.**
+74. **Always use supabase.auth.getUser() for authentication and identity checks.**
     Never use supabase.auth.getSession() for this purpose — session data comes from
     cookies and is not verified by the Auth server. getUser() authenticates by
     contacting the Supabase Auth server directly and is the only secure option.
@@ -630,7 +650,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     orders/duplicate/[orderId]/route.ts.
     src/proxy.ts already used getUser() — do not change it.
 
-73. **Never use asc(nullsLast()) or desc(nullsLast()) from drizzle-orm for ORDER BY.**
+75. **Never use asc(nullsLast()) or desc(nullsLast()) from drizzle-orm for ORDER BY.**
     These wrappers generate invalid PostgreSQL — the direction modifier is appended
     after NULLS LAST, producing `pick_up_date NULLS LAST asc` which PostgreSQL rejects.
     This caused every GET /api/recycling-orders request to return a 500 silently until
@@ -642,7 +662,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     recycling-orders list route uses pick_up_date. Any new list route must follow
     this pattern.
 
-74. **Orders filter bar uses two-layer persistence: URL params + sessionStorage.**
+76. **Orders filter bar uses two-layer persistence: URL params + sessionStorage.**
     URL params: written on every filter change via router.replace(..., { scroll: false }).
     Read on mount as first priority. Supports refresh and shareable/bookmarkable URLs.
     Defaults (lifecycle=active, empty selections) are omitted from the URL to keep it clean.
@@ -654,7 +674,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     and calls sessionStorage.removeItem("orders_filters").
     The /invoicing and /recycling list pages use URL params only — no sessionStorage layer yet.
 
-75. **Drizzle migration journal discipline — how to handle journal drift.**
+77. **Drizzle migration journal discipline — how to handle journal drift.**
     The journal drifts when schema changes are applied via Supabase MCP instead of db:migrate
     (required when DDL touches the auth schema, which the Transaction Pooler cannot access).
     To resync after drift:
@@ -679,7 +699,7 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     **If db:generate outputs "No schema changes, nothing to migrate"**: the journal is
     already in sync. Skip steps 2–4. Proceed directly to step 6 (security advisor).
 
-76. **stripMphPrefix utility — always use for vendor name display.**
+78. **stripMphPrefix utility — always use for vendor name display.**
     File: src/lib/utils/strip-mph-prefix.ts
     Vendor names in the database are stored as "MPH United / [Vendor Name]".
     Never render raw vendor names directly. Always wrap with stripMphPrefix()
@@ -693,13 +713,13 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       - margins-client.tsx (All Vendors dropdown options)
     Apply to any future surface that renders vendor names.
 
-77. **Rule: MSAL callback redirect URI**
+79. **Rule: MSAL callback redirect URI**
     The registered Single-page application redirect URI in Azure is `/msal-callback.html`
     (with .html extension). The file `public/msal-callback.html` exists as a static file
     in the Next.js public folder. Do NOT change the redirect URI or remove this file.
     msal-client.ts correctly points to `/msal-callback.html` — do not change it.
 
-78. **Rule: Commission status canonical value**
+80. **Rule: Commission status canonical value**
     The canonical commission split-load status strings are defined in `COMMISSION_STATUSES`
     in schema.ts: `"Not Eligible"`, `"Eligible"`, `"Commission Paid"`.
     The mark-paid route MUST write `"Commission Paid"` — never the bare string `"Paid"`.
@@ -707,14 +727,14 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     source of truth for deriving status. Never hardcode status strings outside of schema.ts
     constants.
 
-79.  **Rule: SALES role data access**
+81.  **Rule: SALES role data access**
     SALES users see only orders where `salesperson_id = their own user id`.
     This filter is enforced server-side in every API route and page query.
     SALES users cannot create or edit orders.
     Applies to: Dashboard, Orders list, Order Frequency, Margins.
     Do NOT remove or weaken these filters.
 
-80.  **Rule: Commission nav visibility**
+82.  **Rule: Commission nav visibility**
     Commission page nav item is gated by `can_view_commission` flag on the users table.
     As of May 2026: Renee Sauvageau = true, all others = false.
     `is_commission_eligible` is a separate flag controlling salesperson dropdown and
