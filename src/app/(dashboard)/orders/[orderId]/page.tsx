@@ -62,6 +62,7 @@ wantedDate, setWantedDate: _setWantedDate,
     billToContacts, setBillToContacts,
     checklist, setChecklist,
     isAdmin,
+    isSales,
     groupData,
     isDirty, markDirty,
     handleSave, handleDuplicate,
@@ -94,10 +95,10 @@ wantedDate, setWantedDate: _setWantedDate,
     <div className="p-6">
 
       {/* Page title */}
-      <h1 className="text-2xl font-semibold mb-6">Edit Order</h1>
+      <h1 className="text-2xl font-semibold mb-6">{isSales ? 'View Order' : 'Edit Order'}</h1>
 
       <div className="flex gap-6 items-start">
-      <div className="flex-1 min-w-0 space-y-6">
+      <div className={`flex-1 min-w-0 space-y-6${isSales ? ' pointer-events-none opacity-70 select-none' : ''}`}>
 
       {/* Header — order number + action buttons */}
       <div className="flex items-center justify-between">
@@ -119,24 +120,32 @@ wantedDate, setWantedDate: _setWantedDate,
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleDuplicate} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors">
-            <Copy className="h-3.5 w-3.5" /> Duplicate
-          </button>
+          {!isSales && (
+            <button onClick={handleDuplicate} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors">
+              <Copy className="h-3.5 w-3.5" /> Duplicate
+            </button>
+          )}
           <a href={`/api/orders/${orderId}/po-pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors">
             <FileText className="h-3.5 w-3.5" /> Download PO
           </a>
-          <button onClick={handleEmailPoClick} disabled={emailingPo} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors disabled:opacity-50">
-            <Mail className="h-3.5 w-3.5" /> {emailingPo ? 'Creating…' : 'Email PO'}
-          </button>
+          {!isSales && (
+            <button onClick={handleEmailPoClick} disabled={emailingPo} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors disabled:opacity-50">
+              <Mail className="h-3.5 w-3.5" /> {emailingPo ? 'Creating…' : 'Email PO'}
+            </button>
+          )}
           <a href={`/api/orders/${orderId}/bol-pdf`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors">
             <Truck className="h-3.5 w-3.5" /> Download BOL
           </a>
-          <button onClick={handleEmailBolClick} disabled={emailingBol} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors disabled:opacity-50">
-            <Mail className="h-3.5 w-3.5" /> {emailingBol ? 'Creating…' : 'Email BOL'}
-          </button>
-          <button onClick={handleEmailConfirmationClick} disabled={emailingConfirmation} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors disabled:opacity-50">
-            <Mail className="h-3.5 w-3.5" /> {emailingConfirmation ? 'Creating…' : 'Email Confirmation'}
-          </button>
+          {!isSales && (
+            <button onClick={handleEmailBolClick} disabled={emailingBol} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors disabled:opacity-50">
+              <Mail className="h-3.5 w-3.5" /> {emailingBol ? 'Creating…' : 'Email BOL'}
+            </button>
+          )}
+          {!isSales && (
+            <button onClick={handleEmailConfirmationClick} disabled={emailingConfirmation} className="inline-flex items-center gap-2 rounded-md bg-[#00205B] text-white px-3 py-1.5 text-sm hover:bg-[#00205B]/90 transition-colors disabled:opacity-50">
+              <Mail className="h-3.5 w-3.5" /> {emailingConfirmation ? 'Creating…' : 'Email Confirmation'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -363,6 +372,7 @@ wantedDate, setWantedDate: _setWantedDate,
         onInvoiceStatusChange={setInvoicePaymentStatus}
         onQbInvoiceNumberChange={setQbInvoiceNumber}
         onSave={onSave}
+        readOnly={isSales}
       />
       </div>
 

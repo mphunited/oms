@@ -55,6 +55,7 @@ type EditOrderSidebarProps = {
   onInvoiceStatusChange: (v: string) => void
   onQbInvoiceNumberChange: (v: string) => void
   onSave: () => void
+  readOnly?: boolean
 }
 
 export function EditOrderSidebar({
@@ -63,7 +64,7 @@ export function EditOrderSidebar({
   invoicePaymentStatus, qbInvoiceNumber,
   onFlagChange, onIsBlindChange, onIsRevisedChange,
   onInvoiceStatusChange, onQbInvoiceNumberChange,
-  onSave,
+  onSave, readOnly = false,
 }: EditOrderSidebarProps) {
   const margin = computeMargin(loads, freightCost, freightToCustomer, additionalCosts)
 
@@ -71,19 +72,21 @@ export function EditOrderSidebar({
     <aside className="w-64 shrink-0 sticky top-6 space-y-4">
 
       {/* Save */}
-      <div className="space-y-2">
-        <button
-          onClick={onSave}
-          disabled={saving}
-          className="w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 transition-colors"
-        >
-          {saving ? 'Saving…' : 'Save Changes'}
-        </button>
-        {saved && <p className="text-center text-sm text-green-600 dark:text-green-400">Saved.</p>}
-      </div>
+      {!readOnly && (
+        <div className="space-y-2">
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+          {saved && <p className="text-center text-sm text-green-600 dark:text-green-400">Saved.</p>}
+        </div>
+      )}
 
       {/* Status & Invoicing */}
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <div className={`rounded-lg border border-border bg-card p-4 space-y-3${readOnly ? ' pointer-events-none opacity-70' : ''}`}>
         <div className="flex items-center gap-2 mb-1">
           <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
           <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Status & invoicing</h3>

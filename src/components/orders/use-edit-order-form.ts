@@ -67,6 +67,7 @@ export function useEditOrderForm(orderId: string) {
   const [vendorOptions, setVendorOptions] = useState<Array<{ id: string; name: string }>>([])
   const [orderTypeManuallySet, setOrderTypeManuallySet] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isSales, setIsSales] = useState(false)
   const [groupData, setGroupData] = useState<{
     id: string
     group_po_number: string
@@ -75,7 +76,7 @@ export function useEditOrderForm(orderId: string) {
 
   useEffect(() => {
     fetch('/api/me').then(r => r.json())
-      .then(me => setIsAdmin(me?.role === 'ADMIN'))
+      .then(me => { setIsAdmin(me?.role === 'ADMIN'); setIsSales(me?.role === 'SALES') })
       .catch(() => {})
     fetch('/api/users?permission=CSR').then(r => r.json()).then(setCsrUserOptions).catch(() => {})
     fetch('/api/users?permission=SALES').then(r => r.json())
@@ -313,6 +314,7 @@ export function useEditOrderForm(orderId: string) {
     billToContacts, setBillToContacts,
     checklist, setChecklist,
     isAdmin,
+    isSales,
     groupData,
     isDirty,
     markDirty: () => setIsDirty(true),

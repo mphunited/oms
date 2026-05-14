@@ -105,13 +105,15 @@ export default async function DashboardPage() {
 
       {/* Quick actions */}
       <div className="flex gap-3">
-        <Link
-          href="/orders/new"
-          className="inline-flex items-center gap-2 rounded-md bg-[#00205B] px-5 py-3 text-base font-medium text-white shadow hover:bg-[#B88A44] transition-colors"
-        >
-          <FilePlus className="h-5 w-5" />
-          New Order
-        </Link>
+        {!isSales && (
+          <Link
+            href="/orders/new"
+            className="inline-flex items-center gap-2 rounded-md bg-[#00205B] px-5 py-3 text-base font-medium text-white shadow hover:bg-[#B88A44] transition-colors"
+          >
+            <FilePlus className="h-5 w-5" />
+            New Order
+          </Link>
+        )}
         <Link
           href="/orders"
           className="inline-flex items-center gap-2 rounded-md bg-[#00205B] px-5 py-3 text-base font-medium text-white shadow hover:bg-[#B88A44] transition-colors"

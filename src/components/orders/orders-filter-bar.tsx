@@ -70,8 +70,12 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
   const [salespersons, setSalespersons] = useState<NamedItem[]>([])
   const [csrUsers, setCsrUsers] = useState<NamedItem[]>([])
   const [statusOptions, setStatusOptions] = useState<{ value: string; label: string }[]>([])
+  const [canCreateOrder, setCanCreateOrder] = useState(false)
 
   useEffect(() => {
+    fetch('/api/me').then(r => r.json())
+      .then(me => setCanCreateOrder(me?.role === 'ADMIN' || me?.role === 'CSR'))
+      .catch(() => {})
     fetch('/api/vendors')
       .then(r => r.json())
       .then((d: NamedItem[]) => setVendors(d.map(v => ({ id: v.id, name: v.name }))))
@@ -168,12 +172,14 @@ export function OrdersFilterBar({ filters, onChange, onClearAll }: Props) {
           <X className="h-3.5 w-3.5" />
           Clear
         </button>
-        <Link
-          href="/orders/new"
-          className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-[#00205B] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#B88A44] transition-colors"
-        >
-          + New Order
-        </Link>
+        {canCreateOrder && (
+          <Link
+            href="/orders/new"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-[#00205B] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#B88A44] transition-colors"
+          >
+            + New Order
+          </Link>
+        )}
       </div>
 
       {/* Row 2: Customer, Vendor, CSR, Salesperson, Ship Date */}
