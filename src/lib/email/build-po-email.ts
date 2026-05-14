@@ -35,6 +35,7 @@ type SplitLoad = {
   qty: string | null
   sell: string | null
   order_number_override: string | null
+  customer_po: string | null
 }
 
 export type OrderWithRelations = {
@@ -84,9 +85,12 @@ export function buildPoEmail(
   const contacts: PoContact[] = (vendor?.po_contacts ?? []) as PoContact[]
   const primary = contacts.find(c => isToRecipient(c)) ?? contacts[0] ?? null
   const others = contacts.filter(c => c !== primary)
-  const to: string[] = primary?.email ? [primary.email] : []
+  const fmt = (c: PoContact): string => c.name ? `${c.name} <${c.email}>` : c.email
+  const to: string[] = primary?.email ? [fmt(primary)] : []
   const cc: string[] = [
-    ...others.map(c => c.email).filter((e): e is string => Boolean(e) && e.toLowerCase() !== 'orders@mphunited.com'),
+    ...others
+      .filter(c => Boolean(c.email) && c.email.toLowerCase() !== 'orders@mphunited.com')
+      .map(fmt),
     'orders@mphunited.com',
   ]
 
@@ -105,20 +109,19 @@ export function buildPoEmail(
 
   // ── Intro paragraph ──────────────────────────────────────────────────────────
   const vendorName = vendor?.name ?? ''
-  const vendorLoc = [vendor?.address?.city, vendor?.address?.state].filter(Boolean).join(', ')
   const orderWord = count === 1
     ? `1${isRevised ? ' REVISED' : ''} order`
     : `${count}${isRevised ? ' REVISED' : ''} orders`
   let intro: string
   if (isBlind) {
-    intro = `Please find ${orderWord} below for ${vendorName}${vendorLoc ? ` -- ${vendorLoc}` : ''}.`
+    intro = `Please find ${orderWord} below for ${vendorName}.`
   } else {
     const shipToLoc = [first.ship_to?.city, first.ship_to?.state].filter(Boolean).join(', ')
     const customerNames =
       count === 1
         ? (first.customer?.name ?? '')
         : [...new Set(orders.map(o => o.customer?.name).filter(Boolean))].join(', ')
-    intro = `Please find ${orderWord} below for ${vendorName}${vendorLoc ? ` -- ${vendorLoc}` : ''}${shipToLoc ? ` -- ${shipToLoc}` : ''} for ${customerNames}.`
+    intro = `Please find ${orderWord} below for ${vendorName}${shipToLoc ? ` -- ${shipToLoc}` : ''} for ${customerNames}.`
   }
 
   // ── Table ────────────────────────────────────────────────────────────────────
@@ -150,7 +153,7 @@ export function buildPoEmail(
           ]
         : [
             td(mpoPo),
-            td(order.customer_po ?? ''),
+            td(load.customer_po ?? order.customer_po ?? ''),
             td(desc),
             td(formatDate(order.ship_date)),
             td(qty != null ? String(qty) : '--', 'right'),
@@ -168,8 +171,9 @@ export function buildPoEmail(
     const carriers = [...new Set(orders.map(o => o.freight_carrier).filter(Boolean))]
     below.push(`<p style="margin:6px 0;font-size:12pt;"><strong>Ship Via:</strong> ${carriers.length > 0 ? carriers.join(', ') : '—'}</p>`)
 
-    const addr = first.ship_to
-    if (addr) {
+    orders.forEach(order => {
+      const addr = order.ship_to
+      if (!addr) return
       const addrLines = [
         addr.name,
         addr.street,
@@ -177,8 +181,9 @@ export function buildPoEmail(
       ]
         .filter(Boolean)
         .join('<br/>')
-      below.push(`<p style="margin:6px 0;font-size:12pt;"><strong>Ship To:</strong><br/>${addrLines}</p>`)
-    }
+      const label = count > 1 ? `Ship To (${order.order_number})` : 'Ship To'
+      below.push(`<p style="margin:6px 0;font-size:12pt;"><strong>${label}:</strong><br/>${addrLines}</p>`)
+    })
 
     const notesOrders = orders.filter(o => o.po_notes)
     if (notesOrders.length === 1) {
