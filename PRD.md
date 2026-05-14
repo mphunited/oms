@@ -833,18 +833,19 @@ Currently applies to Renee Sauvageau only.
 
 ## 21. Phase 2 Features (Do NOT Build in Phase 1)
 
+- IBC Spec Form to fill in Description for New Orders
 - QuickBooks Online integration
 - Invoice PDF generation and emailing
-- Direct email via Resend
+- Direct email via Resend?
 - Email notifications
 - Vendor stock sheet tracking in-app
-- Alliance Hillsboro collaborative schedule
 - /financials route was deleted and must not be recreated. Product Totals (/product-totals), Margins (/margins), and Order Frequency (/order-frequency) were built in Phase 1 under separate routes.
 - Audit log UI
 - Salesperson margin calculator, quote forms, performance dashboard
 - Mobile-responsive optimization
 - Forum, Resources tab, IBC catalog, CRM
 - Nightly automated database backup to S3
+- Access to database data if app or Supabase is down
 - App-wide undo/redo
 - Recycling order invoicing workflow
 
