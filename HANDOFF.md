@@ -65,3 +65,50 @@ config for `/order-frequency`.
 
 **5. Dark mode — systematic cleanup**
 After the targeted fixes above, run a grep for remaining hardcoded light colors:
+
+Get-ChildItem -Path src -Recurse -Include ".tsx",".ts" |
+Select-String -Pattern 'text-gray-9|text-[#[01]' |
+Select-Object Path, LineNumber, Line
+There may be isolated spots remaining across the codebase.
+
+---
+
+### 🟢 Nice To Have (Post-Launch)
+
+**6. .env.example incomplete**
+Add: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+Document or remove `SUPABASE_SERVICE_ROLE_KEY`
+
+**7. Worktree cleanup**
+~95+ stale `claude/` worktree branches accumulating.
+```powershell
+git fetch --prune
+git branch -r | Select-String "claude/" | ForEach-Object {
+  $branch = $_.ToString().Trim()
+  git push origin --delete $branch.Replace("origin/", "")
+}
+```
+Verify with `git worktree list` and `git worktree prune` afterward.
+
+**8. tsconfig.json**
+Add `.claude` to `exclude` array to prevent ~371k worktree files from
+slowing TypeScript tooling.
+
+**9. Add typecheck/test scripts**
+```json
+"typecheck": "tsc --noEmit",
+"test": "vitest"
+```
+
+---
+
+## Known Acceptable Vulnerabilities
+- esbuild ≤0.24.2 inside drizzle-kit — accept risk, never run npm audit fix --force
+- xlsx SheetJS — write-only, never parses uploads, acceptable
+
+---
+
+## Critical Reminder for Claude Code Sessions
+**Every prompt must end with explicit git steps.** Claude Code failed to push
+commits on 4 of 5 prompts in the May 14 session without this. See AGENTS.md
+rule 13 for the mandatory prompt footer.
