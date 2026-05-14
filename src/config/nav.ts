@@ -41,6 +41,7 @@ export const NAV_ITEMS: NavItem[] = [
     title: "New Order",
     href: "/orders/new",
     icon: FilePlus,
+    roles: ["ADMIN", "CSR"],
   },
   {
     title: "Recycling",
