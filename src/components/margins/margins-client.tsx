@@ -23,7 +23,7 @@ type ShipToOption = { key: string; label: string }
 const SELECT_CLS =
   'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-white px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
 
-export function MarginsClient() {
+export function MarginsClient({ isSalesRole = false }: { isSalesRole?: boolean }) {
   const { start: defaultStart, end: defaultEnd } = getYearBounds()
 
   const [startDate, setStartDate] = useState(defaultStart)
@@ -258,16 +258,18 @@ export function MarginsClient() {
             ))}
           </select>
 
-          <select
-            value={selectedSalespersonId}
-            onChange={e => setSelectedSalespersonId(e.target.value)}
-            className={SELECT_CLS}
-          >
-            <option value="">All Salespersons</option>
-            {salespersons.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
+          {!isSalesRole && (
+            <select
+              value={selectedSalespersonId}
+              onChange={e => setSelectedSalespersonId(e.target.value)}
+              className={SELECT_CLS}
+            >
+              <option value="">All Salespersons</option>
+              {salespersons.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          )}
 
           <button
             onClick={runReport}

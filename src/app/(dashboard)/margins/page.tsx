@@ -20,9 +20,9 @@ export default async function MarginsPage() {
 
   if (!dbUser) redirect('/dashboard')
 
-  if (dbUser.role !== 'ADMIN' && dbUser.role !== 'ACCOUNTING') {
+  if (dbUser.role !== 'ADMIN' && dbUser.role !== 'ACCOUNTING' && dbUser.role !== 'SALES') {
     redirect('/dashboard')
   }
 
-  return <MarginsClient />
+  return <MarginsClient isSalesRole={dbUser.role === 'SALES'} />
 }

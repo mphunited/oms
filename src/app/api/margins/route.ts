@@ -19,12 +19,12 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const [dbUser] = await db
-    .select({ role: users.role })
+    .select({ role: users.role, id: users.id })
     .from(users)
     .where(eq(users.id, user.id))
     .limit(1)
 
-  if (!dbUser || (dbUser.role !== 'ADMIN' && dbUser.role !== 'ACCOUNTING')) {
+  if (!dbUser || (dbUser.role !== 'ADMIN' && dbUser.role !== 'ACCOUNTING' && dbUser.role !== 'SALES')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -56,7 +56,11 @@ export async function GET(req: NextRequest) {
   }
   if (customerId) conditions.push(eq(orders.customer_id, customerId))
   if (vendorId) conditions.push(eq(orders.vendor_id, vendorId))
-  if (salespersonId) conditions.push(eq(orders.salesperson_id, salespersonId))
+  if (dbUser.role === 'SALES') {
+    conditions.push(eq(orders.salesperson_id, dbUser.id))
+  } else if (salespersonId) {
+    conditions.push(eq(orders.salesperson_id, salespersonId))
+  }
   if (shipToKey) {
     conditions.push(
       sql`CONCAT(${orders.ship_to}->>'name','|',${orders.ship_to}->>'city','|',${orders.ship_to}->>'state') = ${shipToKey}`

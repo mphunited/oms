@@ -116,7 +116,7 @@ export const NAV_ITEMS: NavItem[] = [
     title: "Margins",
     href: "/margins",
     icon: TrendingUp,
-    roles: ["ADMIN", "ACCOUNTING"],
+    roles: ["ADMIN", "ACCOUNTING", "SALES"],
   },
   {
     title: "Order Frequency",
