@@ -23,9 +23,9 @@ type ApiResponse = {
 }
 
 const INPUT_CLS =
-  'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-card px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
+  'h-9 rounded-md border border-border bg-card px-3 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
 const SELECT_CLS =
-  'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-card px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
+  'h-9 rounded-md border border-border bg-card px-3 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
 
 function getYearBounds() {
   const now = new Date()
@@ -132,7 +132,7 @@ export function OrderFrequencyClient() {
   return (
     <div className="p-6 max-w-[1400px]">
       <h1
-        className="text-2xl font-semibold text-[#171717] mb-6"
+        className="text-2xl font-semibold text-foreground mb-6"
         style={{ letterSpacing: '-0.96px' }}
       >
         Order Frequency
@@ -143,7 +143,7 @@ export function OrderFrequencyClient() {
         {/* Row 1: Date range */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <label className="text-[13px] font-medium text-[#4d4d4d]">Start Date</label>
+            <label className="text-[13px] font-medium text-muted-foreground">Start Date</label>
             <input
               type="date"
               value={startDate}
@@ -152,7 +152,7 @@ export function OrderFrequencyClient() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[13px] font-medium text-[#4d4d4d]">End Date</label>
+            <label className="text-[13px] font-medium text-muted-foreground">End Date</label>
             <input
               type="date"
               value={endDate}
@@ -319,11 +319,11 @@ export function OrderFrequencyClient() {
                     className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}
                     style={{ borderBottom: '1px solid #f3f4f6' }}
                   >
-                    <td className="px-3 py-2 text-[13px] text-[#171717]">{fmtMonth(pt.month)}</td>
-                    <td className="px-3 py-2 text-right text-[13px] text-[#171717] tabular-nums">
+                    <td className="px-3 py-2 text-[13px] text-foreground">{fmtMonth(pt.month)}</td>
+                    <td className="px-3 py-2 text-right text-[13px] text-foreground tabular-nums">
                       {pt.count}
                     </td>
-                    <td className="px-3 py-2 text-right text-[13px] text-[#171717] tabular-nums">
+                    <td className="px-3 py-2 text-right text-[13px] text-foreground tabular-nums">
                       {data.shipDateSeries[i]?.count ?? 0}
                     </td>
                   </tr>

@@ -50,9 +50,9 @@ export function AggregateCards({ productTotals }: { productTotals: ProductTotal[
           className="rounded-lg bg-card p-3"
           style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
         >
-          <p className="text-[11px] font-medium text-[#6b7280] leading-tight mb-1.5">{c.label}</p>
-          <p className="text-xl font-semibold text-[#1a2744]">{fmtNum(c.qty)}</p>
-          <p className="text-[11px] text-[#6b7280] mt-0.5">{c.shipments} shipments</p>
+          <p className="text-[11px] font-medium text-muted-foreground leading-tight mb-1.5">{c.label}</p>
+          <p className="text-xl font-semibold text-foreground">{fmtNum(c.qty)}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{c.shipments} shipments</p>
         </div>
       ))}
     </div>
