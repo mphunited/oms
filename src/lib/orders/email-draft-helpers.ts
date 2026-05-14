@@ -172,6 +172,7 @@ export async function sendPoEmail(
         qty: l.qty || null,
         sell: l.sell || null,
         order_number_override: l.order_number_override || null,
+        customer_po: l.customer_po ?? null,
       })),
     }
     const { subject, bodyHtml, to, cc } = buildPoEmail([orderData], greetingName)

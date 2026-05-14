@@ -85,7 +85,10 @@ export function buildPoEmail(
   const contacts: PoContact[] = (vendor?.po_contacts ?? []) as PoContact[]
   const primary = contacts.find(c => isToRecipient(c)) ?? contacts[0] ?? null
   const others = contacts.filter(c => c !== primary)
-  const fmt = (c: PoContact): string => c.name ? `${c.name} <${c.email}>` : c.email
+  const fmt = (c: PoContact): string => {
+    const cleanName = c.name ? c.name.replace(/\s*<[^>]*>\s*$/, '').trim() : ''
+    return cleanName ? `${cleanName} <${c.email}>` : c.email
+  }
   const to: string[] = primary?.email ? [fmt(primary)] : []
   const cc: string[] = [
     ...others
@@ -116,12 +119,11 @@ export function buildPoEmail(
   if (isBlind) {
     intro = `Please find ${orderWord} below for ${vendorName}.`
   } else {
-    const shipToLoc = [first.ship_to?.city, first.ship_to?.state].filter(Boolean).join(', ')
     const customerNames =
       count === 1
         ? (first.customer?.name ?? '')
         : [...new Set(orders.map(o => o.customer?.name).filter(Boolean))].join(', ')
-    intro = `Please find ${orderWord} below for ${vendorName}${shipToLoc ? ` -- ${shipToLoc}` : ''} for ${customerNames}.`
+    intro = `Please find ${orderWord} below for ${vendorName} for ${customerNames}.`
   }
 
   // ── Table ────────────────────────────────────────────────────────────────────

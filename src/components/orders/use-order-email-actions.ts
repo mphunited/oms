@@ -169,11 +169,15 @@ export function useOrderEmailActions(
           buy: l.buy ?? null,        // add this line
           sell: l.sell ?? null,
           order_number_override: l.order_number_override ?? null,
+          customer_po: l.customer_po ?? null,
         })),
       }))
       const count = ordersForEmail.length
       toast.loading(`Creating draft with ${count} PDF${count > 1 ? 's' : ''}…`, { id: toastId })
-      const { subject, bodyHtml, to, cc } = buildPoEmail(ordersForEmail, vendor.name ?? '')
+      const poContacts = (vendor.po_contacts ?? []) as Array<{ name: string; email: string; role?: 'to' | 'cc'; is_primary?: boolean }>
+      const primaryContact = poContacts.find(c => (c.role === 'to' || c.role === 'cc') ? c.role === 'to' : c.is_primary === true) ?? poContacts[0] ?? null
+      const greetingName = primaryContact ? (primaryContact.name.split(/\s+/)[0] ?? primaryContact.name) : (vendor.name ?? '')
+      const { subject, bodyHtml, to, cc } = buildPoEmail(ordersForEmail, greetingName)
 
       setEmailStatus('acquiring_token')
       let token: string
