@@ -693,6 +693,34 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       - margins-client.tsx (All Vendors dropdown options)
     Apply to any future surface that renders vendor names.
 
+77. **Rule: MSAL callback redirect URI**
+    The registered Single-page application redirect URI in Azure is `/msal-callback.html`
+    (with .html extension). The file `public/msal-callback.html` exists as a static file
+    in the Next.js public folder. Do NOT change the redirect URI or remove this file.
+    msal-client.ts correctly points to `/msal-callback.html` — do not change it.
+
+78. **Rule: Commission status canonical value**
+    The canonical commission split-load status strings are defined in `COMMISSION_STATUSES`
+    in schema.ts: `"Not Eligible"`, `"Eligible"`, `"Commission Paid"`.
+    The mark-paid route MUST write `"Commission Paid"` — never the bare string `"Paid"`.
+    `deriveOrderCommissionStatus` in `src/lib/commission-eligibility.ts` is the single
+    source of truth for deriving status. Never hardcode status strings outside of schema.ts
+    constants.
+
+79.  **Rule: SALES role data access**
+    SALES users see only orders where `salesperson_id = their own user id`.
+    This filter is enforced server-side in every API route and page query.
+    SALES users cannot create or edit orders.
+    Applies to: Dashboard, Orders list, Order Frequency, Margins.
+    Do NOT remove or weaken these filters.
+
+80.  **Rule: Commission nav visibility**
+    Commission page nav item is gated by `can_view_commission` flag on the users table.
+    As of May 2026: Renee Sauvageau = true, all others = false.
+    `is_commission_eligible` is a separate flag controlling salesperson dropdown and
+    API filtering in commission report — only Renee is eligible.
+    Do not conflate these two flags.
+
 ---
 
 ## TECHNOLOGY STACK
@@ -1176,8 +1204,10 @@ and uses different data structures. AGENTS.md and PRD.md are the authoritative s
 - When new tables are created via migration, manually run:
   ALTER TABLE public.[table] ENABLE ROW LEVEL SECURITY;
   and add service_role policy. Run Supabase security advisor after every DDL migration.
-- When Harding National is added as a second tenant, replace service_role-only policies
-  with tenant-aware RLS policies before adding their data.
+- **test-db.js** was permanently removed from the codebase and purged from all git
+    history on May 13, 2026. Never commit database credentials to any file.
+    All credentials must live in `.env.local` (gitignored) and Vercel environment variables.
+    `.env.local` is in `.gitignore` — never remove it from there.
 
 ---
 

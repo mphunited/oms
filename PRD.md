@@ -30,8 +30,8 @@ invoicing. They do not manufacture or warehouse product.
 | Renee Sauvageau | Salesperson | SALES | Only salesperson that receives commission. Sees only her own orders and can't edit orders. |
 | Jennifer Wilkes | Salesperson | SALES | Sees only her own orders and can't edit orders. |
 | Larry Mitchum | Salesperson | SALES | Sees only his own orders and can't edit orders. |
-| Mike Harding | Salesperson / Owner | SALES | Sees everything. |
-| David Harding | CFO / Owner | (none) | Sees everything. |
+| Mike Harding | Salesperson / Owner | ADMIN | Full admin access. Also has SALES permission in the permissions JSONB so he appears in salesperson dropdowns. |
+| David Harding | CFO / Owner | ADMIN | Full admin access. | Sees everything. |
 | Peter Mannering | Accounting / Controller | (none) | Accounting user. |
 | Matt Cozik | CSR | CSR | CSR for Recycling Orders. |
 | Suzanne Ridenour | CSR | CSR | CSR for Empties. |
@@ -43,6 +43,20 @@ All other users default false. Controls commission report salesperson dropdown a
 GET /api/commission API filtering. Distinct from `can_view_commission` (sidebar visibility).
 Managed on /team page by ADMIN.
 
+**SALES role access rules (as of May 13, 2026):**
+SALES users (Renee Sauvageau, Jennifer Wilkes, Larry Mitchum) are subject to these
+restrictions:
+- See only orders where they are the assigned salesperson (`salesperson_id = their id`)
+- Cannot create new orders (New Order button hidden)
+- Cannot edit orders (order detail is read-only)
+- Dashboard stats show only their own orders
+- Order Frequency shows only their own orders, salesperson filter locked
+- Margins shows only their own orders, salesperson filter locked and hidden
+- Commission nav visible only if `can_view_commission = true` (Renee only)
+
+These filters are enforced server-side in every API route. UI hiding is a secondary
+convenience only — the API is the enforcement layer.
+
 **Permissions field note:** The `permissions` jsonb column on users (default `[]`) controls
 which order-form role dropdowns a user appears in, independently of their app access `role`.
 Valid values: `"SALES"` | `"CSR"`. A user with `role=ADMIN` may have either or both permissions
@@ -51,7 +65,7 @@ to appear in salesperson or CSR dropdowns on the order form.
 Current assignments (as of April 23, 2026):
 - **SALES permissions:** Mike Harding, Renee Sauvageau, Jennifer Wilkes, Larry Mitchum
 - **CSR permissions:** Christina Bayne, Keith Ferrell, Jordan Mannering, Matt Cozik, Suzanne Ridenour, Gracie Medley
-- **No permissions:** Jack Schlaack, David Harding, Peter Mannering, Jack2, Service Account
+- **No permissions:** Jack Schlaack, David Harding, Peter Mannering, Jack2, 
 
 **User onboarding:** New users sign in directly at oms-jade.vercel.app using
 their MPH United Microsoft account. No invite flow. The auth trigger creates
@@ -783,10 +797,14 @@ credit_memo_line_items, order_groups.
 
 Run the Supabase security advisor after every DDL migration to confirm zero critical errors.
 
-### Future Requirement: Multi-Tenant (MPH + Harding National)
-When Harding National is onboarded: replace service_role-only policies with tenant-aware
-RLS policies before adding their data. A `company_id` column will be required.
-Architecture rules in Section 4 prohibiting `company_id` will need to be revised at that time.
+**Credential hygiene:**
+- DATABASE_URL is stored in `.env.local` (gitignored) and Vercel environment variables only
+- No credentials may be committed to any tracked file
+- test-db.js was permanently removed and purged from git history on May 13, 2026
+- Vercel environment variables: only DATABASE_URL, NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, and
+  SUPABASE_SERVICE_ROLE_KEY are required. All others (POSTGRES_*, duplicate SUPABASE_*)
+  were removed May 13, 2026.
 
 ---
 
@@ -1085,9 +1103,12 @@ Washout Drums intentionally excluded from Total New Poly Drums.
 
 ## 29. Margins
 
-Route: /margins
-Access: ADMIN and ACCOUNTING roles only.
-Nav icon: TrendingUp.
+  Route: /margins
+  Margins page (ADMIN, ACCOUNTING, SALES)
+  SALES users see only rows where salesperson_id matches their own id.
+  This is enforced in src/app/api/margins/route.ts.
+  The salesperson filter dropdown is hidden entirely for SALES users.
+  Nav icon: TrendingUp.
 
 ### Included orders
 - Exactly one order_split_loads row (split-load orders excluded)
@@ -1151,7 +1172,9 @@ Display rules:
 ## 30. Order Frequency
 
 Route: /order-frequency
-Access: ADMIN and ACCOUNTING roles only.
+ Order Frequency page (ADMIN, CSR, ACCOUNTING, SALES)
+ SALES users see only their own orders, filtered server-side by salesperson_id.
+ The salesperson filter dropdown is disabled for SALES users.
 Nav icon: Activity.
 
 ### Filters
