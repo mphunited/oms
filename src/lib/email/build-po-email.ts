@@ -35,7 +35,7 @@ type SplitLoad = {
   qty: string | null
   sell: string | null
   order_number_override: string | null
-  customer_po: string | null
+  customer_po?: string | null
 }
 
 export type OrderWithRelations = {
