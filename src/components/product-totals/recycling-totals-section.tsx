@@ -56,7 +56,7 @@ function SortedTable({ rows, label }: { rows: RecyclingVendorRow[]; label: strin
 
   return (
     <div>
-      <p className="text-[12px] font-medium text-[#4d4d4d] mb-2">{label}</p>
+      <p className="text-[12px] font-medium text-muted-foreground mb-2">{label}</p>
       <div className="rounded-lg overflow-hidden" style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px' }}>
         <table className="w-full text-sm">
           <thead>
@@ -71,10 +71,10 @@ function SortedTable({ rows, label }: { rows: RecyclingVendorRow[]; label: strin
               <tr><td colSpan={3} className="px-3 py-6 text-center text-[#6b7280] text-[13px]">No data in range</td></tr>
             )}
             {sorted.map((r, i) => (
-              <tr key={r.vendorId ?? r.vendorName} className={i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                <td className="px-3 py-2 text-[13px] text-[#171717]">{r.vendorName}</td>
-                <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{fmtNum(r.totalQty)}</td>
-                <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{r.totalOrders}</td>
+              <tr key={r.vendorId ?? r.vendorName} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/40'} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                <td className="px-3 py-2 text-[13px] text-foreground">{r.vendorName}</td>
+                <td className="px-3 py-2 text-[13px] text-foreground tabular-nums">{fmtNum(r.totalQty)}</td>
+                <td className="px-3 py-2 text-[13px] text-foreground tabular-nums">{r.totalOrders}</td>
               </tr>
             ))}
           </tbody>
@@ -91,7 +91,7 @@ export function RecyclingTotalsSection({ data }: { data: RecyclingData | null })
   return (
     <div className="rounded-lg border-l-4 border-[#B88A44] pl-4 py-1">
       <div className="flex items-center gap-2 mb-1">
-        <h3 className="text-[13px] font-semibold text-[#171717]">Recycling orders</h3>
+        <h3 className="text-[13px] font-semibold text-foreground">Recycling orders</h3>
       </div>
       <p className="text-[12px] text-[#6b7280] mb-4 italic">
         Recycling totals are not included in Product Totals above.

@@ -44,7 +44,7 @@ function SectionHeader({ children }: { children: string }) {
   return (
     <div className="flex items-center gap-2 mb-3">
       <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-      <h3 className="text-[13px] font-semibold text-[#171717]">{children}</h3>
+      <h3 className="text-[13px] font-semibold text-foreground">{children}</h3>
     </div>
   )
 }
@@ -93,7 +93,7 @@ export function ProductTotalsSection({
       <div className="grid grid-cols-2 gap-6">
         {/* Left: by product */}
         <div>
-          <p className="text-[12px] font-medium text-[#4d4d4d] mb-2">By product</p>
+          <p className="text-[12px] font-medium text-muted-foreground mb-2">By product</p>
           <div className="rounded-lg overflow-hidden" style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px' }}>
             <table className="w-full text-sm">
               <thead>
@@ -108,10 +108,10 @@ export function ProductTotalsSection({
                   <tr><td colSpan={3} className="px-3 py-6 text-center text-[#6b7280] text-[13px]">No data in range</td></tr>
                 )}
                 {sortedProducts.map((r, i) => (
-                  <tr key={r.orderType} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                    <td className="px-3 py-2 text-[13px] text-[#171717]">{r.orderType}</td>
-                    <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{fmtNum(r.totalQty)}</td>
-                    <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{r.totalShipments}</td>
+                  <tr key={r.orderType} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/50'} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td className="px-3 py-2 text-[13px] text-foreground">{r.orderType}</td>
+                    <td className="px-3 py-2 text-[13px] text-foreground tabular-nums">{fmtNum(r.totalQty)}</td>
+                    <td className="px-3 py-2 text-[13px] text-foreground tabular-nums">{r.totalShipments}</td>
                   </tr>
                 ))}
               </tbody>
@@ -121,7 +121,7 @@ export function ProductTotalsSection({
 
         {/* Right: by vendor + product */}
         <div>
-          <p className="text-[12px] font-medium text-[#4d4d4d] mb-2">By vendor and product</p>
+          <p className="text-[12px] font-medium text-muted-foreground mb-2">By vendor and product</p>
           <div className="rounded-lg overflow-hidden" style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px' }}>
             <table className="w-full text-sm">
               <thead>
@@ -137,11 +137,11 @@ export function ProductTotalsSection({
                   <tr><td colSpan={4} className="px-3 py-6 text-center text-[#6b7280] text-[13px]">No data in range</td></tr>
                 )}
                 {sortedVendors.map((r, i) => (
-                  <tr key={`${r.vendorId}-${r.orderType}`} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                    <td className="px-3 py-2 text-[13px] text-[#171717]">{stripMphPrefix(r.vendorName)}</td>
-                    <td className="px-3 py-2 text-[13px] text-[#171717]">{r.orderType}</td>
-                    <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{fmtNum(r.totalQty)}</td>
-                    <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{r.totalShipments}</td>
+                  <tr key={`${r.vendorId}-${r.orderType}`} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/50'} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td className="px-3 py-2 text-[13px] text-foreground">{stripMphPrefix(r.vendorName)}</td>
+                    <td className="px-3 py-2 text-[13px] text-foreground">{r.orderType}</td>
+                    <td className="px-3 py-2 text-[13px] text-foreground tabular-nums">{fmtNum(r.totalQty)}</td>
+                    <td className="px-3 py-2 text-[13px] text-foreground tabular-nums">{r.totalShipments}</td>
                   </tr>
                 ))}
               </tbody>

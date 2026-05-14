@@ -55,7 +55,7 @@ const TH = ({ children, right }: { children: React.ReactNode; right?: boolean })
 )
 
 const TD = ({ children, right }: { children: React.ReactNode; right?: boolean }) => (
-  <td className={`px-3 py-2 text-[13px] text-[#171717] whitespace-nowrap ${right ? 'text-right' : 'text-left'}`}>
+  <td className={`px-3 py-2 text-[13px] text-foreground whitespace-nowrap ${right ? 'text-right' : 'text-left'}`}>
     {children}
   </td>
 )
@@ -98,13 +98,13 @@ export function MarginsTable({ rows }: Props) {
             const isCommission = parseFloat(r.commissionAmount) !== 0
 
             return (
-              <tr key={r.orderId} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
+              <tr key={r.orderId} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/50'}>
                 <TD>{firstName(r.salesperson)}</TD>
                 <TD>{r.orderNumber}</TD>
                 <TD>{r.vendorName ? stripMphPrefix(r.vendorName) : '—'}</TD>
                 <TD>{r.customerName}</TD>
                 <TD>{r.shipToLabel ?? '—'}</TD>
-                <td className="px-3 py-2 text-[13px] text-[#171717] whitespace-normal break-words max-w-xs line-clamp-3">{r.description ?? '—'}</td>
+                <td className="px-3 py-2 text-[13px] text-foreground whitespace-normal break-words max-w-xs line-clamp-3">{r.description ?? '—'}</td>
                 <TD>{formatDate(r.shipDate)}</TD>
                 <TD right>{currency(r.buy)}</TD>
                 <TD right>{currency(r.sell)}</TD>
