@@ -29,6 +29,7 @@ export async function POST(
       : null
 
     const dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) })
+    if (!dbUser || dbUser.role === 'SALES') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const initials = deriveInitials(dbUser?.name)
 
     const allConfigs = await db.select({ order_type: order_type_configs.order_type, is_commission_eligible: order_type_configs.is_commission_eligible }).from(order_type_configs)

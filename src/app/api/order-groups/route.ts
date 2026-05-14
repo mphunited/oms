@@ -69,6 +69,7 @@ export async function POST(req: Request) {
     }
 
     const dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) })
+    if (!dbUser || dbUser.role === 'SALES') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const initials = deriveInitials(dbUser?.name)
 
     const seqResult = await db.execute(sql`SELECT nextval('order_number_seq') AS num`)

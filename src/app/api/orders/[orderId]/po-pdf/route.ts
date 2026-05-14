@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { orders, order_split_loads, vendors, order_groups, customers } from '@/lib/db/schema'
+import { orders, order_split_loads, vendors, order_groups, customers, users } from '@/lib/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { eq, asc, inArray } from 'drizzle-orm'
 import { renderToBuffer, DocumentProps } from '@react-pdf/renderer'
@@ -18,6 +18,9 @@ export async function GET(
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) })
+    if (!dbUser || dbUser.role === 'SALES') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { orderId } = await params
 
