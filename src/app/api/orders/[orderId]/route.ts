@@ -75,6 +75,10 @@ export async function PATCH(
     const dbUser = await db.query.users.findFirst({ where: eq(users.id, user.id) })
     const initials = deriveInitials(dbUser?.name)
 
+    if (dbUser?.role === 'SALES') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await req.json()
     const { split_loads, ...orderFields } = body
 
