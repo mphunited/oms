@@ -623,14 +623,14 @@ export function OrderTableRow({
         <td className="px-3 py-2 text-right tabular-nums">{firstQty(order.split_loads)}</td>
         <td className="px-3 py-2 text-muted-foreground">{formatDate(order.ship_date)}</td>
         <td className="px-3 py-2 text-muted-foreground">{order.vendor_name ? formatVendorName(order.vendor_name) : '—'}</td>
-        <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy, true)}</td>
-        <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.sell, true)}</td>
+        <td className="px-3 py-2 text-right tabular-nums">{formatCurrency(order.split_loads[0]?.buy, true)}</td><td className="px-3 py-2 text-right tabular-nums text-foreground">{formatCurrency(order.split_loads[0]?.buy, true)}</td>
+        <td className="px-3 py-2 text-right tabular-nums text-foreground">{formatCurrency(order.split_loads[0]?.sell, true)}</td>
 
         {/* Ship To */}
         <td className="px-3 py-2">
           {order.ship_to ? (
             <div className="flex flex-col">
-              <span>{order.ship_to.name ?? '—'}</span>
+              <span className="text-foreground">{order.ship_to.name ?? '—'}</span>
               {(order.ship_to.city || order.ship_to.state) && (
                 <span className="text-xs text-muted-foreground">
                   {[order.ship_to.city, order.ship_to.state].filter(Boolean).join(', ')}
