@@ -21,7 +21,7 @@ type SelectOption = { id: string; name: string | null }
 type ShipToOption = { key: string; label: string }
 
 const SELECT_CLS =
-  'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-card px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
+  'h-9 rounded-md border border-border bg-card px-3 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
 
 export function MarginsClient({ isSalesRole = false }: { isSalesRole?: boolean }) {
   const { start: defaultStart, end: defaultEnd } = getYearBounds()
@@ -182,11 +182,11 @@ export function MarginsClient({ isSalesRole = false }: { isSalesRole?: boolean }
     XLSX.writeFile(wb, `margins-report-${dateTag}.xlsx`)
   }
 
-  const inputCls = 'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-card px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
+  const inputCls = 'h-9 rounded-md border border-border bg-card px-3 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
 
   return (
     <div className="p-6 max-w-[1800px]">
-      <h1 className="text-2xl font-semibold text-[#171717] mb-6" style={{ letterSpacing: '-0.96px' }}>
+      <h1 className="text-2xl font-semibold text-foreground mb-6" style={{ letterSpacing: '-0.96px' }}>
         Margins
       </h1>
 
@@ -203,7 +203,7 @@ export function MarginsClient({ isSalesRole = false }: { isSalesRole?: boolean }
             className={`${inputCls} w-72`}
           />
           <div className="flex items-center gap-2">
-            <label className="text-[13px] font-medium text-[#4d4d4d]">From</label>
+            <label className="text-[13px] font-medium text-muted-foreground">From</label>
             <input
               type="date"
               value={startDate}
@@ -212,7 +212,7 @@ export function MarginsClient({ isSalesRole = false }: { isSalesRole?: boolean }
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[13px] font-medium text-[#4d4d4d]">To</label>
+            <label className="text-[13px] font-medium text-muted-foreground">To</label>
             <input
               type="date"
               value={endDate}
@@ -311,7 +311,7 @@ export function MarginsClient({ isSalesRole = false }: { isSalesRole?: boolean }
             <button
               onClick={handleExport}
               disabled={!rows || rows.length === 0}
-              className="inline-flex items-center gap-2 rounded-md border border-[rgba(0,0,0,0.12)] bg-card px-3 py-1.5 text-[13px] font-medium text-[#171717] hover:bg-muted transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
             >
               <Download className="h-4 w-4" />
               Export to Excel
