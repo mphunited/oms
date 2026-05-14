@@ -319,11 +319,11 @@ export function OrderFrequencyClient() {
                     className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}
                     style={{ borderBottom: '1px solid #f3f4f6' }}
                   >
-                    <td className="px-3 py-2 text-[13px] text-[#171717]">{fmtMonth(pt.month)}</td>
-                    <td className="px-3 py-2 text-right text-[13px] text-[#171717] tabular-nums">
+                    <td className="px-3 py-2 text-[13px] text-foreground">{fmtMonth(pt.month)}</td>
+                    <td className="px-3 py-2 text-right text-[13px] text-foreground tabular-nums">
                       {pt.count}
                     </td>
-                    <td className="px-3 py-2 text-right text-[13px] text-[#171717] tabular-nums">
+                    <td className="px-3 py-2 text-right text-[13px] text-foreground tabular-nums">
                       {data.shipDateSeries[i]?.count ?? 0}
                     </td>
                   </tr>

@@ -73,7 +73,7 @@ export function ProductTotalsClient() {
     <div className="p-6 max-w-[1280px]">
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-[#171717]" style={{ letterSpacing: '-0.96px' }}>
+        <h1 className="text-2xl font-semibold text-foreground" style={{ letterSpacing: '-0.96px' }}>
           Product Totals
         </h1>
         <div className="flex items-center gap-3">
