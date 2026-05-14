@@ -122,7 +122,7 @@ export const NAV_ITEMS: NavItem[] = [
     title: "Order Frequency",
     href: "/order-frequency",
     icon: Activity,
-    roles: ["ADMIN", "ACCOUNTING"],
+    roles: ["ADMIN", "ACCOUNTING", "SALES"],
   },
   {
     title: "Settings",

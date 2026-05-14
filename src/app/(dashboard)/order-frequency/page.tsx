@@ -20,7 +20,7 @@ export default async function OrderFrequencyPage() {
 
   if (!dbUser) redirect('/dashboard')
 
-  if (dbUser.role !== 'ADMIN' && dbUser.role !== 'ACCOUNTING') {
+  if (dbUser.role !== 'ADMIN' && dbUser.role !== 'ACCOUNTING' && dbUser.role !== 'SALES') {
     redirect('/dashboard')
   }
 
