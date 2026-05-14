@@ -23,9 +23,9 @@ type ApiResponse = {
 }
 
 const INPUT_CLS =
-  'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-white px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
+  'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-card px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
 const SELECT_CLS =
-  'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-white px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
+  'h-9 rounded-md border border-[rgba(0,0,0,0.08)] bg-card px-3 text-[13px] text-[#171717] focus:outline-none focus:ring-2 focus:ring-[#1a2744]/30'
 
 function getYearBounds() {
   const now = new Date()
@@ -139,7 +139,7 @@ export function OrderFrequencyClient() {
       </h1>
 
       {/* Filter card */}
-      <div className="mb-6 rounded-lg border border-[#e5e7eb] bg-white p-4 shadow-sm space-y-3">
+      <div className="mb-6 rounded-lg border border-[#e5e7eb] bg-card p-4 shadow-sm space-y-3">
         {/* Row 1: Date range */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export function OrderFrequencyClient() {
         <div className="space-y-6">
           {/* Chart */}
           <div
-            className="rounded-lg bg-white p-5"
+            className="rounded-lg bg-card p-5"
             style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
           >
             <p className="text-[14px] font-semibold text-[#171717] mb-4">{chartTitle}</p>
@@ -269,7 +269,7 @@ export function OrderFrequencyClient() {
           {/* Summary stat cards */}
           <div className="grid grid-cols-3 gap-3">
             <div
-              className="rounded-lg bg-white p-4"
+              className="rounded-lg bg-card p-4"
               style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
             >
               <p className="text-[11px] font-medium text-[#6b7280] leading-tight mb-1.5">
@@ -278,7 +278,7 @@ export function OrderFrequencyClient() {
               <p className="text-2xl font-semibold text-[#1a2744]">{totalPlaced}</p>
             </div>
             <div
-              className="rounded-lg bg-white p-4"
+              className="rounded-lg bg-card p-4"
               style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
             >
               <p className="text-[11px] font-medium text-[#6b7280] leading-tight mb-1.5">
@@ -287,7 +287,7 @@ export function OrderFrequencyClient() {
               <p className="text-2xl font-semibold text-[#1a2744]">{totalShipped}</p>
             </div>
             <div
-              className="rounded-lg bg-white p-4"
+              className="rounded-lg bg-card p-4"
               style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
             >
               <p className="text-[11px] font-medium text-[#6b7280] leading-tight mb-1.5">
@@ -316,7 +316,7 @@ export function OrderFrequencyClient() {
                 {data.orderDateSeries.map((pt, i) => (
                   <tr
                     key={pt.month}
-                    className={i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}
+                    className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}
                     style={{ borderBottom: '1px solid #f3f4f6' }}
                   >
                     <td className="px-3 py-2 text-[13px] text-[#171717]">{fmtMonth(pt.month)}</td>

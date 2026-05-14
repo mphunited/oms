@@ -458,7 +458,7 @@ export function OrderTableRow({
     <>
       <tr className={cn(
         'group h-[52px] hover:bg-muted/30 transition-colors',
-        order.flag ? '!bg-[#fef2f2]' : rowIndex % 2 === 0 ? 'bg-[#f3f4f6]' : 'bg-white',
+        order.flag ? '!bg-[#fef2f2] dark:!bg-red-950/30' : rowIndex % 2 === 0 ? 'bg-muted/40' : 'bg-background',
       )}>
         {/* Expand */}
         <td className="px-2 py-2">

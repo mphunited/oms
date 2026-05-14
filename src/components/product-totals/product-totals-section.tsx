@@ -108,7 +108,7 @@ export function ProductTotalsSection({
                   <tr><td colSpan={3} className="px-3 py-6 text-center text-[#6b7280] text-[13px]">No data in range</td></tr>
                 )}
                 {sortedProducts.map((r, i) => (
-                  <tr key={r.orderType} className={i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                  <tr key={r.orderType} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'} style={{ borderBottom: '1px solid #f3f4f6' }}>
                     <td className="px-3 py-2 text-[13px] text-[#171717]">{r.orderType}</td>
                     <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{fmtNum(r.totalQty)}</td>
                     <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{r.totalShipments}</td>
@@ -137,7 +137,7 @@ export function ProductTotalsSection({
                   <tr><td colSpan={4} className="px-3 py-6 text-center text-[#6b7280] text-[13px]">No data in range</td></tr>
                 )}
                 {sortedVendors.map((r, i) => (
-                  <tr key={`${r.vendorId}-${r.orderType}`} className={i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                  <tr key={`${r.vendorId}-${r.orderType}`} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'} style={{ borderBottom: '1px solid #f3f4f6' }}>
                     <td className="px-3 py-2 text-[13px] text-[#171717]">{stripMphPrefix(r.vendorName)}</td>
                     <td className="px-3 py-2 text-[13px] text-[#171717]">{r.orderType}</td>
                     <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{fmtNum(r.totalQty)}</td>

@@ -47,7 +47,7 @@ export function AggregateCards({ productTotals }: { productTotals: ProductTotal[
       {cards.map(c => (
         <div
           key={c.label}
-          className="rounded-lg bg-white p-3"
+          className="rounded-lg bg-card p-3"
           style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
         >
           <p className="text-[11px] font-medium text-[#6b7280] leading-tight mb-1.5">{c.label}</p>

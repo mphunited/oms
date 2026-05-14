@@ -98,7 +98,7 @@ export function MarginsTable({ rows }: Props) {
             const isCommission = parseFloat(r.commissionAmount) !== 0
 
             return (
-              <tr key={r.orderId} className={i % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]'}>
+              <tr key={r.orderId} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
                 <TD>{firstName(r.salesperson)}</TD>
                 <TD>{r.orderNumber}</TD>
                 <TD>{r.vendorName ? stripMphPrefix(r.vendorName) : '—'}</TD>
