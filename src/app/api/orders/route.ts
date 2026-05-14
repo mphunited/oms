@@ -328,7 +328,7 @@ export async function POST(req: Request) {
     let checklist: unknown = null
 
     if (manual_order_number) {
-      if (user?.role !== 'ADMIN' && user?.role !== 'CSR') {
+      if (dbUser?.role !== 'ADMIN' && dbUser?.role !== 'CSR') {
         return new NextResponse('Forbidden', { status: 403 })
       }
       const trimmed = String(manual_order_number).trim()
