@@ -1,6 +1,7 @@
 import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
 import type { Order, OrderSplitLoad, Vendor, CompanySettings } from '@/lib/db/schema'
+import { stripMphPrefix } from '@/lib/utils/strip-mph-prefix'
 
 const NAVY = '#00205B'
 const GOLD = '#B88A44'
@@ -123,7 +124,7 @@ export function PurchaseOrderPDF({ order, splitLoads, vendor, companySetting }: 
           <View style={S.row}>
             <View style={S.cell}>
               <Text style={S.lbl}>VENDOR</Text>
-              <Text style={S.valBold}>MPH United{vendor?.name ? ` / ${vendor.name}` : ''}</Text>
+              <Text style={S.valBold}>MPH United{vendor?.name ? ` / ${stripMphPrefix(vendor.name)}` : ''}</Text>
               {!!va.street && <Text style={S.val}>{va.street}</Text>}
               {!!(va.city || va.state || va.zip) && (
                 <Text style={S.val}>{[va.city, va.state, va.zip].filter(Boolean).join(', ')}</Text>
