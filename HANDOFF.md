@@ -22,32 +22,6 @@ pruned to 0.
 
 ---
 
-## Still To Do
-
-### 🟡 Verify Before Next Session
-
-**1. Local worktree directory cleanup**
-Remote claude/ branches: confirmed pruned (Count: 0).
-Local .claude/worktrees/ directories: required closing Claude Code and
-running Remove-Item manually. Verify cleanup succeeded:
-
-```powershell
-git worktree list | Measure-Object -Line
-```
-
-Expected: Lines: 1 (main only). If still showing many entries, re-run:
-
-```powershell
-Remove-Item -Path "C:/Users/jack/Claude Projects/oms/.claude/worktrees/*" `
-  -Recurse -Force
-git worktree prune
-```
-
-Note: recycling-phase1 is a named branch (not auto-generated). Do not
-delete it without confirming it contains no unmerged work.
-
----
-
 ### 🟢 Nice To Have (Post-Launch)
 
 **2. npm install on new machines / CI**
