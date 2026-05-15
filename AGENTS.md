@@ -711,6 +711,8 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       - recycling-totals-section.tsx (IBC and Drum vendor columns)
       - margins-table.tsx (Vendor column)
       - margins-client.tsx (All Vendors dropdown options)
+      - edit-ibc-form.tsx (Processing Facility dropdown)
+      - edit-drum-form.tsx (Processing Facility dropdown)
     Apply to any future surface that renders vendor names.
 
 79. **Rule: MSAL callback redirect URI**

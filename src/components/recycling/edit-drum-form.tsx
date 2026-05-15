@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Loader2, Save, Mail, Download, Plus, Trash2 } from 'lucide-react'
+import { stripMphPrefix } from '@/lib/utils/strip-mph-prefix'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -118,7 +119,7 @@ export function EditDrumForm({
             <select value={form.vendor_id} onChange={e => { set('vendor_id', e.target.value); markDirty() }}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
               <option value="">Select vendor…</option>
-              {vendorList.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+              {vendorList.map(v => <option key={v.id} value={v.id}>{stripMphPrefix(v.name)}</option>)}
             </select>
           </Field>
         </Row>
