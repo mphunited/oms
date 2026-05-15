@@ -625,8 +625,8 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     IBC Total Sell Price = (sell × qty) + freight_to_customer.
     mph_freight_bottles is used directly in IBC Total Cost; used as
     (mph_freight_bottles / 90) × bottle_qty in the Profit formula — intentionally
-    different. Excel export via xlsx (SheetJS). Export button in filter bar row 2,
-    right of Run Report. Disabled when no rows loaded.
+    different. Excel export via xlsx (SheetJS). Export button in filter bar row 1
+    alongside Run Report. Disabled when no rows loaded.
     Order Frequency: grouped bar chart (Recharts), two series per month — "Orders Placed"
     (navy #1a2744, by order_date) and "Orders Shipped" (blue #3b82f6, by effective
     ship_date = COALESCE(MIN(split_load.ship_date), orders.ship_date)). Customer required
@@ -1151,7 +1151,7 @@ src/app/api/product-totals/pdf/route.ts — GET; export const runtime = 'nodejs'
 src/app/(dashboard)/margins/page.tsx — Margins page (ADMIN + ACCOUNTING only)
 src/components/margins/margins-client.tsx — two-row filter bar (search+dates /
   dropdowns+Run+Export); Ship To disabled until customer selected; report fires on
-  Run click only; Export to Excel button in filter bar row 2 right of Run Report
+  Run click only; Export to Excel button in filter bar row 1 alongside Run Report
 src/components/margins/margins-table.tsx — 21-column scrollable table; Vendor uses
   stripMphPrefix(); Salesperson renders first name only; Profit % red < 8% / green >= 8%;
   Commission shows "—" when ineligible; Description wraps max 3 lines (line-clamp-3)

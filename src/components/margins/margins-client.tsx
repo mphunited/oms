@@ -279,6 +279,15 @@ export function MarginsClient({ isSalesRole = false }: { isSalesRole?: boolean }
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             Run Report
           </button>
+
+          <button
+            onClick={handleExport}
+            disabled={!rows || rows.length === 0}
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-[13px] font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            Export to Excel
+          </button>
         </div>
       </div>
 
@@ -304,18 +313,10 @@ export function MarginsClient({ isSalesRole = false }: { isSalesRole?: boolean }
       {!isLoading && rows !== null && rows.length > 0 && (
         <>
           <MarginsTable rows={rows} />
-          <div className="flex items-center justify-between mt-3">
+          <div className="mt-3">
             <span className="text-[12px] text-[#6b7280]">
               Showing {rows.length} order{rows.length !== 1 ? 's' : ''}
             </span>
-            <button
-              onClick={handleExport}
-              disabled={!rows || rows.length === 0}
-              className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-[13px] font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-            >
-              <Download className="h-4 w-4" />
-              Export to Excel
-            </button>
           </div>
         </>
       )}
