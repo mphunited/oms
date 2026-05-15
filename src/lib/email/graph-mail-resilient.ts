@@ -13,7 +13,10 @@ function authHeaders(token: string): Record<string, string> {
 
 function parseEmailAddress(e: string): { name?: string; address: string } {
   const m = /^(.+?)\s*<([^>]+)>$/.exec(e.trim());
-  return m ? { name: m[1].trim(), address: m[2].trim() } : { address: e.trim() };
+  if (!m) return { address: e.trim() };
+  // Strip any trailing <email> that the lazy group-1 capture may have absorbed
+  const name = m[1].trim().replace(/\s*<[^>]+>$/, '').trim();
+  return name ? { name, address: m[2].trim() } : { address: m[2].trim() };
 }
 
 export class GraphAPIError extends Error {
