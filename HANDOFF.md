@@ -2,9 +2,8 @@
 
 ## Session Summary
 
-Full May 14 backlog cleared — all red, yellow, and green items resolved.
-Vercel is green. typecheck passes with 0 errors. Remote worktree branches
-pruned to 0.
+Five backlog items cleared. Three bugs found during testing. Worktree local
+cleanup still pending (count: 8, target: 1 — run cleanup before next session).
 
 ---
 
@@ -12,41 +11,73 @@ pruned to 0.
 
 | Commit | Description |
 |--------|-------------|
-| `488fa88` | fix: implicit any on render callback in admin/vendor schedule PDFs |
-| `2c8f3fa` | chore: add .claude to tsconfig exclude, typecheck/test scripts, .env.example |
-| `9ccd0fd` | fix: replace remaining hardcoded gray text with text-foreground/muted-foreground |
-| `24f468d` | fix: migrate raw Graph token calls to getMailTokenResilient in 3 email flows |
-| `b36341f` | fix: remove banned inviteUserByEmail and add ADMIN guards to team actions |
-| `0e614e8` | feat: allow CSR role to access Order Frequency page |
-| `6c03480` | fix: dark mode text colors on order-frequency page |
+| `06f3ef5` | fix: remove Approved By and Date from recycling PO PDF |
+| `a9e4688` | fix: apply stripMphPrefix to vendor dropdown in recycling edit forms |
+| `241450f` | feat: move Export button to row 1 alongside Run Report on margins page |
+| `e21dc9a` | feat: add default customer and buy price to new drum recycling form |
+| `75e933c` | fix: auto-populate po_contacts from vendor on drum recycling new and edit forms |
 
 ---
 
-### 🟢 Nice To Have (Post-Launch)
+## Still To Do
 
-**2. npm install on new machines / CI**
-typecheck failures were caused by a corrupted (empty) @react-pdf/renderer
-directory in node_modules. Fixed by npm install. No code change needed.
-tsconfig moduleResolution was already correct ("bundler").
-If typecheck fails again for this reason, npm install is the fix.
+### 🔴 Do Before Next Session
+
+**1. Local worktree directory cleanup**
+git worktree list returned Lines: 8. Target is 1 (main only). Run:
+
+```powershell
+Remove-Item -Path "C:/Users/jack/Claude Projects/oms/.claude/worktrees/*" `
+  -Recurse -Force
+git worktree prune
+git worktree list | Measure-Object -Line
+```
+
+Expected after: Lines: 1
 
 ---
 
-## Closed From May 14 — Confirmed Done
+### 🔴 Bugs Found During Testing
+
+**2. Recycling IBC PDF — notes rendering at bottom**
+Notes are appearing at the bottom of the recycling IBC PO PDF. No notes
+should appear on any recycling PO PDF.
+File: src/lib/recycling/build-recycling-po-pdf.tsx
+Fix: Remove all notes field rendering (likely appointment_notes).
+
+**3. Drum Edit — po_contacts not persisting to DB**
+po_contacts populate correctly in the edit form UI (Prompt 5 worked for
+display) but Email PO draft has no recipients. Root cause: po_contacts is
+likely missing from the PATCH payload, so DB record stays null and the
+email action reads empty contacts from DB.
+Files: src/lib/recycling/use-edit-drum-form.ts (PATCH body),
+src/app/api/recycling-orders/[id]/route.ts (PATCH handler must accept
+po_contacts).
+
+---
+
+### 🟡 Features
+
+**4. Duplicate button on Edit Drum and Edit IBC pages**
+Both recycling edit pages need a Duplicate button.
+Requires: POST /api/recycling-orders/[id]/duplicate route + button on both
+edit page UIs. Access: ADMIN + CSR + ACCOUNTING. SALES blocked.
+On duplicate: new order_number from sequence, status = 'Acknowledged Order',
+pick_up_date = null, delivery_date = null, appointment_notes = null.
+All other fields copied. Navigate to new order edit page after.
+
+---
+
+## Closed From May 15 — Confirmed Done
 
 | Item | Resolution |
 |------|-----------|
-| Dark mode: aggregate-cards, product-totals page, margins page | Already correct — no changes needed |
-| Dark mode: order-frequency text colors | Fixed — 6 replacements in order-frequency-client.tsx |
-| Dark mode: systematic cleanup | 9 files, all text-[#171717] replaced; brand colors left intact |
-| CSR access to Order Frequency | Added CSR to route guard and nav config |
-| team.ts: inviteMember + ADMIN guards | inviteMember removed; requireAdmin() added to updateMemberRole and removeMember |
-| Email token migration (3 files) | new-order-form, use-recycling-po-email, schedules-client all use getMailTokenResilient |
-| tsconfig .claude exclude | Done |
-| typecheck + test scripts | Done |
-| .env.example | NEXT_PUBLIC_ vars added |
-| Remote worktree branch cleanup | 91 branches deleted, Count: 0 |
-| Vercel build errors (schedule PDF implicit any) | Fixed — customer_po error was already resolved in prior commit |
+| Remove Approved By and Date from recycling PO PDF | 06f3ef5 |
+| Hide "MPH United /" in Processing Facility dropdown — IBC + Drum edit | a9e4688 |
+| Move Export button to row 1 alongside Run Report on margins page | 241450f |
+| Default customer (Container Services Network) on new drum form | e21dc9a |
+| Default buy $5.00 for Coastal on new drum form | e21dc9a |
+| Auto-populate po_contacts from vendor on drum new and edit forms (display) | 75e933c |
 
 ---
 
