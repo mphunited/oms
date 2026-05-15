@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { getMailTokenResilient } from '@/lib/email/msal-client-resilient'
 import { createDraftResilient, attachFileToDraftResilient } from '@/lib/email/graph-mail-resilient'
-import { openDraft } from '@/lib/email/graph-mail'
+import { openDraft, parseEmailAddress } from '@/lib/email/graph-mail'
 import { getUserSignature } from '@/lib/email/get-user-signature'
 
 function blobToBase64(blob: Blob): Promise<string> {
@@ -30,8 +30,8 @@ export function useRecyclingPoEmail(id: string, orderNumber: string) {
       const ccHeader  = pdfRes.headers.get('x-email-cc') ?? ''
       const subject   = pdfRes.headers.get('x-email-subject') ?? `MPH United PO ${orderNumber}`
 
-      const to = toHeader ? toHeader.split(',').map(s => s.trim()).filter(Boolean) : []
-      const cc = ccHeader ? ccHeader.split(',').map(s => s.trim()).filter(Boolean) : []
+      const to = toHeader ? toHeader.split(',').map(s => parseEmailAddress(s.trim()).address).filter(Boolean) : []
+      const cc = ccHeader ? ccHeader.split(',').map(s => parseEmailAddress(s.trim()).address).filter(Boolean) : []
 
       const base64 = await blobToBase64(await pdfRes.blob())
       const [token, signature] = await Promise.all([getMailTokenResilient(), getUserSignature()])

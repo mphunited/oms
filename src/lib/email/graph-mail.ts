@@ -16,7 +16,7 @@ async function assertOk(res: Response, context: string): Promise<void> {
   }
 }
 
-function parseEmailAddress(e: string): { name?: string; address: string } {
+export function parseEmailAddress(e: string): { name?: string; address: string } {
   const m = /^(.+?)\s*<([^>]+)>$/.exec(e.trim())
   return m ? { name: m[1].trim(), address: m[2].trim() } : { address: e.trim() }
 }
