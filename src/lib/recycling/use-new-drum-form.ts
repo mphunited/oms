@@ -7,6 +7,9 @@ import { toast } from 'sonner'
 // Coastal Container Services vendor ID — hardcoded for drum orders default
 const COASTAL_VENDOR_ID = '8ae0764b-c98d-4b4f-a71f-1e0111225a94'; // MPH United / Coastal Container Services -- Alvin, TX
 const COASTAL_DEFAULT_SELL = '12.00';
+const COASTAL_DEFAULT_BUY = '5.00';
+// Container Services Network customer ID — default customer for new drum orders
+const CONTAINER_SERVICES_CUSTOMER_ID = '212d0119-52e4-4bf8-acb1-41026f47320e';
 
 type Contact = { name: string; email: string; role: 'to' | 'cc' }
 type CustomerContact = { name: string; email: string }
@@ -58,7 +61,7 @@ export function useNewDrumForm() {
   const [form, setForm] = useState<NewDrumFormState>({
     order_date:              today(),
     status:                  'Acknowledged Order',
-    customer_id:             '',
+    customer_id:             CONTAINER_SERVICES_CUSTOMER_ID,
     vendor_id:               COASTAL_VENDOR_ID,
     is_blind_shipment:       false,
     salesperson_id:          '',
@@ -100,10 +103,14 @@ export function useNewDrumForm() {
     })
   }, [])
 
-  // Auto-populate sell with Coastal default when vendor changes to Coastal and sell is empty
+  // Auto-populate buy/sell with Coastal defaults when vendor changes to Coastal and fields are empty
   useEffect(() => {
-    if (form.vendor_id === COASTAL_VENDOR_ID && !form.sell) {
-      setForm(f => ({ ...f, sell: COASTAL_DEFAULT_SELL }))
+    if (form.vendor_id === COASTAL_VENDOR_ID) {
+      setForm(f => ({
+        ...f,
+        sell: f.sell ? f.sell : COASTAL_DEFAULT_SELL,
+        buy:  f.buy  ? f.buy  : COASTAL_DEFAULT_BUY,
+      }))
     }
   }, [form.vendor_id]) // eslint-disable-line react-hooks/exhaustive-deps
 

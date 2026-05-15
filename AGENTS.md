@@ -514,8 +514,12 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - Stored as COASTAL_VENDOR_ID constant in src/lib/recycling/use-new-drum-form.ts.
     - Pre-fills vendor_id on the new drum form. Field remains a dropdown — editable.
     - COASTAL_DEFAULT_SELL = "12.00" is also in use-new-drum-form.ts. Pre-fills the sell
-    field when vendor = Coastal and sell is currently empty. CSR can edit freely. Edit
-    form applies only when sell is null on load — never overwrites an existing value.
+      field when vendor = Coastal and sell is currently empty. CSR can edit freely.
+    - COASTAL_DEFAULT_BUY = "5.00" is in use-new-drum-form.ts. Pre-fills the buy
+      field when vendor = Coastal and buy is currently empty. Never overwrites an existing value.
+    - CONTAINER_SERVICES_CUSTOMER_ID = "212d0119-52e4-4bf8-acb1-41026f47320e"
+      (Container Services Network). Pre-fills customer_id on new drum form initialization.
+      Applied only when customer_id is null/empty — never overwrites an existing value.
 
 64. **Recycling orders use the same order_number_seq as regular orders.**
     - Same [Initials]-MPH[Number] format. No separate sequence.
