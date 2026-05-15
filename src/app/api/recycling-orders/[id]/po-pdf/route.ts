@@ -75,11 +75,17 @@ export async function GET(
 
     const emailTo = toContacts
       .filter(c => c.email)
-      .map(c => c.name ? `${c.name} <${c.email}>` : c.email!)
+      .map(c => {
+        const displayName = c.name ? c.name.replace(/<[^>]*>/g, '').trim() : ''
+        return displayName ? `${displayName} <${c.email}>` : c.email!
+      })
       .join(', ')
 
     const emailCc = [
-      ...ccContacts.filter(c => c.email).map(c => c.name ? `${c.name} <${c.email}>` : c.email!),
+      ...ccContacts.filter(c => c.email).map(c => {
+        const displayName = c.name ? c.name.replace(/<[^>]*>/g, '').trim() : ''
+        return displayName ? `${displayName} <${c.email}>` : c.email!
+      }),
       ...(order.recycling_type === 'IBC' ? ['orders@mphunited.com'] : []),
     ].join(', ')
 
