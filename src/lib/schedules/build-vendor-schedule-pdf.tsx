@@ -264,7 +264,7 @@ export function VendorSchedulePdf({
           <Text style={styles.footerText}>MPH United</Text>
           <Text
             style={styles.footerText}
-            render={({ pageNumber, totalPages }) =>
+            render={({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) =>
               `Page ${pageNumber} of ${totalPages}`
             }
           />

@@ -241,7 +241,7 @@ export function AdminSchedulePdf({
           <Text style={styles.footerText}>MPH United — CONFIDENTIAL — Admin Use Only</Text>
           <Text
             style={styles.footerText}
-            render={({ pageNumber, totalPages }) =>
+            render={({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) =>
               `Page ${pageNumber} of ${totalPages}`
             }
           />
