@@ -77,7 +77,7 @@ export function useEditDrumForm(id: string) {
       fetch('/api/users?permission=CSR').then(r => r.json()),
       fetch('/api/customers').then(r => r.json()),
       fetch('/api/vendors').then(r => r.json()),
-    ]).then(([order, carriers, sales, csrs, custs, vends]) => {
+    ]).then(async ([order, carriers, sales, csrs, custs, vends]) => {
       setCarriers(carriers.values ?? [])
       setSales(sales ?? [])
       setCsrs(csrs ?? [])
@@ -88,6 +88,14 @@ export function useEditDrumForm(id: string) {
       const loadedSell = order.sell ?? ''
       const isCoastal = (order.vendor_id ?? '') === COASTAL_VENDOR_ID
       const defaultSell = (!loadedSell && isCoastal) ? COASTAL_DEFAULT_SELL : loadedSell
+      let poContacts = (order.po_contacts ?? []) as Contact[]
+      if (poContacts.length === 0 && order.vendor_id) {
+        try {
+          const vr = await fetch(`/api/vendors/${order.vendor_id}`)
+          const vd = await vr.json()
+          poContacts = (vd.po_contacts ?? []) as Contact[]
+        } catch { /* silently fail */ }
+      }
       setForm({
         order_number:            order.order_number ?? '',
         order_date:              order.order_date ?? '',
@@ -108,7 +116,7 @@ export function useEditDrumForm(id: string) {
         bill_to:                 coerceAddr(order.bill_to),
         customer_contacts:       (order.customer_contacts ?? []) as CustomerContact[],
         invoice_payment_status:  order.invoice_payment_status ?? 'Not Invoiced',
-        po_contacts:             (order.po_contacts ?? []) as Contact[],
+        po_contacts:             poContacts,
         po_notes:                order.po_notes ?? '',
         misc_notes:              order.misc_notes ?? '',
         bol_number:              order.bol_number ?? '',

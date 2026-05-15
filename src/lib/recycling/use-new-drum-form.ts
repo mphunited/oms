@@ -114,6 +114,17 @@ export function useNewDrumForm() {
     }
   }, [form.vendor_id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-populate po_contacts from vendor when vendor changes
+  useEffect(() => {
+    if (!form.vendor_id) return
+    fetch(`/api/vendors/${form.vendor_id}`)
+      .then(r => r.json())
+      .then(vendor => {
+        setForm(f => ({ ...f, po_contacts: (vendor.po_contacts ?? []) as Contact[] }))
+      })
+      .catch(() => {})
+  }, [form.vendor_id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function set<K extends keyof NewDrumFormState>(key: K, value: NewDrumFormState[K]) {
     setForm(f => ({ ...f, [key]: value }))
   }
