@@ -205,14 +205,14 @@ export function OrderFrequencyClient() {
       )}
 
       {isLoading && (
-        <div className="flex items-center gap-2 text-[13px] text-[#6b7280]">
+        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading…
         </div>
       )}
 
       {!isLoading && allZero && (
-        <div className="flex items-center justify-center py-16 text-[13px] text-[#6b7280]">
+        <div className="flex items-center justify-center py-16 text-[13px] text-muted-foreground">
           No orders found for {data ? data.customerName : 'this customer'} in the selected date range.
         </div>
       )}
@@ -224,7 +224,7 @@ export function OrderFrequencyClient() {
             className="rounded-lg bg-card p-5"
             style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
           >
-            <p className="text-[14px] font-semibold text-[#171717] mb-4">{chartTitle}</p>
+            <p className="text-[14px] font-semibold text-foreground mb-4">{chartTitle}</p>
             <ResponsiveContainer width="100%" height={400}>
               <BarChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f3f4f6" />
@@ -272,28 +272,28 @@ export function OrderFrequencyClient() {
               className="rounded-lg bg-card p-4"
               style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
             >
-              <p className="text-[11px] font-medium text-[#6b7280] leading-tight mb-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground leading-tight mb-1.5">
                 Total Orders Placed
               </p>
-              <p className="text-2xl font-semibold text-[#1a2744]">{totalPlaced}</p>
+              <p className="text-2xl font-semibold text-foreground">{totalPlaced}</p>
             </div>
             <div
               className="rounded-lg bg-card p-4"
               style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
             >
-              <p className="text-[11px] font-medium text-[#6b7280] leading-tight mb-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground leading-tight mb-1.5">
                 Total Orders Shipped
               </p>
-              <p className="text-2xl font-semibold text-[#1a2744]">{totalShipped}</p>
+              <p className="text-2xl font-semibold text-foreground">{totalShipped}</p>
             </div>
             <div
               className="rounded-lg bg-card p-4"
               style={{ boxShadow: 'rgba(0,0,0,0.08) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 2px' }}
             >
-              <p className="text-[11px] font-medium text-[#6b7280] leading-tight mb-1.5">
+              <p className="text-[11px] font-medium text-muted-foreground leading-tight mb-1.5">
                 Date Range
               </p>
-              <p className="text-[13px] font-semibold text-[#1a2744]">
+              <p className="text-[13px] font-semibold text-foreground">
                 {fmtDateDisplay(startDate)} – {fmtDateDisplay(endDate)}
               </p>
             </div>
