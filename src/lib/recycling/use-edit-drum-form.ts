@@ -88,14 +88,7 @@ export function useEditDrumForm(id: string) {
       const loadedSell = order.sell ?? ''
       const isCoastal = (order.vendor_id ?? '') === COASTAL_VENDOR_ID
       const defaultSell = (!loadedSell && isCoastal) ? COASTAL_DEFAULT_SELL : loadedSell
-      let poContacts = (order.po_contacts ?? []) as Contact[]
-      if (poContacts.length === 0 && order.vendor_id) {
-        try {
-          const vr = await fetch(`/api/vendors/${order.vendor_id}`)
-          const vd = await vr.json()
-          poContacts = (vd.po_contacts ?? []) as Contact[]
-        } catch { /* silently fail */ }
-      }
+      const poContacts = (order.po_contacts ?? []) as Contact[]
       setForm({
         order_number:            order.order_number ?? '',
         order_date:              order.order_date ?? '',
