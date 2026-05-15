@@ -538,9 +538,18 @@ Pre-filled in new drum form; field remains a dropdown.
 always saves as `'Invoice'`. `invoice_customer_amount` is never shown and always saves
 as `null`. Neither field is user-editable on drum forms. `qb_invoice_number` is shown on drum edit forms in the Financial section — same as IBC edit forms.
 
-**Coastal default sell:** `COASTAL_DEFAULT_SELL = "12.00"` constant in
-`use-new-drum-form.ts`. Pre-fills `sell` when vendor = Coastal and `sell` is currently
-empty. CSR can edit freely. Edit form applies only when `sell` is null on load.
+**Drum recycling defaults (constants in `src/lib/recycling/use-new-drum-form.ts`):**
+- Default vendor: Coastal Container Services
+  (`COASTAL_VENDOR_ID = "8ae0764b-c98d-4b4f-a71f-1e0111225a94"`)
+  Pre-fills `vendor_id` on new drum form. Field remains a dropdown — editable.
+- Default customer: Container Services Network
+  (`CONTAINER_SERVICES_CUSTOMER_ID = "212d0119-52e4-4bf8-acb1-41026f47320e"`)
+  Pre-fills `customer_id` on new drum form initialization.
+  Applied only when `customer_id` is null/empty — never overwrites an existing value.
+- When vendor = Coastal and `buy` is empty: `COASTAL_DEFAULT_BUY = "5.00"` pre-fills buy.
+  Never overwrites an existing value.
+- When vendor = Coastal and `sell` is empty: `COASTAL_DEFAULT_SELL = "12.00"` pre-fills sell.
+  CSR can edit freely. Edit form applies only when `sell` is null on load.
 
 **Drum-only fields** (not shown on IBC form):
 `ship_from` (customer pickup location), `bill_to`, `customer_contacts` (confirmation emails)
@@ -583,6 +592,19 @@ Reads x-email-to/cc/subject from po-pdf route response headers.
 Creates Graph API draft with PDF attached, opens Outlook.
 po_contacts on the ORDER drives recipients (not vendor.po_contacts).
 If po_contacts empty: opens draft with empty To field — does not throw.
+
+### Duplication
+- Both IBC and Drum edit pages have a Duplicate button in the page header.
+- Duplicate creates a new recycling order copying all fields from the source, with
+  these fields reset: status → 'Acknowledged Order', order_number → new from sequence,
+  pick_up_date → null, delivery_date → null, appointment_notes → null, bol_number → null,
+  qb_invoice_number → null, flag → false, invoice_payment_status → 'Not Invoiced',
+  commission_status → 'Not Eligible', part_number → null.
+- Route: POST /api/recycling-orders/[id]/duplicate (ADMIN, CSR, ACCOUNTING — SALES blocked).
+- Returns { id, recycling_type }. Navigates to the new order's edit page.
+- UI shows "Duplicating…" loading state and Sonner toast on success/error.
+- Recycling PO PDFs never display notes fields (appointment_notes, po_notes).
+  See AGENTS.md ⛔ DO NOT RE-ADD table and rule 83.
 
 ### Invoice Number
 `qb_invoice_number` (text, nullable) is on recycling_orders. Surfaced on IBC and Drum edit forms in the Financial section.

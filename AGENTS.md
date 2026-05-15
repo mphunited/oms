@@ -45,6 +45,8 @@ PRD.md before proceeding.
 | /financials route | App router | Deleted intentionally. Do not recreate. |
 | Greeting modal | Email flows | Email greeting is derived automatically from vendor.name. No modal. |
 | Button asChild | All components | @base-ui/react does not support this prop. Use styled native Link elements instead. |
+| Approved By / Date footer | build-recycling-po-pdf.tsx | Removed 2026-05-15 by business decision. Do not re-add signature fields to any recycling PO PDF. |
+| Notes rendering (po_notes) | build-recycling-po-pdf.tsx | Removed 2026-05-15. Dead code styles notesBox, notesLbl, notesText remain in the S object — do not use them and do not remove them (inert, no runtime effect). Do not render any notes fields on any recycling PO PDF. |
 
 ---
 
@@ -201,6 +203,9 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       between the "Signature:" label and the signing underline. Consignee box has no
       signing line.
     - BOL return email is bol@mphunited.com. Hardcoded in build-bol-pdf.tsx.
+    - Recycling PO PDF does NOT render any notes fields. appointment_notes
+      and po_notes are not rendered. Do not add notes rendering to
+      build-recycling-po-pdf.tsx under any circumstances.
 
 23. **invoice_paid_date and commission_paid_date are date columns on orders.**
     invoice_paid_date = when customer paid. Set by Accounting on the order edit form.
@@ -747,6 +752,27 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     API filtering in commission report — only Renee is eligible.
     Do not conflate these two flags.
 
+83. **Rule: Recycling order duplication**
+    Route: POST /api/recycling-orders/[id]/duplicate
+    Access: ADMIN, CSR, ACCOUNTING. SALES blocked (same as rule 14).
+    Behavior: copies all fields from the source recycling order except:
+      status              → 'Acknowledged Order'
+      order_number        → new value from order_number_seq
+      pick_up_date        → null
+      delivery_date       → null
+      appointment_notes   → null
+      bol_number          → null
+      qb_invoice_number   → null
+      flag                → false
+      invoice_payment_status → 'Not Invoiced'
+      commission_status   → 'Not Eligible'
+      part_number         → null
+    Returns: { id, recycling_type }
+    Navigation: IBC duplicate → /recycling/ibcs/[newId],
+                Drum duplicate → /recycling/drums/[newId]
+    UI: Duplicate button in page header of both edit pages.
+        Shows "Duplicating…" loading state. Sonner toast on success/error.
+
 ---
 
 ## TECHNOLOGY STACK
@@ -1186,6 +1212,9 @@ src/app/api/recycling-orders/route.ts   — GET (paginated, ?type=IBC|Drum) + PO
 src/app/api/recycling-orders/[id]/route.ts — GET detail + PATCH
 src/app/api/recycling-orders/[id]/po-pdf/route.ts — GET PDF; sets email headers;
   export const runtime = 'nodejs'
+src/app/api/recycling-orders/[id]/duplicate/route.ts — POST; mints
+  new order_number from sequence; resets status, dates, flags; returns
+  { id, recycling_type }; ADMIN + CSR + ACCOUNTING only
 src/app/api/order-groups/route.ts       — POST create group
 src/app/api/order-groups/[id]/route.ts  — DELETE ungroup (ADMIN only)
 src/app/api/orders/[orderId]/po-pdf/route.ts — handles grouped orders via group_id
