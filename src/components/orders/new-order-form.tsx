@@ -5,8 +5,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import { toast } from 'sonner'
-import { getMailToken } from '@/lib/email/msal-client'
-import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
+import { getMailTokenResilient } from '@/lib/email/msal-client-resilient'
+import { createDraftResilient, attachFileToDraftResilient } from '@/lib/email/graph-mail-resilient'
+import { openDraft } from '@/lib/email/graph-mail'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
@@ -73,7 +74,7 @@ export function NewOrderForm() {
     if (!savedOrder) return
     setEmailingPO(true)
     try {
-      const token = await getMailToken()
+      const token = await getMailTokenResilient()
       const pdfRes = await fetch(`/api/orders/${savedOrder.id}/po-pdf`)
       if (!pdfRes.ok) throw new Error(`PDF fetch failed (${pdfRes.status})`)
       const pdfBlob = await pdfRes.blob()
@@ -83,9 +84,9 @@ export function NewOrderForm() {
         reader.onerror = reject
         reader.readAsDataURL(pdfBlob)
       })
-      const draft = await createDraft(token, { to: contactEmails, cc: ['orders@mphunited.com'], subject: `Order #${savedOrder.order_number}`, bodyHtml: '' })
-      await attachFileToDraft(token, draft.id, `MPH PO ${savedOrder.order_number}.pdf`, base64)
-      openDraft(draft.webLink)
+      const { id: messageId, webLink } = await createDraftResilient(token, { to: contactEmails, cc: ['orders@mphunited.com'], subject: `Order #${savedOrder.order_number}`, bodyHtml: '' })
+      await attachFileToDraftResilient(token, messageId, `MPH PO ${savedOrder.order_number}.pdf`, base64)
+      openDraft(webLink)
       toast.success('Draft created with PDF attached — opening Outlook...')
     } catch (err) {
       toast.error(`Failed to create draft: ${err instanceof Error ? err.message : String(err)}`)

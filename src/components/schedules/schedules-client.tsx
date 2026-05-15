@@ -15,8 +15,9 @@ import { Separator } from "@/components/ui/separator";
 import { CalendarDays, FileText, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getMonFri } from "@/lib/schedules/date-utils";
-import { getMailToken } from "@/lib/email/msal-client";
-import { createDraft, attachFileToDraft, openDraft } from "@/lib/email/graph-mail";
+import { getMailTokenResilient } from "@/lib/email/msal-client-resilient";
+import { createDraftResilient, attachFileToDraftResilient } from "@/lib/email/graph-mail-resilient";
+import { openDraft } from "@/lib/email/graph-mail";
 import { getUserSignature } from "@/lib/email/get-user-signature";
 import { formatDate } from "@/lib/utils/format-date";
 
@@ -167,15 +168,15 @@ useEffect(() => {
       const formattedEnd = formatDate(endDate);
       const bodyHtml = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.6;"><p>Please find the attached shipping schedule for ${formattedStart} through ${formattedEnd}.</p><p>Total Shipments: ${count}</p></div>`;
       const base64 = await blobToBase64(await pdfRes.blob());
-      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()]);
-      const { id: messageId, webLink } = await createDraft(token, {
+      const [token, signature] = await Promise.all([getMailTokenResilient(), getUserSignature()]);
+      const { id: messageId, webLink } = await createDraftResilient(token, {
         to: emailTo.split(",").filter(Boolean),
         cc: emailCc.split(",").filter(Boolean),
         subject: emailSubject,
         bodyHtml,
         signature,
       });
-      await attachFileToDraft(token, messageId, `MPH Schedule ${startDate}.pdf`, base64);
+      await attachFileToDraftResilient(token, messageId, `MPH Schedule ${startDate}.pdf`, base64);
       toast.success("Draft created — opening Outlook", { id: toastId });
       openDraft(webLink);
     } catch (err) {

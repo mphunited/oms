@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { getMailToken } from '@/lib/email/msal-client'
-import { createDraft, attachFileToDraft, openDraft } from '@/lib/email/graph-mail'
+import { getMailTokenResilient } from '@/lib/email/msal-client-resilient'
+import { createDraftResilient, attachFileToDraftResilient } from '@/lib/email/graph-mail-resilient'
+import { openDraft } from '@/lib/email/graph-mail'
 import { getUserSignature } from '@/lib/email/get-user-signature'
 
 function blobToBase64(blob: Blob): Promise<string> {
@@ -33,15 +34,15 @@ export function useRecyclingPoEmail(id: string, orderNumber: string) {
       const cc = ccHeader ? ccHeader.split(',').map(s => s.trim()).filter(Boolean) : []
 
       const base64 = await blobToBase64(await pdfRes.blob())
-      const [token, signature] = await Promise.all([getMailToken(), getUserSignature()])
+      const [token, signature] = await Promise.all([getMailTokenResilient(), getUserSignature()])
 
       const bodyHtml = `<div style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12pt;color:#1f2937;max-width:700px;line-height:1.6;">
   <p style="margin:0 0 16px;">Please find attached Purchase Order ${orderNumber}.</p>
   <p style="margin:0 0 16px;">Please confirm receipt at your earliest convenience. Please reference MPH PO # on all correspondence and shipping documents.</p>
 </div>`
 
-      const { id: messageId, webLink } = await createDraft(token, { to, cc, subject, bodyHtml, signature })
-      await attachFileToDraft(token, messageId, `MPH PO ${orderNumber}.pdf`, base64)
+      const { id: messageId, webLink } = await createDraftResilient(token, { to, cc, subject, bodyHtml, signature })
+      await attachFileToDraftResilient(token, messageId, `MPH PO ${orderNumber}.pdf`, base64)
       toast.success('Draft created — opening Outlook', { id: toastId })
       openDraft(webLink)
     } catch (err) {
