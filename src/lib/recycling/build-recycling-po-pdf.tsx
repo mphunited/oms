@@ -131,15 +131,30 @@ export function RecyclingPurchaseOrderPDF({ order, customer, vendor, companySett
         {/* Info grid */}
         <View style={S.grid}>
 
-          {/* Row 1: Vendor (= customer company providing IBCs) | Ship To (= vendor processing facility) */}
+          {/* Row 1: Vendor | Ship To (= vendor processing facility)
+              IBC: Vendor block = customer (IBC source company, PO addressed to them)
+              Drum: Vendor block = vendor (processor/PO recipient) */}
           <View style={S.row}>
             <View style={S.cell}>
               <Text style={S.lbl}>VENDOR</Text>
-              <Text style={S.valBold}>{customer.name}</Text>
-              {!!(customerAddr.street) && <Text style={S.val}>{customerAddr.street}</Text>}
-              {!!(customerAddr.city || customerAddr.state || customerAddr.zip) && (
-                <Text style={S.val}>{[customerAddr.city, customerAddr.state, customerAddr.zip].filter(Boolean).join(', ')}</Text>
-              )}
+              {order.recycling_type === 'Drum'
+                ? vendor
+                  ? <View>
+                      <Text style={S.valBold}>{vendor.name}</Text>
+                      {!!(vendorAddr.street) && <Text style={S.val}>{vendorAddr.street}</Text>}
+                      {!!(vendorAddr.city || vendorAddr.state || vendorAddr.zip) && (
+                        <Text style={S.val}>{[vendorAddr.city, vendorAddr.state, vendorAddr.zip].filter(Boolean).join(', ')}</Text>
+                      )}
+                    </View>
+                  : <Text style={S.val}>--</Text>
+                : <View>
+                    <Text style={S.valBold}>{customer.name}</Text>
+                    {!!(customerAddr.street) && <Text style={S.val}>{customerAddr.street}</Text>}
+                    {!!(customerAddr.city || customerAddr.state || customerAddr.zip) && (
+                      <Text style={S.val}>{[customerAddr.city, customerAddr.state, customerAddr.zip].filter(Boolean).join(', ')}</Text>
+                    )}
+                  </View>
+              }
             </View>
             <View style={S.cellR}>
               <Text style={S.lbl}>SHIP TO</Text>

@@ -79,7 +79,7 @@ export async function GET(
 
     const emailCc = [
       ...ccContacts.filter(c => c.email).map(c => c.name ? `${c.name} <${c.email}>` : c.email!),
-      'orders@mphunited.com',
+      ...(order.recycling_type === 'IBC' ? ['orders@mphunited.com'] : []),
     ].join(', ')
 
     const shipDateStr = fmtDate(order.pick_up_date)

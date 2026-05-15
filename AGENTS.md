@@ -497,21 +497,22 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
       JOIN on order_groups. Both return all orders in the group when a group_po_number
       matches.
 
-62. **Recycling orders have an inverted customer/vendor relationship vs regular orders.**
+62. **Recycling orders have an inverted customer/vendor relationship for IBC orders.**
     - recycling_orders.customer_id = the company providing empty IBCs or drums for
-      disposal. This is the PO RECIPIENT. It is a record in the customers table.
+      disposal. It is a record in the customers table.
     - recycling_orders.vendor_id = the recycling/processing facility that receives
       and processes the containers. It is a record in the vendors table.
-    - The PO is sent TO the customer, NOT the vendor.
-    - PO PDF "Vendor" block = customer record. Address: customers.bill_to, fall back
-      to customers.ship_to if bill_to is null or empty.
-    - PO PDF "Ship to" block = vendor.address. Hidden (shows "CPU" only) when
-      is_blind_shipment = true.
+    - PO PDF "Vendor" block — differs by recycling_type:
+        IBC: customer record (PO addressed to the IBC source company). Address:
+             customers.bill_to, fall back to customers.ship_to if bill_to is null or empty.
+        Drum: vendor record (PO addressed to the processing facility, e.g. Coastal).
+    - PO PDF "Ship To" block = vendor.address for both IBC and Drum. Hidden (shows "CPU"
+      only) when is_blind_shipment = true.
     - po_contacts on recycling_orders drives PO email To/CC — NOT vendor.po_contacts.
       po_contacts shape: [{ name, email, role: "to"|"cc" }]
-    - CC always includes orders@mphunited.com on recycling PO emails.
+    - IBC PO emails: CC includes orders@mphunited.com.
+    - Drum PO emails: CC does NOT include orders@mphunited.com.
     - If po_contacts is empty, draft opens with empty To field — do not throw an error.
-    - This inverted pattern applies to both IBC and Drum recycling types.
 
 63. **Drum recycling vendor default is Coastal Container Services.**
     - UUID: 8ae0764b-c98d-4b4f-a71f-1e0111225a94 (MPH United / Coastal Container
@@ -951,7 +952,9 @@ Outlook Web deeplinks are no longer used anywhere in the app.
 - Regular order PO emails: CC includes orders@mphunited.com
 - BOL emails: orders@mphunited.com is NOT CC'd
 - Recycling PO emails: To/CC from recycling_orders.po_contacts (NOT vendor.po_contacts).
-  CC includes orders@mphunited.com. Hook: src/lib/recycling/use-recycling-po-email.ts.
+  Hook: src/lib/recycling/use-recycling-po-email.ts.
+  IBC PO emails: CC includes orders@mphunited.com.
+  Drum PO emails: CC does NOT include orders@mphunited.com.
 - Full email rules in PRD.md Section 11
 
 ---
