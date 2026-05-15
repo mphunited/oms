@@ -79,6 +79,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    const permissions = (dbUser?.permissions ?? []) as string[]
+    if (permissions.includes('RECYCLING_ONLY')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await req.json()
     const { split_loads, ...orderFields } = body
 

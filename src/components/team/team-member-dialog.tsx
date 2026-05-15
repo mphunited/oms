@@ -175,6 +175,20 @@ export function TeamMemberDialog({ member, onClose, onSaved }: Props) {
                 />
                 <span className="text-sm">Appears as CSR on orders</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.permissions.includes("RECYCLING_ONLY")}
+                  onChange={(e) => setForm((f) => ({
+                    ...f,
+                    permissions: e.target.checked
+                      ? [...f.permissions.filter((p) => p !== "RECYCLING_ONLY"), "RECYCLING_ONLY"]
+                      : f.permissions.filter((p) => p !== "RECYCLING_ONLY"),
+                  }))}
+                  className="h-4 w-4 rounded border-input accent-[#00205B]"
+                />
+                <span className="text-sm">Recycling Only — blocks regular order editing</span>
+              </label>
             </div>
           </div>
 
