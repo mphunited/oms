@@ -1134,6 +1134,9 @@ src/lib/recycling/use-new-drum-form.ts  — new drum form hook; COASTAL_VENDOR_I
   (8ae0764b-c98d-4b4f-a71f-1e0111225a94)
 src/lib/recycling/use-edit-ibc-form.ts  — edit IBC form state hook
 src/lib/recycling/use-edit-drum-form.ts — edit drum form state hook
+src/lib/recycling/build-drum-po-email.ts — drum PO email body builder (pure
+  function); takes DrumOrderForEmail + VendorForDrumEmail, returns { bodyHtml };
+  drum only — IBC uses minimal body in use-recycling-po-email.ts
 src/lib/recycling/use-recycling-po-email.ts — Graph API PO email hook; reads
   x-email-to/cc/subject headers from po-pdf route response
 src/lib/schedules/                      — schedule PDF builders, order fetching, utils

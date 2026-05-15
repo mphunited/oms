@@ -6,6 +6,9 @@ import { getMailTokenResilient } from '@/lib/email/msal-client-resilient'
 import { createDraftResilient, attachFileToDraftResilient } from '@/lib/email/graph-mail-resilient'
 import { openDraft } from '@/lib/email/graph-mail'
 import { getUserSignature } from '@/lib/email/get-user-signature'
+import { buildDrumPoEmail, type DrumOrderForEmail, type VendorForDrumEmail } from './build-drum-po-email'
+
+type DrumEmailData = { order: DrumOrderForEmail; vendor: VendorForDrumEmail }
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -16,7 +19,7 @@ function blobToBase64(blob: Blob): Promise<string> {
   })
 }
 
-export function useRecyclingPoEmail(id: string, orderNumber: string) {
+export function useRecyclingPoEmail(id: string, orderNumber: string, drumData?: DrumEmailData) {
   const [emailingPo, setEmailingPo] = useState(false)
 
   async function handleEmailPo() {
@@ -36,7 +39,9 @@ export function useRecyclingPoEmail(id: string, orderNumber: string) {
       const base64 = await blobToBase64(await pdfRes.blob())
       const [token, signature] = await Promise.all([getMailTokenResilient(), getUserSignature()])
 
-      const bodyHtml = `<div style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12pt;color:#1f2937;max-width:700px;line-height:1.6;">
+      const bodyHtml = drumData
+        ? buildDrumPoEmail(drumData.order, drumData.vendor).bodyHtml
+        : `<div style="font-family:'Aptos','Calibri','Arial',sans-serif;font-size:12pt;color:#1f2937;max-width:700px;line-height:1.6;">
   <p style="margin:0 0 16px;">Please find attached Purchase Order ${orderNumber}.</p>
   <p style="margin:0 0 16px;">Please confirm receipt at your earliest convenience. Please reference MPH PO # on all correspondence and shipping documents.</p>
 </div>`

@@ -56,7 +56,20 @@ export function EditDrumForm({
   useEffect(() => { onSavingChange?.(saving) }, [saving, onSavingChange])
   useEffect(() => { if (saveRef) saveRef.current = save })
 
-  const { handleEmailPo, emailingPo } = useRecyclingPoEmail(id, form.order_number)
+  const vendorName = vendorList.find(v => v.id === form.vendor_id)?.name ?? ''
+  const { handleEmailPo, emailingPo } = useRecyclingPoEmail(id, form.order_number, {
+    order: {
+      order_number:    form.order_number,
+      customer_po:     form.customer_po     || null,
+      description:     form.description     || null,
+      pick_up_date:    form.pick_up_date    || null,
+      qty:             form.qty             || null,
+      buy:             form.buy             || null,
+      freight_carrier: form.freight_carrier || null,
+      ship_from:       form.ship_from.name || form.ship_from.street ? form.ship_from : null,
+    },
+    vendor: { name: vendorName },
+  })
 
   function downloadPdf() {
     window.open(`/api/recycling-orders/${id}/po-pdf`, '_blank')
