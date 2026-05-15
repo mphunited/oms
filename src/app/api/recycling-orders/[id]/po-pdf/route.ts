@@ -83,7 +83,7 @@ export async function GET(
     ].join(', ')
 
     const shipDateStr = fmtDate(order.pick_up_date)
-    const subject = order.is_blind_shipment
+    const subject = (order.is_blind_shipment || order.recycling_type === 'Drum')
       ? `MPH United PO ${order.order_number} | Ship ${shipDateStr}`
       : `MPH United PO ${order.order_number} -- ${customer.name} | Ship ${shipDateStr}`
 
