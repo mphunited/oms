@@ -1,9 +1,10 @@
-# OMS Handoff — May 14, 2026
+# OMS Handoff — May 15, 2026
 
 ## Session Summary
 
-All pre-Christina red items from May 13 are closed. Dark mode is partially 
-complete — stopped mid-session with 3 known remaining items.
+Full May 14 backlog cleared — all red, yellow, and green items resolved.
+Vercel is green. typecheck passes with 0 errors. Remote worktree branches
+pruned to 0.
 
 ---
 
@@ -11,94 +12,67 @@ complete — stopped mid-session with 3 known remaining items.
 
 | Commit | Description |
 |--------|-------------|
-| `7f92bf3` | fix: text-foreground on Buy/Sell/Ship To cells for dark mode |
-| `c391b4b` | feat: hide New Order nav item for SALES role |
-| `cf636eb` | fix: hide Notes button and block PATCH for SALES role |
-| `697a991` | fix: use dbUser.role in orders list/create route |
-| `c026b48` | fix: make customer_po optional on SplitLoad type (build fix) |
-| `88ae2f7` | fix: apply stripMphPrefix to vendor name in PO PDF |
-| `3d60498` | fix: email bugs — greeting name, city duplication, customer PO, recipient format |
-| `a4e1250` | fix: block SALES from PDF generation and duplicate routes |
-| `15658ee` | fix: dark mode backgrounds — orders table and reporting pages |
-| `5814ee5` | fix: dark mode contrast and missing recycling section backgrounds |
+| `488fa88` | fix: implicit any on render callback in admin/vendor schedule PDFs |
+| `2c8f3fa` | chore: add .claude to tsconfig exclude, typecheck/test scripts, .env.example |
+| `9ccd0fd` | fix: replace remaining hardcoded gray text with text-foreground/muted-foreground |
+| `24f468d` | fix: migrate raw Graph token calls to getMailTokenResilient in 3 email flows |
+| `b36341f` | fix: remove banned inviteUserByEmail and add ADMIN guards to team actions |
+| `0e614e8` | feat: allow CSR role to access Order Frequency page |
+| `6c03480` | fix: dark mode text colors on order-frequency page |
 
 ---
 
 ## Still To Do
 
-### 🔴 Finish Before Heavy Use
+### 🟡 Verify Before Next Session
 
-**1. Remaining dark mode fixes**
-Three specific items stopped mid-session:
-- `src/components/product-totals/aggregate-cards.tsx` — card label and number 
-  text colors (text-gray-500 etc.) need to be text-foreground/text-muted-foreground
-- `src/components/order-frequency/order-frequency-client.tsx` — monthly data 
-  table row td elements need text-foreground
-- `src/app/(dashboard)/product-totals/page.tsx` — page title barely visible,
-  needs text-foreground
+**1. Local worktree directory cleanup**
+Remote claude/ branches: confirmed pruned (Count: 0).
+Local .claude/worktrees/ directories: required closing Claude Code and
+running Remove-Item manually. Verify cleanup succeeded:
 
-Prompt is already written — use the one from the May 14 session ending.
-After fixing, also check `src/app/(dashboard)/margins/page.tsx` for the same
-page title visibility issue.
+```powershell
+git worktree list | Measure-Object -Line
+```
 
-**2. CSR access to Order Frequency**
-CSRs currently cannot access Order Frequency. They should be able to — the page
-shows shipment counts, not margin/buy data. Add CSR to the route guard and nav
-config for `/order-frequency`.
+Expected: Lines: 1 (main only). If still showing many entries, re-run:
 
----
+```powershell
+Remove-Item -Path "C:/Users/jack/Claude Projects/oms/.claude/worktrees/*" `
+  -Recurse -Force
+git worktree prune
+```
 
-### 🟡 Soon — Before Heavy Use
-
-**3. team.ts unsafe server actions**
-- File: `src/actions/team.ts`
-- Contains banned `inviteUserByEmail` (lines 12, 25)
-- `inviteMember`, `updateMemberRole`, `removeMember` lack ADMIN guards
-- Fix: remove invite flow per AGENTS.md onboarding rules, add ADMIN checks
-
-**4. Email flows using raw Graph helpers**
-- Files: `new-order-form.tsx` (line 76), `use-recycling-po-email.ts` (line 36), 
-  `schedules-client.tsx` (line 170)
-- These use raw MSAL/Graph calls instead of `getMailTokenResilient`
-- Causes silent failures when tokens expire
-- Fix: migrate to resilient token/Graph helpers
-
-**5. Dark mode — systematic cleanup**
-After the targeted fixes above, run a grep for remaining hardcoded light colors:
-
-Get-ChildItem -Path src -Recurse -Include ".tsx",".ts" |
-Select-String -Pattern 'text-gray-9|text-[#[01]' |
-Select-Object Path, LineNumber, Line
-There may be isolated spots remaining across the codebase.
+Note: recycling-phase1 is a named branch (not auto-generated). Do not
+delete it without confirming it contains no unmerged work.
 
 ---
 
 ### 🟢 Nice To Have (Post-Launch)
 
-**6. .env.example incomplete**
-Add: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-Document or remove `SUPABASE_SERVICE_ROLE_KEY`
+**2. npm install on new machines / CI**
+typecheck failures were caused by a corrupted (empty) @react-pdf/renderer
+directory in node_modules. Fixed by npm install. No code change needed.
+tsconfig moduleResolution was already correct ("bundler").
+If typecheck fails again for this reason, npm install is the fix.
 
-**7. Worktree cleanup**
-~95+ stale `claude/` worktree branches accumulating.
-```powershell
-git fetch --prune
-git branch -r | Select-String "claude/" | ForEach-Object {
-  $branch = $_.ToString().Trim()
-  git push origin --delete $branch.Replace("origin/", "")
-}
-```
-Verify with `git worktree list` and `git worktree prune` afterward.
+---
 
-**8. tsconfig.json**
-Add `.claude` to `exclude` array to prevent ~371k worktree files from
-slowing TypeScript tooling.
+## Closed From May 14 — Confirmed Done
 
-**9. Add typecheck/test scripts**
-```json
-"typecheck": "tsc --noEmit",
-"test": "vitest"
-```
+| Item | Resolution |
+|------|-----------|
+| Dark mode: aggregate-cards, product-totals page, margins page | Already correct — no changes needed |
+| Dark mode: order-frequency text colors | Fixed — 6 replacements in order-frequency-client.tsx |
+| Dark mode: systematic cleanup | 9 files, all text-[#171717] replaced; brand colors left intact |
+| CSR access to Order Frequency | Added CSR to route guard and nav config |
+| team.ts: inviteMember + ADMIN guards | inviteMember removed; requireAdmin() added to updateMemberRole and removeMember |
+| Email token migration (3 files) | new-order-form, use-recycling-po-email, schedules-client all use getMailTokenResilient |
+| tsconfig .claude exclude | Done |
+| typecheck + test scripts | Done |
+| .env.example | NEXT_PUBLIC_ vars added |
+| Remote worktree branch cleanup | 91 branches deleted, Count: 0 |
+| Vercel build errors (schedule PDF implicit any) | Fixed — customer_po error was already resolved in prior commit |
 
 ---
 
@@ -109,6 +83,9 @@ slowing TypeScript tooling.
 ---
 
 ## Critical Reminder for Claude Code Sessions
-**Every prompt must end with explicit git steps.** Claude Code failed to push
+Every prompt must end with explicit git steps. Claude Code failed to push
 commits on 4 of 5 prompts in the May 14 session without this. See AGENTS.md
 rule 13 for the mandatory prompt footer.
+
+Claude Code verbal commit hash confirmations are not reliable — always
+verify with git pull origin main followed by git log --oneline.
