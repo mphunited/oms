@@ -211,14 +211,6 @@ export function RecyclingPurchaseOrderPDF({ order, customer, vendor, companySett
           </View>
         </View>
 
-        {/* Notes */}
-        {!!(order.po_notes && order.po_notes.trim()) && (
-          <View style={S.notesBox}>
-            <Text style={S.notesLbl}>NOTES</Text>
-            <Text style={S.notesText}>{order.po_notes}</Text>
-          </View>
-        )}
-
 
       </Page>
     </Document>
