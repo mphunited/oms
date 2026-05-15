@@ -150,7 +150,7 @@ export function NewOrderForm() {
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-            <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Order identity</h3>
+            <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Order identity</h3>
           </div>
           {canUseManualPO && (
             <div className="space-y-3">
@@ -223,7 +223,7 @@ export function NewOrderForm() {
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-            <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Customer & vendor</h3>
+            <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Customer & vendor</h3>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -267,7 +267,7 @@ export function NewOrderForm() {
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-            <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Freight & logistics</h3>
+            <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Freight & logistics</h3>
           </div>
           <div className="grid grid-cols-4 gap-4">
             <div className="space-y-1.5">
@@ -293,7 +293,7 @@ export function NewOrderForm() {
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-            <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Addresses & contacts</h3>
+            <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Addresses & contacts</h3>
           </div>
           <div className="grid grid-cols-2 gap-6">
             <div><p className="text-sm font-medium mb-3">Ship To</p><OrderAddressFields prefix="ship_to" register={form.register} notesLabel="Ship To Notes" hideContactFields notesPlaceholder="Optional — Contact name, number, email, & docking details" /><hr className="border-[#B88A44] my-6" /><OrderContactFields control={form.control} register={form.register} setValue={form.setValue} globalContacts={confirmationContacts} /></div>
@@ -308,7 +308,7 @@ export function NewOrderForm() {
           <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between py-1 transition-opacity hover:opacity-70">
             <div className="flex items-center gap-2">
               <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-              <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Notes</h3>
+              <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Notes</h3>
             </div>
             {notesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </CollapsibleTrigger>

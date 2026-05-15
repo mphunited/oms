@@ -50,7 +50,7 @@ export function EditOrderIdentitySection({
     <section className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-        <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Order identity</h3>
+        <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Order identity</h3>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">

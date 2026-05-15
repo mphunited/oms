@@ -175,7 +175,7 @@ wantedDate, setWantedDate: _setWantedDate,
       <section className="space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-          <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Customer & vendor</h3>
+          <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Customer & vendor</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
@@ -260,7 +260,7 @@ wantedDate, setWantedDate: _setWantedDate,
       <section className="space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-          <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Notes</h3>
+          <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Notes</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
@@ -284,7 +284,7 @@ wantedDate, setWantedDate: _setWantedDate,
       <section className="space-y-3">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-          <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">CSR checklist</h3>
+          <h3 className="text-[13px] font-semibold text-foreground tracking-normal">CSR checklist</h3>
         </div>
         <OrderChecklist items={checklist} onChange={setChecklist} />
       </section>
@@ -296,7 +296,7 @@ wantedDate, setWantedDate: _setWantedDate,
           <section className="space-y-3">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-              <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Multi-ship-to group</h3>
+              <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Multi-ship-to group</h3>
             </div>
             <div className="rounded-md border bg-muted/30 p-4 space-y-3">
               <div className="flex items-center gap-2">

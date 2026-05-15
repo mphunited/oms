@@ -83,7 +83,7 @@ export function ProductTotalsClient() {
               type="date"
               value={startDate}
               onChange={e => setStartDate(e.target.value)}
-              className="rounded-md px-3 py-1.5 text-[13px] text-[#171717] bg-white"
+              className="rounded-md px-3 py-1.5 text-[13px] text-foreground bg-white"
               style={{ boxShadow: '0px 0px 0px 1px rgba(0,0,0,0.08)' }}
             />
           </div>
@@ -93,7 +93,7 @@ export function ProductTotalsClient() {
               type="date"
               value={endDate}
               onChange={e => setEndDate(e.target.value)}
-              className="rounded-md px-3 py-1.5 text-[13px] text-[#171717] bg-white"
+              className="rounded-md px-3 py-1.5 text-[13px] text-foreground bg-white"
               style={{ boxShadow: '0px 0px 0px 1px rgba(0,0,0,0.08)' }}
             />
           </div>

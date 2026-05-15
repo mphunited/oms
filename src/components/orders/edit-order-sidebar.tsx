@@ -89,7 +89,7 @@ export function EditOrderSidebar({
       <div className={`rounded-lg border border-border bg-card p-4 space-y-3${readOnly ? ' pointer-events-none opacity-70' : ''}`}>
         <div className="flex items-center gap-2 mb-1">
           <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-          <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Status & invoicing</h3>
+          <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Status & invoicing</h3>
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Invoice Payment Status</Label>

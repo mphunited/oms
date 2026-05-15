@@ -18,7 +18,7 @@ function SectionHeader({ children }: { children: string }) {
   return (
     <div className="flex items-center gap-2 mb-4">
       <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-      <h3 className="text-[13px] font-semibold text-[#171717]">{children}</h3>
+      <h3 className="text-[13px] font-semibold text-foreground">{children}</h3>
     </div>
   )
 }
@@ -120,7 +120,7 @@ export function CustomerFrequencySection({ startDate, endDate }: { startDate: st
           <select
             value={selectedCustomer}
             onChange={e => setSelectedCustomer(e.target.value)}
-            className="rounded-md px-3 py-2 text-[13px] text-[#171717] bg-white w-72"
+            className="rounded-md px-3 py-2 text-[13px] text-foreground bg-white w-72"
             style={{ boxShadow: '0px 0px 0px 1px rgba(0,0,0,0.08)' }}
           >
             <option value="">— Select a customer —</option>
@@ -159,8 +159,8 @@ export function CustomerFrequencySection({ startDate, endDate }: { startDate: st
                   )}
                   {singleData.map((d, i) => (
                     <tr key={d.period} className={i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                      <td className="px-3 py-2 text-[13px] text-[#171717]">{fmtPeriod(d.period)}</td>
-                      <td className="px-3 py-2 text-[13px] text-[#171717] tabular-nums">{d.count}</td>
+                      <td className="px-3 py-2 text-[13px] text-foreground">{fmtPeriod(d.period)}</td>
+                      <td className="px-3 py-2 text-[13px] text-foreground tabular-nums">{d.count}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -199,8 +199,8 @@ export function CustomerFrequencySection({ startDate, endDate }: { startDate: st
               )}
               {sortedAll.map((c, i) => (
                 <tr key={c.customerId} className={i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                  <td className="px-3 py-2 text-[13px] text-[#171717]">{c.customerName}</td>
-                  <td className="px-3 py-2 text-[13px] font-medium text-[#171717] tabular-nums">{c.total}</td>
+                  <td className="px-3 py-2 text-[13px] text-foreground">{c.customerName}</td>
+                  <td className="px-3 py-2 text-[13px] font-medium text-foreground tabular-nums">{c.total}</td>
                   {allData.periods.map(p => (
                     <td key={p} className="px-3 py-2 text-right text-[13px] text-[#6b7280] tabular-nums">{c.periodCounts[p] ?? 0}</td>
                   ))}

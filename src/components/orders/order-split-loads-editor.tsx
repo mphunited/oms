@@ -54,7 +54,7 @@ export function OrderSplitLoadsEditor({
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-0.5 h-5 rounded-full bg-[#1a2744]" />
-        <h3 className="text-[13px] font-semibold text-[#171717] tracking-normal">Line items</h3>
+        <h3 className="text-[13px] font-semibold text-foreground tracking-normal">Line items</h3>
       </div>
       {loads.map((load, index) => (
         <SplitLoadRow
