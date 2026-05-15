@@ -219,17 +219,6 @@ export function RecyclingPurchaseOrderPDF({ order, customer, vendor, companySett
           </View>
         )}
 
-        {/* Signature lines */}
-        <View style={S.sigRow}>
-          <View style={S.sigBlock}>
-            <View style={S.sigLine} />
-            <Text style={S.sigLbl}>APPROVED BY</Text>
-          </View>
-          <View style={S.sigBlock}>
-            <View style={S.sigLine} />
-            <Text style={S.sigLbl}>DATE</Text>
-          </View>
-        </View>
 
       </Page>
     </Document>
