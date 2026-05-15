@@ -174,6 +174,7 @@ export function useEditDrumForm(id: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          po_contacts: form.po_contacts,
           invoice_status: 'Invoice',
           invoice_customer_amount: null,
           qty: form.qty || null, buy: form.buy || null, sell: form.sell || null,

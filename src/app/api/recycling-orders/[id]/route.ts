@@ -86,6 +86,7 @@ export async function PATCH(
     const {
       customer_name, customer_bill_to, customer_ship_to, customer_contacts_list,
       vendor_name, vendor_address, salesperson_name, csr_name,
+      po_contacts,
       ...updateFields
     } = body
 
@@ -95,7 +96,7 @@ export async function PATCH(
 
     const [updated] = await db
       .update(recycling_orders)
-      .set({ ...(updateFields as any), updated_at: new Date() }) // eslint-disable-line @typescript-eslint/no-explicit-any
+      .set({ ...(updateFields as any), po_contacts: po_contacts ?? null, updated_at: new Date() }) // eslint-disable-line @typescript-eslint/no-explicit-any
       .where(eq(recycling_orders.id, id))
       .returning()
 
