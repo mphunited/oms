@@ -22,6 +22,7 @@ export type RecyclingOrderForPdf = {
   pick_up_date:      string | null
   po_notes:          string | null
   is_blind_shipment: boolean
+  ship_from:         unknown
 }
 
 export type RecyclingCustomerForPdf = {
@@ -106,6 +107,7 @@ const S = StyleSheet.create({
 export function RecyclingPurchaseOrderPDF({ order, customer, vendor, companySetting }: Props) {
   const customerAddr = ((order.is_blind_shipment ? customer.bill_to ?? customer.ship_to : customer.bill_to ?? customer.ship_to) ?? {}) as Address
   const vendorAddr   = (vendor?.address ?? {}) as Address
+  const shipFromAddr = ((order.ship_from ?? {}) as Address)
 
   return (
     <Document>
@@ -157,42 +159,57 @@ export function RecyclingPurchaseOrderPDF({ order, customer, vendor, companySett
               }
             </View>
             <View style={S.cellR}>
-              <Text style={S.lbl}>SHIP TO</Text>
-              {order.is_blind_shipment
-                ? <Text style={S.blindText}>CPU</Text>
-                : vendor
-                  ? <View>
-                      <Text style={S.valBold}>{vendor.name}</Text>
-                      {!!(vendorAddr.street) && <Text style={S.val}>{vendorAddr.street}</Text>}
-                      {!!(vendorAddr.city || vendorAddr.state || vendorAddr.zip) && (
-                        <Text style={S.val}>{[vendorAddr.city, vendorAddr.state, vendorAddr.zip].filter(Boolean).join(', ')}</Text>
-                      )}
-                    </View>
-                  : <Text style={S.val}>--</Text>}
+              {order.recycling_type === 'Drum'
+                ? <>
+                    <Text style={S.lbl}>SHIP FROM</Text>
+                    {shipFromAddr.name || shipFromAddr.street
+                      ? <View>
+                          {!!shipFromAddr.name   && <Text style={S.valBold}>{shipFromAddr.name}</Text>}
+                          {!!shipFromAddr.street && <Text style={S.val}>{shipFromAddr.street}</Text>}
+                          {!!(shipFromAddr.city || shipFromAddr.state || shipFromAddr.zip) && (
+                            <Text style={S.val}>{[shipFromAddr.city, shipFromAddr.state, shipFromAddr.zip].filter(Boolean).join(', ')}</Text>
+                          )}
+                        </View>
+                      : <Text style={S.val}>--</Text>}
+                  </>
+                : <>
+                    <Text style={S.lbl}>SHIP TO</Text>
+                    {order.is_blind_shipment
+                      ? <Text style={S.blindText}>CPU</Text>
+                      : vendor
+                        ? <View>
+                            <Text style={S.valBold}>{vendor.name}</Text>
+                            {!!(vendorAddr.street) && <Text style={S.val}>{vendorAddr.street}</Text>}
+                            {!!(vendorAddr.city || vendorAddr.state || vendorAddr.zip) && (
+                              <Text style={S.val}>{[vendorAddr.city, vendorAddr.state, vendorAddr.zip].filter(Boolean).join(', ')}</Text>
+                            )}
+                          </View>
+                        : <Text style={S.val}>--</Text>}
+                  </>}
             </View>
           </View>
 
-          {/* Row 2: PO Number | PO Date */}
+          {/* Row 2 */}
           <View style={S.rowBorder}>
             <View style={S.cell}>
-              <Text style={S.lbl}>PO NUMBER</Text>
-              <Text style={S.val}>{order.order_number}</Text>
+              <Text style={S.lbl}>{order.recycling_type === 'Drum' ? 'CUSTOMER PO #' : 'PO NUMBER'}</Text>
+              <Text style={S.val}>{order.recycling_type === 'Drum' ? (order.customer_po ?? '--') : order.order_number}</Text>
             </View>
             <View style={S.cellR}>
-              <Text style={S.lbl}>PO DATE</Text>
-              <Text style={S.val}>{fmtDate(order.order_date)}</Text>
+              <Text style={S.lbl}>{order.recycling_type === 'Drum' ? 'REQUIRED SHIP DATE' : 'PO DATE'}</Text>
+              <Text style={S.val}>{order.recycling_type === 'Drum' ? fmtDate(order.pick_up_date) : fmtDate(order.order_date)}</Text>
             </View>
           </View>
 
-          {/* Row 3: Ship Via | Customer PO */}
+          {/* Row 3 */}
           <View style={S.rowBorder}>
             <View style={S.cell}>
               <Text style={S.lbl}>SHIP VIA</Text>
               <Text style={S.val}>{order.freight_carrier ?? '--'}</Text>
             </View>
             <View style={S.cellR}>
-              <Text style={S.lbl}>CUSTOMER PO #</Text>
-              <Text style={S.val}>{order.customer_po ?? '--'}</Text>
+              <Text style={S.lbl}>{order.recycling_type === 'Drum' ? 'APPT. TIME' : 'CUSTOMER PO #'}</Text>
+              <Text style={S.val}>{order.recycling_type === 'Drum' ? '--' : (order.customer_po ?? '--')}</Text>
             </View>
           </View>
 

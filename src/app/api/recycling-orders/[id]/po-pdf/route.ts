@@ -54,6 +54,7 @@ export async function GET(
           pick_up_date:      order.pick_up_date ?? null,
           po_notes:          order.po_notes ?? null,
           is_blind_shipment: order.is_blind_shipment,
+          ship_from:         order.ship_from ?? null,
         },
         customer: {
           name:    customer.name,
