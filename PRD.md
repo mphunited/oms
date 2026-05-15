@@ -348,6 +348,11 @@ Role-based access rules:
 - Role is enforced as a PostgreSQL enum (user_role) in the database.
 - Default role for new users: CSR
 
+**RECYCLING_ONLY permission** — value in users.permissions JSONB (not a role). Blocks editing
+regular orders (PATCH /api/orders/[orderId] → 403; /orders/[orderId] redirects to /orders).
+Does not affect recycling order access. No schema migration needed. Set via /team page.
+Current holder: Matt Cozik (recycling-only CSR).
+
 ---
 
 ## 11. Email Pattern
@@ -556,6 +561,36 @@ as `null`. Neither field is user-editable on drum forms. `qb_invoice_number` is 
 
 **Drum-only fields** (not shown on IBC form):
 `ship_from` (customer pickup location), `bill_to`, `customer_contacts` (confirmation emails)
+
+**Drum PO PDF layout:**
+- Vendor block: vendor record (Coastal Container — processing facility). NOT inverted.
+  PO is addressed to the processing facility (vendor), not the customer.
+- Ship From block: order.ship_from (customer drum pickup location).
+  shape: { name, street, city, state, zip }. Omitted if ship_from is null.
+- Info grid: CUSTOMER PO # | REQUIRED SHIP DATE (pick_up_date) | SHIP VIA | APPT. TIME (--)
+- Note: drum layout is NOT inverted — IBC uses the inverted pattern (customer in Vendor block).
+
+**Drum PO email CC:**
+Drum PO emails do NOT include orders@mphunited.com in CC.
+IBC PO emails include orders@mphunited.com in CC (unchanged).
+
+**Drum PO email body:**
+Built by src/lib/recycling/build-drum-po-email.ts.
+Sections:
+  1. Greeting: "Hello [vendor display name],"
+  2. Opening: "Please find orders below for [vendor.name]." — vendor.name is the full
+     stored name; no customer address appended
+  3. Product table — columns: MPH PO | CUSTOMER PO | PRODUCT/DESCRIPTION |
+     SHIP DATE (pick_up_date) | QTY | UNIT PRICE (buy) | TOTAL (qty × buy)
+     ORDER TOTAL row at bottom
+  4. Ship Via: freight_carrier. Ship From: order.ship_from address block.
+     Ship From section omitted if ship_from is null.
+  5. Footer (three lines):
+     "Please confirm receipt of this PO. Please reference PO # [number]
+      on all correspondence and shipping documents."
+     "BOL is attached to this email."
+     "The carrier will contact you to arrange freight."
+IBC PO email body: unchanged minimal string ("Please find attached...").
 
 ### Recycling Order Statuses (RECYCLING_STATUSES — hardcoded in schema.ts, NOT in dropdown_configs)
 Acknowledged Order | PO Request To Accounting | Waiting On Vendor To Confirm |

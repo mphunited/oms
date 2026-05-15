@@ -503,16 +503,33 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     - recycling_orders.vendor_id = the recycling/processing facility that receives
       and processes the containers. It is a record in the vendors table.
     - PO PDF "Vendor" block — differs by recycling_type:
-        IBC: customer record (PO addressed to the IBC source company). Address:
-             customers.bill_to, fall back to customers.ship_to if bill_to is null or empty.
-        Drum: vendor record (PO addressed to the processing facility, e.g. Coastal).
-    - PO PDF "Ship To" block = vendor.address for both IBC and Drum. Hidden (shows "CPU"
-      only) when is_blind_shipment = true.
+        IBC: "Vendor" block = customer record (inverted — PO addressed to IBC source
+             company). Address: customers.bill_to, fall back to customers.ship_to if
+             bill_to is null or empty.
+        Drum: "Vendor" block = vendor record (NOT inverted — PO addressed to processing
+              facility). Drum layout is NOT inverted.
+    - PO PDF right column — differs by recycling_type:
+        IBC: right column label = "SHIP TO", data = vendor.address.
+             Hidden (shows "CPU" only) when is_blind_shipment = true.
+        Drum: right column label = "SHIP FROM", data = order.ship_from JSONB.
+              shape: { name, street, city, state, zip }
+              If ship_from is null/empty, render block empty — do not throw.
+    - PO PDF info grid — differs by recycling_type:
+        IBC info grid:  Row 1: PO NUMBER / PO DATE
+                        Row 2: SHIP VIA / CUSTOMER PO #
+        Drum info grid: Row 1: CUSTOMER PO # / REQUIRED SHIP DATE (order.pick_up_date)
+                        Row 2: SHIP VIA / APPT. TIME (always "--" — appointment_notes
+                               is IBC-only per Rule 67)
     - po_contacts on recycling_orders drives PO email To/CC — NOT vendor.po_contacts.
       po_contacts shape: [{ name, email, role: "to"|"cc" }]
     - IBC PO emails: CC includes orders@mphunited.com.
     - Drum PO emails: CC does NOT include orders@mphunited.com.
     - If po_contacts is empty, draft opens with empty To field — do not throw an error.
+    - PO_CONTACTS NAME SANITIZATION: po_contacts name field must store display name only —
+      never an RFC 5322 formatted string (e.g. "Name <email>"). The po-pdf route sanitizes
+      c.name with /<[^>]*>/g before building x-email-to and x-email-cc headers. If a
+      contact's name field contains an embedded email in angle brackets, the sanitization
+      strips it before wrapping with <${c.email}>.
 
 63. **Drum recycling vendor default is Coastal Container Services.**
     - UUID: 8ae0764b-c98d-4b4f-a71f-1e0111225a94 (MPH United / Coastal Container
@@ -774,6 +791,30 @@ replacing a shared Excel workbook. ~10 remote users. 150–500 orders/month.
     UI: Duplicate button in page header of both edit pages.
         Shows "Duplicating…" loading state. Sonner toast on success/error.
 
+84. **Rule: RECYCLING_ONLY permission**
+    "RECYCLING_ONLY" is a valid value in users.permissions JSONB array.
+    No schema migration required — the column accepts any string values.
+
+    Effect:
+    - PATCH /api/orders/[orderId]: returns 403 Forbidden immediately after
+      auth check if caller's permissions include "RECYCLING_ONLY"
+    - /orders/[orderId]/page.tsx: server-side redirect to /orders before
+      client component loads if current user has "RECYCLING_ONLY"
+    - Has NO effect on recycling order access (/recycling/*)
+    - Does NOT block /orders list page — user can still view orders
+
+    Implementation files:
+    - src/app/api/orders/[orderId]/route.ts — PATCH guard
+    - src/app/(dashboard)/orders/[orderId]/page.tsx — server redirect
+      (client code moved to order-edit-client.tsx unchanged)
+    - src/components/team/team-member-dialog.tsx — "Recycling Only"
+      checkbox under permissions section
+
+    Management: /team page (ADMIN only). Set "Recycling Only" checkbox
+    for the user. No SQL required.
+
+    Current users with RECYCLING_ONLY: Matt Cozik (set manually via /team).
+
 ---
 
 ## TECHNOLOGY STACK
@@ -953,7 +994,7 @@ Outlook Web deeplinks are no longer used anywhere in the app.
 - BOL emails: orders@mphunited.com is NOT CC'd
 - Recycling PO emails: To/CC from recycling_orders.po_contacts (NOT vendor.po_contacts).
   Hook: src/lib/recycling/use-recycling-po-email.ts.
-  IBC PO emails: CC includes orders@mphunited.com.
+  Recycling PO emails (IBC only): CC includes orders@mphunited.com.
   Drum PO emails: CC does NOT include orders@mphunited.com.
 - Full email rules in PRD.md Section 11
 
@@ -1134,9 +1175,11 @@ src/lib/recycling/use-new-drum-form.ts  — new drum form hook; COASTAL_VENDOR_I
   (8ae0764b-c98d-4b4f-a71f-1e0111225a94)
 src/lib/recycling/use-edit-ibc-form.ts  — edit IBC form state hook
 src/lib/recycling/use-edit-drum-form.ts — edit drum form state hook
-src/lib/recycling/build-drum-po-email.ts — drum PO email body builder (pure
-  function); takes DrumOrderForEmail + VendorForDrumEmail, returns { bodyHtml };
-  drum only — IBC uses minimal body in use-recycling-po-email.ts
+src/lib/recycling/build-drum-po-email.ts — drum PO email body builder;
+  pure function buildDrumPoEmail(order, vendor) → { bodyHtml }; drum only.
+  Greeting from vendor.name, 7-column product table (MPH PO, Customer PO,
+  Description, Ship Date, Qty, Unit Price, Total), Ship Via/From block,
+  three-line footer. IBC uses minimal body in use-recycling-po-email.ts.
 src/lib/recycling/use-recycling-po-email.ts — Graph API PO email hook; reads
   x-email-to/cc/subject headers from po-pdf route response
 src/lib/schedules/                      — schedule PDF builders, order fetching, utils
