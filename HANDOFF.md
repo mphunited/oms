@@ -24,14 +24,11 @@ cleanup still pending (count: 8, target: 1 — run cleanup before next session).
 ### 🔴 Do Before Next Session
 
 **1. Local worktree directory cleanup**
-git worktree list returned Lines: 8. Target is 1 (main only). Run:
-
-```powershell
-Remove-Item -Path "C:/Users/jack/Claude Projects/oms/.claude/worktrees/*" `
-  -Recurse -Force
-git worktree prune
-git worktree list | Measure-Object -Line
-```
+git worktree list = Lines: 1 — git state is clean.
+5 orphaned directories remain in .claude/worktrees/ (locked by Claude Code).
+Delete after closing Claude Code:
+Remove-Item -Path "C:/Users/jack/Claude Projects/oms/.claude/worktrees/*" -Recurse -Force
+No git impact until then.
 
 Expected after: Lines: 1
 
